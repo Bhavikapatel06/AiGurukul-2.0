@@ -25,6 +25,11 @@ import { RAGController } from './controllers/rag.controller.js';
 import { RAGService } from './services/rag.service.js';
 import { QuizController } from './controllers/quiz.controller.js';
 import { QuizService } from './services/quiz.service.js';
+import { GamificationController } from './controllers/gamification.controller.js';
+import { GamificationService } from './services/gamification.service.js';
+import { LanguageController } from './controllers/language.controller.js';
+import { TranslationService } from './services/translation.service.js';
+import { EtymologyService } from './services/etymology.service.js';
 import {
   UserRepository,
   SessionRepository,
@@ -37,6 +42,8 @@ import {
   DocumentChunkRepository,
   QuizRepository,
   QuizAttemptRepository,
+  GamificationRepository,
+  ManuscriptRepository,
 } from './repositories/index.js';
 import { GoogleAuthService } from './services/google-auth.service.js';
 import { DatabaseService } from '@ai-gurukul/database';
@@ -62,6 +69,8 @@ export interface CreateAppOptions {
   chunkRepo?: DocumentChunkRepository;
   quizRepo?: QuizRepository;
   quizAttemptRepo?: QuizAttemptRepository;
+  gamificationRepo?: GamificationRepository;
+  manuscriptRepo?: ManuscriptRepository;
   authService?: AuthService;
   wisdomService?: WisdomService;
   ayurvedaService?: AyurvedaService;
@@ -69,6 +78,9 @@ export interface CreateAppOptions {
   documentService?: DocumentService;
   ragService?: RAGService;
   quizService?: QuizService;
+  gamificationService?: GamificationService;
+  translationService?: TranslationService;
+  etymologyService?: EtymologyService;
   aiProvider?: AIProvider;
 }
 
@@ -110,6 +122,8 @@ export function createApp(options: CreateAppOptions): Express {
   const chunkRepo = options.chunkRepo || new DocumentChunkRepository();
   const quizRepo = options.quizRepo || new QuizRepository();
   const quizAttemptRepo = options.quizAttemptRepo || new QuizAttemptRepository();
+  const gamificationRepo = options.gamificationRepo || new GamificationRepository();
+  const manuscriptRepo = options.manuscriptRepo || new ManuscriptRepository();
 
   const googleAuthService = new GoogleAuthService(config, logger);
   const authService =
@@ -142,6 +156,15 @@ export function createApp(options: CreateAppOptions): Express {
   const quizService =
     options.quizService || new QuizService(quizRepo, quizAttemptRepo, aiProvider);
 
+  const gamificationService =
+    options.gamificationService || new GamificationService(gamificationRepo);
+
+  const translationService =
+    options.translationService || new TranslationService(manuscriptRepo);
+
+  const etymologyService =
+    options.etymologyService || new EtymologyService();
+
   const healthService = new HealthService(dbService, redisClient);
   const healthController = new HealthController(healthService);
   const authController = new AuthController(authService, config);
@@ -152,6 +175,8 @@ export function createApp(options: CreateAppOptions): Express {
   const documentController = new DocumentController(documentService);
   const ragController = new RAGController(ragService);
   const quizController = new QuizController(quizService);
+  const gamificationController = new GamificationController(gamificationService);
+  const languageController = new LanguageController(translationService, etymologyService);
 
   // 6. Mount API routers
   const apiRouter = createApiRouter({
@@ -164,6 +189,8 @@ export function createApp(options: CreateAppOptions): Express {
     documentController,
     ragController,
     quizController,
+    gamificationController,
+    languageController,
     jwtSecret: config.JWT_ACCESS_SECRET,
   });
   app.use(apiRouter);

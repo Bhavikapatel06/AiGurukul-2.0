@@ -8,6 +8,8 @@ import { KnowledgeGraphController } from '../controllers/knowledge-graph.control
 import { DocumentController } from '../controllers/document.controller.js';
 import { RAGController } from '../controllers/rag.controller.js';
 import { QuizController } from '../controllers/quiz.controller.js';
+import { GamificationController } from '../controllers/gamification.controller.js';
+import { LanguageController } from '../controllers/language.controller.js';
 import { createHealthRouter } from './health.routes.js';
 import { createAuthRouter } from './auth.routes.js';
 import { createAdminRouter } from './admin.routes.js';
@@ -17,6 +19,8 @@ import { createKnowledgeGraphRouter } from './knowledge-graph.routes.js';
 import { createDocumentRouter } from './document.routes.js';
 import { createRAGRouter } from './rag.routes.js';
 import { createQuizRouter } from './quiz.routes.js';
+import { createGamificationRouter } from './gamification.routes.js';
+import { createLanguageRouter } from './language.routes.js';
 
 export interface AppRoutersOptions {
   healthController: HealthController;
@@ -28,6 +32,8 @@ export interface AppRoutersOptions {
   documentController?: DocumentController;
   ragController?: RAGController;
   quizController?: QuizController;
+  gamificationController?: GamificationController;
+  languageController?: LanguageController;
   jwtSecret?: string;
 }
 
@@ -43,6 +49,8 @@ export function createApiRouter(options: AppRoutersOptions): Router {
     documentController,
     ragController,
     quizController,
+    gamificationController,
+    languageController,
     jwtSecret = 'default_secret',
   } = options;
 
@@ -90,6 +98,16 @@ export function createApiRouter(options: AppRoutersOptions): Router {
   // Mount Quiz routes if controller provided
   if (quizController) {
     v1.use('/quizzes', createQuizRouter({ quizController, jwtSecret }));
+  }
+
+  // Mount Gamification routes if controller provided
+  if (gamificationController) {
+    v1.use('/gamification', createGamificationRouter({ controller: gamificationController, jwtSecret }));
+  }
+
+  // Mount Language and Translation routes if controller provided
+  if (languageController) {
+    v1.use('/languages', createLanguageRouter({ controller: languageController }));
   }
 
   // Mount Admin routes if controller provided

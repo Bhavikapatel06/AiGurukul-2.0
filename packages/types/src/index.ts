@@ -6,3 +6,5 @@ export * from './rag.js';
 export * from './ayurveda.js';
 export * from './graph.js';
 export * from './quiz.js';
+export * from './gamification.js';
+export * from './language.js';

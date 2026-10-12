@@ -15,7 +15,7 @@ export const RegisterRequestSchema = z.object({
     .enum(['krishna', 'chanakya', 'vaidya', 'vyasa', 'patanjali'])
     .default('krishna')
     .optional(),
-  language: z.enum(['en', 'sa', 'hi', 'ta']).default('en').optional(),
+  language: z.enum(['en', 'sa', 'hi', 'ta', 'gu', 'pli', 'pa']).default('en').optional(),
 });
 
 export const LoginRequestSchema = z.object({
@@ -41,7 +41,7 @@ export const UpdateProfileSchema = z.object({
   preferences: z
     .object({
       defaultPersona: z.enum(['krishna', 'chanakya', 'vaidya', 'vyasa', 'patanjali']).optional(),
-      language: z.enum(['en', 'sa', 'hi', 'ta']).optional(),
+      language: z.enum(['en', 'sa', 'hi', 'ta', 'gu', 'pli', 'pa']).optional(),
       notificationsEnabled: z.boolean().optional(),
     })
     .optional(),

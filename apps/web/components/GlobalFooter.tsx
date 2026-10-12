@@ -152,6 +152,30 @@ export function GlobalFooter() {
                   🎯 Vedic Quizzes &amp; Dynamic Assessments
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/gamification"
+                  style={{
+                    fontSize: '0.88rem',
+                    color: 'var(--text-dust)',
+                    transition: 'color 0.2s',
+                  }}
+                >
+                  🏆 Gamification, Bazaar &amp; 3x4 Jigsaw
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/languages"
+                  style={{
+                    fontSize: '0.88rem',
+                    color: 'var(--text-dust)',
+                    transition: 'color 0.2s',
+                  }}
+                >
+                  🪶 Multilingual Manuscripts &amp; Virtual Keyboards
+                </Link>
+              </li>
             </ul>
           </div>
 

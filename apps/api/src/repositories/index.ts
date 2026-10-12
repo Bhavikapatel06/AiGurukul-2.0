@@ -9,3 +9,5 @@ export * from './document.repository.js';
 export * from './document-chunk.repository.js';
 export * from './quiz.repository.js';
 export * from './quiz-attempt.repository.js';
+export * from './gamification.repository.js';
+export * from './manuscript.repository.js';

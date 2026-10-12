@@ -10,3 +10,5 @@ export * from './document.model.js';
 export * from './document-chunk.model.js';
 export * from './quiz.model.js';
 export * from './quiz-attempt.model.js';
+export * from './gamification-profile.model.js';
+export * from './manuscript.model.js';

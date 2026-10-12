@@ -5,3 +5,5 @@ export * from './ayurveda.schema.js';
 export * from './graph.schema.js';
 export * from './rag.schema.js';
 export * from './quiz.schema.js';
+export * from './gamification.schema.js';
+export * from './language.schema.js';
