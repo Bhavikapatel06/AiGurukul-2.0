@@ -1,6 +1,7 @@
-export type UserRole = 'learner' | 'scholar' | 'admin';
+import { SupportedLanguage } from './language.js';
+export { SupportedLanguage };
 
-export type SupportedLanguage = 'en' | 'sa' | 'hi' | 'ta';
+export type UserRole = 'learner' | 'scholar' | 'admin';
 
 export type WisdomPersona = 'krishna' | 'chanakya' | 'vaidya' | 'vyasa' | 'patanjali';
 

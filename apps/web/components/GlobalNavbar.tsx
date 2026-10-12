@@ -16,6 +16,8 @@ export function GlobalNavbar() {
     { href: '/graph', label: 'Knowledge Graph', icon: '🕸️', color: '#fde047' },
     { href: '/documents', label: 'Ingestion & RAG', icon: '📜', color: '#a78bfa' },
     { href: '/quizzes', label: 'Vedic Quizzes', icon: '🎯', color: '#fdba74' },
+    { href: '/gamification', label: 'Gamification & Bazaar', icon: '🏆', color: '#fbbf24' },
+    { href: '/languages', label: 'Languages & Translation', icon: '🪶', color: '#38bdf8' },
   ];
 
   return (

@@ -54,7 +54,7 @@ const UserPreferencesSchema = new Schema(
     },
     language: {
       type: String,
-      enum: ['en', 'sa', 'hi', 'ta'],
+      enum: ['en', 'sa', 'hi', 'ta', 'gu', 'pli', 'pa'],
       default: 'en',
       required: true,
     },

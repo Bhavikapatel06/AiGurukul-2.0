@@ -1,71 +1,83 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 export default function HomePage() {
+  const [activeTab, setActiveTab] = useState<'all' | 'wisdom' | 'health' | 'learning'>('all');
+
   const pillars = [
     {
+      id: 'wisdom',
+      category: 'wisdom',
       title: 'Wisdom Dialogue',
       sanskrit: 'संवाद • Samvada',
       badge: 'SSE Streaming',
       badgeColor: '#7B68EE',
       icon: '💬',
-      desc: 'Engage in real-time streaming philosophical dialogues with 6 revered Vedic personas. Receive nuanced life guidance grounded in verbatim Sanskrit citations.',
+      desc: 'Engage in real-time streaming philosophical dialogues with 5 revered Vedic personas. Receive nuanced life guidance grounded in verbatim Sanskrit citations.',
       href: '/wisdom',
       actionLabel: 'Enter Wisdom Sanctum',
       features: [
-        'Real-time SSE token stream',
-        'Verbatim Sanskrit citations',
-        'Conversation history & persistence',
+        'Real-time SSE token stream with smooth cursor',
+        'Verbatim Sanskrit shloka citation popups',
+        'Persistent seeker dialogue history & context',
       ],
     },
     {
+      id: 'ayurveda',
+      category: 'health',
       title: 'Ayurveda & Dosha Matrix',
       sanskrit: 'आयुर्वेद • Prakriti & Vikriti',
       badge: 'Charaka Diagnostic',
       badgeColor: '#3A9B8C',
       icon: '🌿',
-      desc: '18-question constitutional assessment based on Charaka Samhita. Computes normalized Tri-Dosha percentages, acute Vikriti tracking, and personalized regimens.',
+      desc: '18-matrix constitutional assessment formulated from the Charaka Samhita. Computes normalized Tri-Dosha percentages, acute Vikriti tracking, and personalized herbal regimens.',
       href: '/ayurveda',
       actionLabel: 'Analyze Your Constitution',
       features: [
-        'Tri-Dosha % normalization',
-        'Acute symptom Vikriti tracker',
-        'Ahara, Dinacharya & Herb regimens',
+        'Tri-Dosha (Vata, Pitta, Kapha) % normalization',
+        'Acute symptom Vikriti imbalance tracker',
+        'Ahara (Diet), Dinacharya (Rituals) & Herb prescriptions',
       ],
     },
     {
+      id: 'graph',
+      category: 'learning',
       title: 'Vedic Knowledge Graph',
       sanskrit: 'ज्ञानजाल • Jnana Jala',
       badge: 'BFS Graph Traversal',
       badgeColor: '#D4AF37',
       icon: '🕸️',
-      desc: 'Interactive radial clustered ontology spanning orthodox Darshanas, shastric texts, sages, and core doctrines connected by 56 semantic relationship edges.',
+      desc: 'Interactive radial ontology spanning orthodox Darshanas, shastric texts, sages, and core doctrines connected by 56 semantic relationship edges.',
       href: '/graph',
       actionLabel: 'Traverse Ontology',
       features: [
-        '32 Nodes & 56 Semantic edges',
-        'BFS shortest pathfinder engine',
-        'Interactive canvas & Sanctum drawer',
+        '32 Ontology Nodes & 56 Semantic edges',
+        'Multi-hop BFS shortest pathfinder algorithm',
+        'Interactive SVG canvas & Sanctum detail drawer',
       ],
     },
     {
+      id: 'documents',
+      category: 'learning',
       title: 'Sacred Ingestion & RAG',
       sanskrit: 'शास्त्र संचय • Shastra Sanchaya',
       badge: 'Hybrid Vector Search',
       badgeColor: '#A78BFA',
       icon: '📜',
-      desc: 'Enterprise document ingestion pipeline for classical texts. Chunks, extracts Sanskrit terms, and retrieves synthesized context with verbatim scriptural citations.',
+      desc: 'Enterprise document ingestion pipeline for classical texts. Chunks scriptures, extracts Sanskrit terms, and retrieves synthesized context with verbatim scriptural citations.',
       href: '/documents',
       actionLabel: 'Open RAG Studio',
       features: [
-        'Automated text chunking & indexing',
-        'Multi-domain shastric filters',
-        'Synthesized context with citations',
+        'Automated text chunking & embedding index',
+        'Multi-domain shastric classification filters',
+        'Synthesized context with chapter & verse grounding',
       ],
     },
     {
+      id: 'quizzes',
+      category: 'learning',
       title: 'Vedic Quizzes & Discernment',
       sanskrit: 'विवेक परीक्षा • Viveka Pariksha',
       badge: 'AI Dynamic Synthesis',
@@ -75,12 +87,51 @@ export default function HomePage() {
       href: '/quizzes',
       actionLabel: 'Test Your Discernment',
       features: [
-        'Curated scriptural assessments',
-        'On-demand AI quiz synthesis',
-        'Domain mastery scoring & analytics',
+        'Curated scriptural assessments across Gita & Darshana',
+        'On-demand AI quiz synthesis for custom inquiries',
+        'Instant domain scoring analytics & explanations',
+      ],
+    },
+    {
+      id: 'gamification',
+      category: 'learning',
+      title: 'Gamification, Quests & Bazaar',
+      sanskrit: 'साधना सिद्धि • Sadhana & Bazaar',
+      badge: '3x4 Jigsaw Engine',
+      badgeColor: '#EAB308',
+      icon: '🏆',
+      desc: 'Level up across 5 Seeker tiers from Jijñāsu to Ācārya. Complete sacred daily quests, earn Sacred Coins, acquire relics in the Vedic Bazaar, and solve the 3x4 Jigsaw puzzle.',
+      href: '/gamification',
+      actionLabel: 'Enter Gamification Arena',
+      features: [
+        '5 Seeker Tiers: Seeker ➔ Learner ➔ Thinker ➔ Philosopher ➔ Acharya',
+        'Sacred Coins Economy & Vedic Relic Bazaar inventory',
+        'Interactive 3x4 Jigsaw puzzle with hint penalties & lore',
+      ],
+    },
+    {
+      id: 'languages',
+      category: 'wisdom',
+      title: 'Languages & Translation Studio',
+      sanskrit: 'भाषा मञ्जरी • Bhasha & Translation',
+      badge: 'Virtual Keyboards',
+      badgeColor: '#38BDF8',
+      icon: '🪶',
+      desc: 'Cross-lingual classical translation across 6 sacred tongues. Type using Devanagari and Gujarati virtual keyboards with Shift & Matra combining, and explore Paninian Dhatu roots.',
+      href: '/languages',
+      actionLabel: 'Launch Multilingual Studio',
+      features: [
+        '6 Supported Tongues: Sanskrit, Hindi, Gujarati, Tamil, Pali, English',
+        'On-screen Devanagari & Gujarati keyboards with automatic Matra combining',
+        'Word-by-word grammatical breakdown & Paninian Dhatu root inspector',
       ],
     },
   ];
+
+  const filteredPillars = pillars.filter((p) => {
+    if (activeTab === 'all') return true;
+    return p.category === activeTab;
+  });
 
   const personas = [
     {
@@ -88,7 +139,7 @@ export default function HomePage() {
       sanskritTitle: 'योगेश्वर कृष्ण',
       domain: 'Bhagavad Gita & Dharma',
       color: '#7B68EE',
-      desc: 'Transcendental guidance, duty without attachment (Nishkama Karma), and inner equanimity amidst life struggles.',
+      desc: 'Transcendental guidance, selfless duty (Nishkama Karma), equanimity (Sthitaprajna), and overcoming existential doubt.',
       href: '/wisdom',
     },
     {
@@ -96,50 +147,42 @@ export default function HomePage() {
       sanskritTitle: 'कौटिल्य चाणक्य',
       domain: 'Arthashastra & Neeti',
       color: '#C46B3A',
-      desc: 'Pragmatic intellect, strategic governance, ethical leadership, and astute navigation of complex real-world dilemmas.',
-      href: '/wisdom',
-    },
-    {
-      name: 'Maharishi Patanjali',
-      sanskritTitle: 'महर्षि पतञ्जलि',
-      domain: 'Yoga Sutras & Mind Mastery',
-      color: '#E5A93C',
-      desc: 'Stillness of mind (Chitta Vritti Nirodha), eightfold path (Ashtanga Yoga), and transcendental mindfulness.',
-      href: '/wisdom',
-    },
-    {
-      name: 'Gargi Vachaknavi',
-      sanskritTitle: 'विदुषी गार्गी',
-      domain: 'Brihadaranyaka Upanishad',
-      color: '#EC4899',
-      desc: 'Relentless metaphysical inquiry, fearless scholarly debate, and exploration of the ultimate unmanifest reality (Brahman).',
+      desc: 'Strategic leadership, practical ethics (Vinaya), realpolitik, and navigating complex worldly challenges with discipline.',
       href: '/wisdom',
     },
     {
       name: 'Vaidya Charaka',
       sanskritTitle: 'वैद्य चरक',
-      domain: 'Ayurveda & Holistic Living',
+      domain: 'Ayurveda & Vitality',
       color: '#3A9B8C',
-      desc: 'Prakriti analysis, doshic balance, seasonal wellness (Ritucharya), dietetics (Ahara), and restorative living.',
+      desc: 'Doshic balance, Dinacharya daily rhythms, Ahara dietetics, and holistic harmony between body, mind, and spirit.',
       href: '/ayurveda',
     },
     {
       name: 'Sage Vyasa',
       sanskritTitle: 'महर्षि वेदव्यास',
-      domain: 'Mahabharata & Vedantic Synthesis',
-      color: '#8B5CF6',
-      desc: 'Universal narrative perspective, deep karmic causality, and the eternal synthesis of spiritual traditions.',
+      domain: 'Mahabharata & Vedanta',
+      color: '#B8860B',
+      desc: 'Cosmic karmic causality, moral nuance, multi-generational epic perspective, and synthesis of spiritual paths.',
+      href: '/wisdom',
+    },
+    {
+      name: 'Sage Patanjali',
+      sanskritTitle: 'महर्षि पतञ्जलि',
+      domain: 'Yoga Sutras & Mind',
+      color: '#4682B4',
+      desc: 'Stilling mental whirlpools (Chitta Vritti Nirodha), eightfold Ashtanga Yoga, and radical discriminative discernment.',
       href: '/wisdom',
     },
   ];
 
   return (
-    <div className="temple-container" style={{ padding: '2.5rem 1.5rem 6rem', maxWidth: '1280px' }}>
+    <div className="temple-container" style={{ padding: '2.5rem 1.5rem 6rem', maxWidth: '1360px' }}>
       {/* =========================================================================
-          1. HERO SECTION (Unified, Single Layout - No duplicate header)
+          1. HERO SECTION
           ========================================================================= */}
-      <section style={{ textAlign: 'center', marginBottom: '4.5rem', paddingTop: '1rem' }}>
-        {/* Sacred Mantra & Status Badges */}
+      <section style={{ textAlign: 'center', marginBottom: '4.5rem', paddingTop: '1.5rem' }}>
+        {/* Sacred Badges Bar */}
         <div
           style={{
             display: 'flex',
@@ -155,11 +198,12 @@ export default function HomePage() {
             style={{
               borderColor: 'var(--gold-sacred)',
               color: 'var(--gold-radiance)',
-              background: 'rgba(212, 175, 55, 0.1)',
-              padding: '0.35rem 0.85rem',
+              background: 'rgba(212, 175, 55, 0.12)',
+              padding: '0.35rem 0.95rem',
+              fontWeight: 600,
             }}
           >
-            🪷 AI GURUKUL 2.0 • PRODUCTION READY
+            🪷 AI GURUKUL 2.0 • ALL PHASES COMPLETE
           </span>
           <span
             className="badge"
@@ -170,18 +214,29 @@ export default function HomePage() {
               padding: '0.35rem 0.85rem',
             }}
           >
-            ✓ 146 Automated Tests Passing
+            ✓ 204 Unit &amp; Integration Tests
           </span>
           <span
             className="badge"
             style={{
-              borderColor: 'rgba(196, 181, 253, 0.4)',
-              color: '#c4b5fd',
-              background: 'rgba(196, 181, 253, 0.08)',
+              borderColor: 'rgba(56, 189, 248, 0.4)',
+              color: '#38bdf8',
+              background: 'rgba(56, 189, 248, 0.08)',
               padding: '0.35rem 0.85rem',
             }}
           >
-            ⚡ Live SSE Streaming &amp; BFS Graph
+            🪶 6 Languages &amp; Virtual Keyboards
+          </span>
+          <span
+            className="badge"
+            style={{
+              borderColor: 'rgba(234, 179, 8, 0.4)',
+              color: '#eab308',
+              background: 'rgba(234, 179, 8, 0.08)',
+              padding: '0.35rem 0.85rem',
+            }}
+          >
+            🏆 5 Seeker Tiers &amp; 3x4 Jigsaw
           </span>
         </div>
 
@@ -189,34 +244,35 @@ export default function HomePage() {
         <h1
           style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
+            fontSize: 'clamp(2.4rem, 5vw, 3.9rem)',
             marginBottom: '1.25rem',
             letterSpacing: '0.03em',
             lineHeight: 1.15,
           }}
           className="gold-gradient-text"
         >
-          Timeless Guidance for Modern Seekers
+          Ancient Shastras • Modern Intelligence
         </h1>
 
         {/* Subtitle */}
         <p
           style={{
-            maxWidth: '780px',
+            maxWidth: '820px',
             margin: '0 auto 2.5rem',
             color: 'var(--text-vellum)',
             fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
             lineHeight: 1.65,
-            opacity: 0.9,
+            opacity: 0.92,
           }}
         >
-          An authentic, verifiable Vedic intelligence platform. Consult legendary sages through
-          real-time streaming dialogues, analyze your Ayurvedic Prakriti constitution, explore the
-          multi-hop Knowledge Graph, retrieve sacred scriptures via RAG, and master shastric
-          concepts with dynamic assessments.
+          An authentic, verifiable Vedic platform bridging classical scriptures (*Bhagavad Gita,
+          Upanishads, Charaka Samhita, Thirukkural, Dhammapada, Arthashastra*) with modern AI.
+          Consult legendary sages, track your Ayurvedic Prakriti constitution, explore the
+          Knowledge Graph, solve 3x4 shloka jigsaws, and master ancient languages with vernacular
+          virtual keyboards.
         </p>
 
-        {/* Primary Call to Action Cluster */}
+        {/* Quick Launch Action Cluster */}
         <div
           style={{
             display: 'flex',
@@ -235,7 +291,33 @@ export default function HomePage() {
               boxShadow: '0 4px 20px rgba(212, 175, 55, 0.35)',
             }}
           >
-            💬 Consult Wisdom Personas
+            💬 Consult Wisdom Sages
+          </Link>
+
+          <Link
+            href="/gamification"
+            className="btn-outline-sacred"
+            style={{
+              padding: '0.85rem 1.75rem',
+              fontSize: '1rem',
+              borderColor: '#EAB308',
+              color: '#fde047',
+            }}
+          >
+            🏆 Gamification &amp; Jigsaw
+          </Link>
+
+          <Link
+            href="/languages"
+            className="btn-outline-sacred"
+            style={{
+              padding: '0.85rem 1.75rem',
+              fontSize: '1rem',
+              borderColor: '#38BDF8',
+              color: '#7dd3fc',
+            }}
+          >
+            🪶 Multilingual Studio
           </Link>
 
           <Link
@@ -248,7 +330,7 @@ export default function HomePage() {
               color: '#5eead4',
             }}
           >
-            🌿 Ayurveda &amp; Dosha Matrix
+            🌿 Ayurvedic Dosha Matrix
           </Link>
 
           <Link
@@ -261,44 +343,18 @@ export default function HomePage() {
               color: 'var(--gold-radiance)',
             }}
           >
-            🕸️ Vedic Knowledge Graph
-          </Link>
-
-          <Link
-            href="/documents"
-            className="btn-outline-sacred"
-            style={{
-              padding: '0.85rem 1.75rem',
-              fontSize: '1rem',
-              borderColor: '#a78bfa',
-              color: '#c4b5fd',
-            }}
-          >
-            📜 Sacred Ingestion &amp; RAG
-          </Link>
-
-          <Link
-            href="/quizzes"
-            className="btn-outline-sacred"
-            style={{
-              padding: '0.85rem 1.75rem',
-              fontSize: '1rem',
-              borderColor: '#f59e0b',
-              color: '#fcd34d',
-            }}
-          >
-            🎯 Vedic Quizzes
+            🕸️ Knowledge Graph
           </Link>
         </div>
       </section>
 
       {/* =========================================================================
-          2. SANCTUM ARCHITECTURE & LIVE METRICS BAR
+          2. METRICS & CAPABILITIES SUMMARY STRIP
           ========================================================================= */}
       <section
         style={{
           background:
-            'linear-gradient(180deg, rgba(33, 29, 18, 0.8) 0%, rgba(20, 17, 11, 0.9) 100%)',
+            'linear-gradient(180deg, rgba(33, 29, 18, 0.85) 0%, rgba(20, 17, 11, 0.95) 100%)',
           border: '1px solid rgba(212, 175, 55, 0.25)',
           borderRadius: '12px',
           padding: '2rem 1.5rem',
@@ -309,7 +365,7 @@ export default function HomePage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '1.5rem',
             textAlign: 'center',
           }}
@@ -318,7 +374,7 @@ export default function HomePage() {
             style={{ borderRight: '1px solid rgba(212, 175, 55, 0.12)', padding: '0.5rem 1rem' }}
           >
             <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--gold-radiance)' }}>
-              146 / 146
+              7 Pillars
             </div>
             <div
               style={{
@@ -329,7 +385,45 @@ export default function HomePage() {
                 letterSpacing: '0.05em',
               }}
             >
-              Automated Tests Passing
+              Unified Shastric System
+            </div>
+          </div>
+
+          <div
+            style={{ borderRight: '1px solid rgba(212, 175, 55, 0.12)', padding: '0.5rem 1rem' }}
+          >
+            <div style={{ fontSize: '1.85rem', fontWeight: 700, color: '#eab308' }}>
+              5 Seeker Tiers
+            </div>
+            <div
+              style={{
+                fontSize: '0.82rem',
+                color: 'var(--text-dust)',
+                marginTop: '0.3rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Jijñāsu ➔ Ācārya Levels
+            </div>
+          </div>
+
+          <div
+            style={{ borderRight: '1px solid rgba(212, 175, 55, 0.12)', padding: '0.5rem 1rem' }}
+          >
+            <div style={{ fontSize: '1.85rem', fontWeight: 700, color: '#38bdf8' }}>
+              6 Languages
+            </div>
+            <div
+              style={{
+                fontSize: '0.82rem',
+                color: 'var(--text-dust)',
+                marginTop: '0.3rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Keyboards &amp; Etymology
             </div>
           </div>
 
@@ -348,7 +442,7 @@ export default function HomePage() {
                 letterSpacing: '0.05em',
               }}
             >
-              Charaka Dosha Diagnostics
+              Charaka Dosha Assessment
             </div>
           </div>
 
@@ -368,23 +462,6 @@ export default function HomePage() {
               }}
             >
               Ontology Knowledge Graph
-            </div>
-          </div>
-
-          <div
-            style={{ borderRight: '1px solid rgba(212, 175, 55, 0.12)', padding: '0.5rem 1rem' }}
-          >
-            <div style={{ fontSize: '1.85rem', fontWeight: 700, color: '#fcd34d' }}>6 Personas</div>
-            <div
-              style={{
-                fontSize: '0.82rem',
-                color: 'var(--text-dust)',
-                marginTop: '0.3rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Vedic Wisdom Streamers
             </div>
           </div>
 
@@ -408,10 +485,10 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================================
-          3. THE 5 SACRED PILLARS OF AI GURUKUL 2.0
+          3. THE 7 SACRED PILLARS SECTION (With Filter Tabs)
           ========================================================================= */}
       <section style={{ marginBottom: '5.5rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <span
             style={{
               fontSize: '0.85rem',
@@ -421,7 +498,7 @@ export default function HomePage() {
               fontWeight: 600,
             }}
           >
-            पञ्च स्तम्भाः • Core Shastric Capabilities
+            सप्त स्तम्भाः • Core Shastric Capabilities
           </span>
           <h2
             style={{
@@ -432,19 +509,58 @@ export default function HomePage() {
             }}
             className="gold-gradient-text"
           >
-            The Five Pillars of Vedic Intelligence
+            The Seven Pillars of AI Gurukul
           </h2>
           <p
             style={{
               color: 'var(--text-dust)',
               maxWidth: '680px',
-              margin: '0 auto',
+              margin: '0 auto 1.5rem',
               fontSize: '1.05rem',
             }}
           >
             A modular, unified system combining scriptural authenticity with state-of-the-art
-            computational algorithms.
+            computational intelligence.
           </p>
+
+          {/* Filter Chips */}
+          <div
+            style={{
+              display: 'inline-flex',
+              background: 'rgba(20, 17, 11, 0.8)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              borderRadius: '30px',
+              padding: '0.3rem',
+              gap: '0.3rem',
+            }}
+          >
+            {(
+              [
+                { id: 'all', label: 'All 7 Pillars' },
+                { id: 'wisdom', label: '💬 Wisdom & Languages' },
+                { id: 'health', label: '🌿 Ayurveda Health' },
+                { id: 'learning', label: '🏆 Gamification & RAG' },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  background: activeTab === tab.id ? 'var(--gold-sacred)' : 'transparent',
+                  color: activeTab === tab.id ? '#0D0B08' : 'var(--text-dust)',
+                  fontWeight: activeTab === tab.id ? 700 : 500,
+                  fontSize: '0.88rem',
+                  padding: '0.45rem 1.15rem',
+                  borderRadius: '24px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div
@@ -454,7 +570,7 @@ export default function HomePage() {
             gap: '2rem',
           }}
         >
-          {pillars.map((pillar) => (
+          {filteredPillars.map((pillar) => (
             <div
               key={pillar.title}
               className="temple-card"
@@ -503,7 +619,7 @@ export default function HomePage() {
                 <h3
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: '1.5rem',
+                    fontSize: '1.45rem',
                     color: 'var(--text-vellum)',
                     marginBottom: '0.85rem',
                   }}
@@ -575,7 +691,7 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================================
-          4. MEET THE CANONICAL SAGES & PHILOSOPHERS
+          4. CANONICAL SAGES & PHILOSOPHERS
           ========================================================================= */}
       <section style={{ marginBottom: '5.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
@@ -617,7 +733,7 @@ export default function HomePage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.75rem',
           }}
         >
@@ -753,17 +869,22 @@ export default function HomePage() {
             className="btn-sacred"
             style={{ padding: '0.8rem 2rem', fontSize: '1rem' }}
           >
-            Start Your First Dialogue
+            💬 Consult Wisdom Sages
           </Link>
-          <a
-            href="http://localhost:5000/api/v1/wisdom/verses"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/gamification"
             className="btn-outline-sacred"
-            style={{ padding: '0.8rem 2rem', fontSize: '1rem' }}
+            style={{ padding: '0.8rem 2rem', fontSize: '1rem', borderColor: '#EAB308', color: '#fde047' }}
           >
-            Inspect Canonical Verses API →
-          </a>
+            🏆 Play 3x4 Shloka Jigsaw
+          </Link>
+          <Link
+            href="/languages"
+            className="btn-outline-sacred"
+            style={{ padding: '0.8rem 2rem', fontSize: '1rem', borderColor: '#38BDF8', color: '#7dd3fc' }}
+          >
+            🪶 Open Multilingual Keyboards
+          </Link>
         </div>
       </section>
     </div>

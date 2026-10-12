@@ -6,6 +6,7 @@ import {
   seedCanonicalKnowledgeGraph,
   seedCanonicalDocuments,
   seedCanonicalQuizzes,
+  seedCanonicalManuscripts,
 } from '@ai-gurukul/database';
 import Redis from 'ioredis';
 import { createApp } from './app.js';
@@ -30,6 +31,7 @@ async function bootstrap(): Promise<void> {
     await seedCanonicalKnowledgeGraph().catch(() => {});
     await seedCanonicalDocuments().catch(() => {});
     await seedCanonicalQuizzes().catch(() => {});
+    await seedCanonicalManuscripts().catch(() => {});
   } catch (error) {
     logger.warn({ error }, 'MongoDB initial connection failed; continuing in degraded mode');
   }
@@ -38,6 +40,9 @@ async function bootstrap(): Promise<void> {
   const redisClient = new Redis(config.REDIS_URL, {
     maxRetriesPerRequest: 3,
     lazyConnect: true,
+  });
+  redisClient.on('error', () => {
+    // Suppress unhandled error log when running without Redis in local dev mode
   });
 
   try {

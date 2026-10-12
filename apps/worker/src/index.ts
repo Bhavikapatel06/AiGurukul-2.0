@@ -30,6 +30,9 @@ async function bootstrapWorker(): Promise<void> {
     maxRetriesPerRequest: null, // Required for BullMQ
     lazyConnect: true,
   });
+  redisClient.on('error', () => {
+    // Suppress unhandled error log when running without Redis in local dev mode
+  });
 
   let ingestionWorker: DocumentIngestionWorker | null = null;
 

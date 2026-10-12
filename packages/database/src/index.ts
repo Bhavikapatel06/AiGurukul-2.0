@@ -6,3 +6,8 @@ export * from './seeds/wisdom-verses.seed.js';
 export * from './seeds/knowledge-graph.seed.js';
 export * from './seeds/canonical-documents.seed.js';
 export * from './seeds/quizzes.seed.js';
+export * from './seeds/bazaar.seed.js';
+export * from './seeds/quests.seed.js';
+export * from './seeds/puzzles.seed.js';
+export * from './seeds/manuscripts.seed.js';
+export * from './seeds/etymology.seed.js';
