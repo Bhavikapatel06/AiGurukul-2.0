@@ -240,110 +240,316 @@ export default function HomePage() {
           </span>
         </div>
 
-        {/* Main Title */}
+        {/* Main Title (Matching User Reference Image 2) */}
         <h1
           style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 'clamp(2.4rem, 5vw, 3.9rem)',
-            marginBottom: '1.25rem',
-            letterSpacing: '0.03em',
+            fontSize: 'clamp(2.4rem, 5.5vw, 4.2rem)',
+            fontWeight: 800,
+            marginBottom: '1rem',
+            letterSpacing: '0.04em',
             lineHeight: 1.15,
+            textTransform: 'uppercase',
           }}
           className="gold-gradient-text"
         >
-          Ancient Shastras • Modern Intelligence
+          STUCK IN LIFE?<br />
+          ASK 5000 YEARS<br />
+          OF WISDOM.
         </h1>
 
         {/* Subtitle */}
+        <div
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '0.88rem',
+            letterSpacing: '0.18em',
+            color: 'var(--gold-sacred)',
+            textTransform: 'uppercase',
+            marginBottom: '1.25rem',
+            fontWeight: 600,
+          }}
+        >
+          ANCIENT KNOWLEDGE · MODERN SOLUTIONS
+        </div>
+
         <p
           style={{
-            maxWidth: '820px',
-            margin: '0 auto 2.5rem',
+            maxWidth: '720px',
+            margin: '0 auto 3.5rem',
             color: 'var(--text-vellum)',
             fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
-            lineHeight: 1.65,
+            lineHeight: 1.6,
             opacity: 0.92,
           }}
         >
-          An authentic, verifiable Vedic platform bridging classical scriptures (*Bhagavad Gita,
-          Upanishads, Charaka Samhita, Thirukkural, Dhammapada, Arthashastra*) with modern AI.
-          Consult legendary sages, track your Ayurvedic Prakriti constitution, explore the
-          Knowledge Graph, solve 3x4 shloka jigsaws, and master ancient languages with vernacular
-          virtual keyboards.
+          Not just learning — <strong style={{ color: 'var(--gold-radiance)' }}>solving real-life problems</strong> using the timeless wisdom of India.
         </p>
 
-        {/* Quick Launch Action Cluster */}
+        {/* ===================================================================
+            CORE NAVIGATION BLOCKS (Matching User Reference Image 2 Bento Grid)
+            =================================================================== */}
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem',
-            flexWrap: 'wrap',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '1.5rem',
+            maxWidth: '1100px',
+            margin: '0 auto 4rem',
+            textAlign: 'left',
           }}
         >
+          {/* Block 1: Learn Concepts */}
+          <Link
+            href="/concepts"
+            style={{
+              textDecoration: 'none',
+              background: 'linear-gradient(180deg, #1C180E 0%, #14110A 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              borderRadius: '14px',
+              padding: '2rem 1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.25s ease',
+            }}
+            className="temple-card"
+          >
+            <div>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📖</div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.15rem',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold-radiance)',
+                  margin: '0 0 0.5rem',
+                  textTransform: 'uppercase',
+                }}
+              >
+                LEARN CONCEPTS
+              </h3>
+              <p style={{ color: 'var(--text-dust)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                Explore Gita, Panchatantra, and Ayurveda with stories, shlokas, and real-life meaning.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#eab308', fontWeight: 600 }}>
+              Read All 18 Chapters →
+            </div>
+          </Link>
+
+          {/* Block 2: Solve My Problem (CORE FEATURE) */}
           <Link
             href="/wisdom"
-            className="btn-sacred"
             style={{
-              padding: '0.85rem 2rem',
-              fontSize: '1rem',
-              boxShadow: '0 4px 20px rgba(212, 175, 55, 0.35)',
+              textDecoration: 'none',
+              background: 'linear-gradient(180deg, #241D12 0%, #16120B 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.45)',
+              boxShadow: '0 0 25px rgba(212, 175, 55, 0.15)',
+              borderRadius: '14px',
+              padding: '2rem 1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              position: 'relative',
+              transition: 'all 0.25s ease',
             }}
+            className="temple-card"
           >
-            💬 Consult Wisdom Sages
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '2rem' }}>🧠</span>
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    letterSpacing: '0.08em',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '20px',
+                    background: 'rgba(212, 175, 55, 0.18)',
+                    color: 'var(--gold-radiance)',
+                    border: '1px solid rgba(212, 175, 55, 0.4)',
+                  }}
+                >
+                  CORE FEATURE
+                </span>
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.15rem',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold-radiance)',
+                  margin: '0 0 0.5rem',
+                  textTransform: 'uppercase',
+                }}
+              >
+                SOLVE MY PROBLEM
+              </h3>
+              <p style={{ color: 'var(--text-vellum)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                Tell us what’s bothering you. Get ancient wisdom + modern action steps from Krishna &amp; Chanakya.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#c4b5fd', fontWeight: 600 }}>
+              Open Wisdom Sanctum →
+            </div>
           </Link>
 
-          <Link
-            href="/gamification"
-            className="btn-outline-sacred"
-            style={{
-              padding: '0.85rem 1.75rem',
-              fontSize: '1rem',
-              borderColor: '#EAB308',
-              color: '#fde047',
-            }}
-          >
-            🏆 Gamification &amp; Jigsaw
-          </Link>
-
-          <Link
-            href="/languages"
-            className="btn-outline-sacred"
-            style={{
-              padding: '0.85rem 1.75rem',
-              fontSize: '1rem',
-              borderColor: '#38BDF8',
-              color: '#7dd3fc',
-            }}
-          >
-            🪶 Multilingual Studio
-          </Link>
-
-          <Link
-            href="/ayurveda"
-            className="btn-outline-sacred"
-            style={{
-              padding: '0.85rem 1.75rem',
-              fontSize: '1rem',
-              borderColor: '#3A9B8C',
-              color: '#5eead4',
-            }}
-          >
-            🌿 Ayurvedic Dosha Matrix
-          </Link>
-
+          {/* Block 3: Knowledge Graph */}
           <Link
             href="/graph"
-            className="btn-outline-sacred"
             style={{
-              padding: '0.85rem 1.75rem',
-              fontSize: '1rem',
-              borderColor: 'var(--gold-sacred)',
-              color: 'var(--gold-radiance)',
+              textDecoration: 'none',
+              background: 'linear-gradient(180deg, #1C180E 0%, #14110A 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              borderRadius: '14px',
+              padding: '2rem 1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.25s ease',
             }}
+            className="temple-card"
           >
-            🕸️ Knowledge Graph
+            <div>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🌌</div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.15rem',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold-radiance)',
+                  margin: '0 0 0.5rem',
+                  textTransform: 'uppercase',
+                }}
+              >
+                KNOWLEDGE GRAPH
+              </h3>
+              <p style={{ color: 'var(--text-dust)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                Explore an interactive map of India’s knowledge traditions, darshanas, and sages.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#fde047', fontWeight: 600 }}>
+              Traverse 32 Nodes &amp; 56 Edges →
+            </div>
+          </Link>
+
+          {/* Block 4: Manuscript Translator */}
+          <Link
+            href="/languages"
+            style={{
+              textDecoration: 'none',
+              background: 'linear-gradient(180deg, #1C180E 0%, #14110A 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              borderRadius: '14px',
+              padding: '2rem 1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.25s ease',
+            }}
+            className="temple-card"
+          >
+            <div>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📜</div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.15rem',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold-radiance)',
+                  margin: '0 0 0.5rem',
+                  textTransform: 'uppercase',
+                }}
+              >
+                MANUSCRIPT TRANSLATOR
+              </h3>
+              <p style={{ color: 'var(--text-dust)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                Translate and analyze ancient manuscripts into modern understandable language with on-screen keyboards.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#38bdf8', fontWeight: 600 }}>
+              Launch Translation Studio →
+            </div>
+          </Link>
+
+          {/* Block 5: Quiz Generator */}
+          <Link
+            href="/quizzes"
+            style={{
+              textDecoration: 'none',
+              background: 'linear-gradient(180deg, #1C180E 0%, #14110A 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              borderRadius: '14px',
+              padding: '2rem 1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.25s ease',
+            }}
+            className="temple-card"
+          >
+            <div>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📝</div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.15rem',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold-radiance)',
+                  margin: '0 0 0.5rem',
+                  textTransform: 'uppercase',
+                }}
+              >
+                QUIZ GENERATOR
+              </h3>
+              <p style={{ color: 'var(--text-dust)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                Upload a file or enter a topic to generate an interactive MCQ quiz powered by AI &amp; RAG.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#fdba74', fontWeight: 600 }}>
+              Test Your Discernment →
+            </div>
+          </Link>
+
+          {/* Block 6: Play Game */}
+          <Link
+            href="/gamification"
+            style={{
+              textDecoration: 'none',
+              background: 'linear-gradient(180deg, #1C180E 0%, #14110A 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              borderRadius: '14px',
+              padding: '2rem 1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 0.25s ease',
+            }}
+            className="temple-card"
+          >
+            <div>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🎮</div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.15rem',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold-radiance)',
+                  margin: '0 0 0.5rem',
+                  textTransform: 'uppercase',
+                }}
+              >
+                PLAY GAME
+              </h3>
+              <p style={{ color: 'var(--text-dust)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                Enter the gamified version of Gurukul. Test your knowledge, earn coins, and unlock sacred rewards.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#fbbf24', fontWeight: 600 }}>
+              Play 3x4 Jigsaw &amp; Bazaar →
+            </div>
           </Link>
         </div>
       </section>

@@ -11,13 +11,14 @@ export function GlobalNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
+    { href: '/concepts', label: 'Ancient Knowledge', icon: '📖', color: '#fbbf24' },
     { href: '/wisdom', label: 'Wisdom Dialogue', icon: '💬', color: '#c4b5fd' },
     { href: '/ayurveda', label: 'Ayurveda & Dosha', icon: '🌿', color: '#5eead4' },
     { href: '/graph', label: 'Knowledge Graph', icon: '🕸️', color: '#fde047' },
-    { href: '/documents', label: 'Ingestion & RAG', icon: '📜', color: '#a78bfa' },
     { href: '/quizzes', label: 'Vedic Quizzes', icon: '🎯', color: '#fdba74' },
     { href: '/gamification', label: 'Gamification & Bazaar', icon: '🏆', color: '#fbbf24' },
     { href: '/languages', label: 'Languages & Translation', icon: '🪶', color: '#38bdf8' },
+    { href: '/documents', label: 'Ingestion & RAG', icon: '📜', color: '#a78bfa' },
   ];
 
   return (
@@ -87,42 +88,44 @@ export function GlobalNavbar() {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-          }}
-          className="desktop-nav"
-        >
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  fontSize: '0.88rem',
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? 'var(--gold-radiance)' : 'var(--text-vellum)',
-                  background: isActive ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
-                  border: isActive ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid transparent',
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <span style={{ fontSize: '1rem' }}>{link.icon}</span>
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Desktop Navigation Links (Shown on inner pages, hidden on landing page for block-driven navigation) */}
+        {pathname !== '/' && (
+          <nav
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+            }}
+            className="desktop-nav"
+          >
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.88rem',
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? 'var(--gold-radiance)' : 'var(--text-vellum)',
+                    background: isActive ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
+                    border: isActive ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid transparent',
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '1rem' }}>{link.icon}</span>
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         {/* Right Side User / Auth Profile Widget */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -207,22 +210,24 @@ export function GlobalNavbar() {
           )}
 
           {/* Mobile Menu Toggle Button */}
-          <button
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            aria-label="Toggle navigation menu"
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(212, 175, 55, 0.3)',
-              color: 'var(--gold-radiance)',
-              padding: '0.4rem 0.6rem',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'none',
-            }}
-            className="mobile-menu-toggle"
-          >
-            ☰
-          </button>
+          {pathname !== '/' && (
+            <button
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle navigation menu"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                color: 'var(--gold-radiance)',
+                padding: '0.4rem 0.6rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'none',
+              }}
+              className="mobile-menu-toggle"
+            >
+              ☰
+            </button>
+          )}
         </div>
       </div>
 
