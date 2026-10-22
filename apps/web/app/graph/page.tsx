@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '../../lib/api';
 import {
@@ -163,6 +163,109 @@ export default function KnowledgeGraphPage() {
     return map;
   }, [positionedNodes]);
 
+  // Interactive Node Dragging State (allows moving nodes to reveal overlapping names)
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [nodePositions, setNodePositions] = useState<Record<string, { x: number; y: number }>>({});
+  const [draggingNodeSlug, setDraggingNodeSlug] = useState<string | null>(null);
+  const dragOffsetRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
+  const hasDraggedRef = useRef<boolean>(false);
+
+  // Convert client screen coordinates to SVG coordinate space
+  const getSvgCoords = useCallback((clientX: number, clientY: number) => {
+    if (!svgRef.current) return null;
+    const svg = svgRef.current;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const transformed = pt.matrixTransform(ctm.inverse());
+    return { x: transformed.x, y: transformed.y };
+  }, []);
+
+  const handleNodeMouseDown = (e: React.MouseEvent, nodeSlug: string) => {
+    if (e.button !== 0) return; // Only primary left-click drag
+    e.stopPropagation();
+    const coords = getSvgCoords(e.clientX, e.clientY);
+    if (!coords) return;
+
+    const currentPos = nodePositions[nodeSlug] || nodeMap.get(nodeSlug);
+    if (!currentPos) return;
+
+    dragOffsetRef.current = {
+      offsetX: coords.x - currentPos.x,
+      offsetY: coords.y - currentPos.y,
+    };
+    hasDraggedRef.current = false;
+    setDraggingNodeSlug(nodeSlug);
+  };
+
+  const handleNodeTouchStart = (e: React.TouchEvent, nodeSlug: string) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const coords = getSvgCoords(touch.clientX, touch.clientY);
+    if (!coords) return;
+
+    const currentPos = nodePositions[nodeSlug] || nodeMap.get(nodeSlug);
+    if (!currentPos) return;
+
+    dragOffsetRef.current = {
+      offsetX: coords.x - currentPos.x,
+      offsetY: coords.y - currentPos.y,
+    };
+    hasDraggedRef.current = false;
+    setDraggingNodeSlug(nodeSlug);
+  };
+
+  // Window-level mouse tracking for smooth continuous dragging
+  useEffect(() => {
+    if (!draggingNodeSlug) return;
+
+    const onWindowMouseMove = (e: MouseEvent) => {
+      const coords = getSvgCoords(e.clientX, e.clientY);
+      if (!coords) return;
+      hasDraggedRef.current = true;
+      const newX = Math.round(coords.x - dragOffsetRef.current.offsetX);
+      const newY = Math.round(coords.y - dragOffsetRef.current.offsetY);
+      setNodePositions((prev) => ({
+        ...prev,
+        [draggingNodeSlug]: { x: newX, y: newY },
+      }));
+    };
+
+    const onWindowMouseUp = () => {
+      setDraggingNodeSlug(null);
+    };
+
+    window.addEventListener('mousemove', onWindowMouseMove);
+    window.addEventListener('mouseup', onWindowMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', onWindowMouseMove);
+      window.removeEventListener('mouseup', onWindowMouseUp);
+    };
+  }, [draggingNodeSlug, getSvgCoords]);
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!draggingNodeSlug || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const coords = getSvgCoords(touch.clientX, touch.clientY);
+    if (!coords) return;
+    hasDraggedRef.current = true;
+    const newX = Math.round(coords.x - dragOffsetRef.current.offsetX);
+    const newY = Math.round(coords.y - dragOffsetRef.current.offsetY);
+    setNodePositions((prev) => ({
+      ...prev,
+      [draggingNodeSlug]: { x: newX, y: newY },
+    }));
+  };
+
+  const handleTouchEnd = () => {
+    if (draggingNodeSlug) {
+      setDraggingNodeSlug(null);
+    }
+  };
+
   // Nodes filtered by search and type
   const visibleSlugs = useMemo(() => {
     const set = new Set<string>();
@@ -294,7 +397,7 @@ export default function KnowledgeGraphPage() {
             Vedic Knowledge Graph &amp; Ontology
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <span
             className="badge"
             style={{
@@ -314,6 +417,16 @@ export default function KnowledgeGraphPage() {
             }}
           >
             BFS Pathfinder Active
+          </span>
+          <span
+            className="badge"
+            style={{
+              borderColor: 'rgba(242, 214, 117, 0.4)',
+              color: 'var(--gold-radiance)',
+              fontSize: '0.75rem',
+            }}
+          >
+            🖐️ Draggable Nodes Active
           </span>
         </div>
       </div>
@@ -757,8 +870,9 @@ export default function KnowledgeGraphPage() {
               onClick={() => {
                 setZoom(1);
                 setPan({ x: 0, y: 0 });
+                setNodePositions({});
               }}
-              title="Reset View"
+              title="Reset View & Node Positions"
               style={{
                 width: '34px',
                 height: '34px',
@@ -776,16 +890,19 @@ export default function KnowledgeGraphPage() {
 
           {/* SVG Graph View */}
           <svg
+            ref={svgRef}
             width="100%"
             height="700"
             viewBox="0 0 1200 800"
             style={{
-              cursor: 'grab',
+              cursor: draggingNodeSlug ? 'grabbing' : 'grab',
               userSelect: 'none',
               transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
               transformOrigin: 'center center',
-              transition: 'transform 0.25s ease-out',
+              transition: draggingNodeSlug ? 'none' : 'transform 0.25s ease-out',
             }}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             <defs>
               {/* Arrow Marker Definitions */}
@@ -828,6 +945,9 @@ export default function KnowledgeGraphPage() {
                 const tNode = nodeMap.get(e.targetSlug);
                 if (!sNode || !tNode) return null;
 
+                const sPos = nodePositions[e.sourceSlug] || { x: sNode.x, y: sNode.y };
+                const tPos = nodePositions[e.targetSlug] || { x: tNode.x, y: tNode.y };
+
                 const isPathEdge = pathEdgeKeySet.has(`${e.sourceSlug}->${e.targetSlug}`);
                 const isSelectedEdge =
                   activeNode &&
@@ -860,10 +980,10 @@ export default function KnowledgeGraphPage() {
                     opacity={isDimmed ? 0.08 : 1}
                   >
                     <line
-                      x1={sNode.x}
-                      y1={sNode.y}
-                      x2={tNode.x}
-                      y2={tNode.y}
+                      x1={sPos.x}
+                      y1={sPos.y}
+                      x2={tPos.x}
+                      y2={tPos.y}
                       stroke={strokeColor}
                       strokeWidth={strokeWidth}
                       strokeDasharray={e.relationship === 'critiques' ? '4,4' : undefined}
@@ -881,6 +1001,9 @@ export default function KnowledgeGraphPage() {
                 const isSelected = activeNode?.slug === node.slug;
                 const isNeighbor = activeNeighborhoodSlugs?.has(node.slug);
                 const isPathNode = pathSlugSet.has(node.slug);
+                const isBeingDragged = draggingNodeSlug === node.slug;
+
+                const pos = nodePositions[node.slug] || { x: node.x, y: node.y };
 
                 const cfg = TYPE_CONFIG[node.entityType] || TYPE_CONFIG.concept;
                 const baseRadius =
@@ -897,20 +1020,31 @@ export default function KnowledgeGraphPage() {
                 return (
                   <g
                     key={node.slug}
-                    transform={`translate(${node.x}, ${node.y})`}
+                    transform={`translate(${pos.x}, ${pos.y})`}
                     opacity={opacity}
-                    style={{ cursor: 'pointer', transition: 'all 0.2s ease-in-out' }}
-                    onClick={() => setActiveNode(node)}
+                    style={{
+                      cursor: isBeingDragged ? 'grabbing' : 'grab',
+                      transition: isBeingDragged ? 'none' : 'opacity 0.2s ease-in-out',
+                    }}
+                    onMouseDown={(e) => handleNodeMouseDown(e, node.slug)}
+                    onTouchStart={(e) => handleNodeTouchStart(e, node.slug)}
+                    onClick={() => {
+                      if (!hasDraggedRef.current) {
+                        setActiveNode(node);
+                      }
+                    }}
                   >
-                    {/* Outer Glow Halo for active or path node */}
-                    {(isSelected || isPathNode) && (
+                    <title>{node.name} ({node.sanskritName || node.entityType}) — Drag to reposition</title>
+
+                    {/* Outer Glow Halo for active or path node or dragged node */}
+                    {(isSelected || isPathNode || isBeingDragged) && (
                       <circle
                         r={baseRadius + 10}
                         fill="none"
                         stroke={isPathNode ? '#4fd1c5' : 'var(--gold-radiance)'}
                         strokeWidth="2.5"
                         strokeDasharray="3,3"
-                        opacity={0.8}
+                        opacity={0.85}
                       >
                         <animateTransform
                           attributeName="transform"
@@ -926,9 +1060,9 @@ export default function KnowledgeGraphPage() {
                     {/* Main Node Circle */}
                     <circle
                       r={baseRadius}
-                      fill={isSelected ? cfg.color : '#16130E'}
+                      fill={isSelected || isBeingDragged ? cfg.color : '#16130E'}
                       stroke={cfg.color}
-                      strokeWidth={isSelected ? 3 : 2}
+                      strokeWidth={isSelected || isBeingDragged ? 3 : 2}
                       filter="drop-shadow(0 2px 8px rgba(0,0,0,0.7))"
                     />
 
@@ -937,7 +1071,7 @@ export default function KnowledgeGraphPage() {
                       textAnchor="middle"
                       dy="5"
                       fontSize={baseRadius > 20 ? 14 : 11}
-                      style={{ pointerEvents: 'none' }}
+                      style={{ pointerEvents: 'none', userSelect: 'none' }}
                     >
                       {cfg.icon}
                     </text>
@@ -946,11 +1080,14 @@ export default function KnowledgeGraphPage() {
                     <text
                       textAnchor="middle"
                       dy={baseRadius + 14}
-                      fill={isSelected ? '#F2D675' : 'var(--text-vellum)'}
+                      fill={isSelected || isBeingDragged ? '#F2D675' : 'var(--text-vellum)'}
                       fontSize={11}
-                      fontWeight={isSelected ? 700 : 500}
+                      fontWeight={isSelected || isBeingDragged ? 700 : 500}
                       fontFamily="var(--font-sans)"
-                      style={{ pointerEvents: 'none', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}
+                      style={{
+                        userSelect: 'none',
+                        textShadow: '0 1px 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.8)',
+                      }}
                     >
                       {node.name}
                     </text>
@@ -960,10 +1097,13 @@ export default function KnowledgeGraphPage() {
                       <text
                         textAnchor="middle"
                         dy={baseRadius + 26}
-                        fill="rgba(212, 175, 55, 0.7)"
+                        fill={isBeingDragged ? '#F2D675' : 'rgba(212, 175, 55, 0.7)'}
                         fontSize={9.5}
                         fontFamily="var(--font-serif)"
-                        style={{ pointerEvents: 'none' }}
+                        style={{
+                          userSelect: 'none',
+                          textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                        }}
                       >
                         {node.sanskritName}
                       </text>
@@ -980,29 +1120,46 @@ export default function KnowledgeGraphPage() {
               position: 'absolute',
               bottom: '1rem',
               left: '1rem',
+              right: '1rem',
               background: 'rgba(13, 11, 8, 0.85)',
               padding: '0.6rem 1rem',
               borderRadius: '6px',
               border: '1px solid rgba(212, 175, 55, 0.2)',
               display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               gap: '1rem',
               flexWrap: 'wrap',
               fontSize: '0.75rem',
             }}
           >
-            {(Object.keys(TYPE_CONFIG) as GraphEntityType[]).map((t) => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span
-                  style={{
-                    width: '9px',
-                    height: '9px',
-                    borderRadius: '50%',
-                    background: TYPE_CONFIG[t].color,
-                  }}
-                />
-                <span style={{ color: 'var(--text-dust)' }}>{TYPE_CONFIG[t].label}</span>
-              </div>
-            ))}
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              {(Object.keys(TYPE_CONFIG) as GraphEntityType[]).map((t) => (
+                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span
+                    style={{
+                      width: '9px',
+                      height: '9px',
+                      borderRadius: '50%',
+                      background: TYPE_CONFIG[t].color,
+                    }}
+                  />
+                  <span style={{ color: 'var(--text-dust)' }}>{TYPE_CONFIG[t].label}</span>
+                </div>
+              ))}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: 'var(--gold-radiance)',
+                fontWeight: 600,
+              }}
+            >
+              <span>🖐️</span>
+              <span>Drag any node to reposition and reveal overlapping names</span>
+            </div>
           </div>
         </div>
 
