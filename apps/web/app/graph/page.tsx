@@ -10,6 +10,7 @@ import {
   GraphPathResultDTO,
   GraphEntityType,
 } from '@ai-gurukul/types';
+import { FALLBACK_GRAPH_OVERVIEW } from '../../lib/knowledge-graph-fallback';
 
 // Color palette mapping by entity type
 const TYPE_CONFIG: Record<
@@ -80,15 +81,23 @@ export default function KnowledgeGraphPage() {
     setErrorMsg(null);
     try {
       const res = await apiClient<GraphOverviewDTO>('/graph/overview');
-      if (res.success && res.data) {
+      if (res.success && res.data && res.data.nodes.length > 0) {
         setNodes(res.data.nodes);
         setEdges(res.data.edges);
         setStatistics(res.data.statistics);
       } else {
-        setErrorMsg(res.error?.message || 'Failed to load Vedic Knowledge Graph');
+        // Fallback to bundled canonical dataset so graph always renders even if backend API is offline
+        setNodes(FALLBACK_GRAPH_OVERVIEW.nodes);
+        setEdges(FALLBACK_GRAPH_OVERVIEW.edges);
+        setStatistics(FALLBACK_GRAPH_OVERVIEW.statistics);
+        setErrorMsg('Operating in offline mode with full canonical Vedic dataset (API server on port 5000 not connected).');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error connecting to graph service');
+    } catch {
+      // Fallback to bundled canonical dataset on network error
+      setNodes(FALLBACK_GRAPH_OVERVIEW.nodes);
+      setEdges(FALLBACK_GRAPH_OVERVIEW.edges);
+      setStatistics(FALLBACK_GRAPH_OVERVIEW.statistics);
+      setErrorMsg('Operating in offline mode with full canonical Vedic dataset (API server on port 5000 not connected).');
     } finally {
       setLoading(false);
     }
@@ -340,14 +349,66 @@ export default function KnowledgeGraphPage() {
       );
       if (res.success && res.data) {
         setPathResult(res.data);
-      } else {
-        setPathResult(null);
+        setPathLoading(false);
+        return;
       }
     } catch {
-      setPathResult(null);
-    } finally {
-      setPathLoading(false);
+      // Fall through to client-side BFS
     }
+
+    // Client-side BFS pathfinder fallback (works offline or when API is unreachable)
+    const queue: Array<{ current: string; nodePath: KnowledgeNodeDTO[]; edgePath: KnowledgeEdgeDTO[] }> = [
+      {
+        current: pathSource,
+        nodePath: nodeMap.has(pathSource) ? [nodeMap.get(pathSource)!] : [],
+        edgePath: [],
+      },
+    ];
+    const visited = new Set<string>([pathSource]);
+    let foundResult: GraphPathResultDTO | null = null;
+
+    while (queue.length > 0) {
+      const { current, nodePath, edgePath } = queue.shift()!;
+      if (current === pathTarget) {
+        foundResult = {
+          found: true,
+          source: pathSource,
+          target: pathTarget,
+          length: edgePath.length,
+          nodePath,
+          edgePath,
+        };
+        break;
+      }
+      if (edgePath.length >= 4) continue;
+
+      for (const e of edges) {
+        let nextSlug: string | null = null;
+        if (e.sourceSlug === current) nextSlug = e.targetSlug;
+        else if (e.targetSlug === current) nextSlug = e.sourceSlug;
+
+        if (nextSlug && !visited.has(nextSlug) && nodeMap.has(nextSlug)) {
+          visited.add(nextSlug);
+          queue.push({
+            current: nextSlug,
+            nodePath: [...nodePath, nodeMap.get(nextSlug)!],
+            edgePath: [...edgePath, e],
+          });
+        }
+      }
+    }
+
+    setPathResult(
+      foundResult || {
+        found: false,
+        source: pathSource,
+        target: pathTarget,
+        length: 0,
+        nodePath: [],
+        edgePath: [],
+      }
+    );
+    setPathLoading(false);
   };
 
   const clearPath = () => {
@@ -479,19 +540,42 @@ export default function KnowledgeGraphPage() {
         </p>
       </section>
 
-      {/* Error Banner */}
+      {/* Status / Offline Banner */}
       {errorMsg && (
         <div
           style={{
-            padding: '1rem 1.25rem',
+            padding: '0.85rem 1.25rem',
             borderRadius: '6px',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#fca5a5',
+            background: errorMsg.includes('offline mode')
+              ? 'rgba(212, 175, 55, 0.1)'
+              : 'rgba(239, 68, 68, 0.15)',
+            border: `1px solid ${
+              errorMsg.includes('offline mode')
+                ? 'rgba(212, 175, 55, 0.35)'
+                : 'rgba(239, 68, 68, 0.3)'
+            }`,
+            color: errorMsg.includes('offline mode') ? 'var(--gold-radiance)' : '#fca5a5',
             marginBottom: '1.5rem',
+            fontSize: '0.88rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          ⚠️ {errorMsg}
+          <span>{errorMsg.includes('offline mode') ? '✨' : '⚠️'} {errorMsg}</span>
+          <button
+            onClick={() => setErrorMsg(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-dust)',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              marginLeft: '1rem',
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
