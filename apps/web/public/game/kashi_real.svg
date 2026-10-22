@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1B0F2A"/>
+      <stop offset="40%" stop-color="#3D1845"/>
+      <stop offset="70%" stop-color="#B84A39"/>
+      <stop offset="100%" stop-color="#F39C12"/>
+    </linearGradient>
+    <linearGradient id="gangaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C0392B"/>
+      <stop offset="30%" stop-color="#8E44AD"/>
+      <stop offset="100%" stop-color="#1A1A2E"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#996515"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF2A7" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#F39C12" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#C0392B" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Ornate Frame Border -->
+  <rect x="0" y="0" width="600" height="600" fill="#2C1810"/>
+  <rect x="15" y="15" width="570" height="570" fill="url(#goldGrad)"/>
+  <rect x="25" y="25" width="550" height="550" fill="#1B0F2A"/>
+
+  <!-- Sunset Sky -->
+  <rect x="35" y="35" width="530" height="380" fill="url(#skyGrad)"/>
+
+  <!-- Radiant Ganga Aarti Sun / Divine Aura -->
+  <circle cx="300" cy="240" r="160" fill="url(#sunGlow)"/>
+
+  <!-- Ganga River Waters -->
+  <rect x="35" y="380" width="530" height="185" fill="url(#gangaGrad)"/>
+
+  <!-- Water Reflections -->
+  <ellipse cx="300" cy="420" rx="140" ry="8" fill="#F39C12" opacity="0.6"/>
+  <ellipse cx="300" cy="450" rx="90" ry="6" fill="#F1C40F" opacity="0.4"/>
+  <ellipse cx="300" cy="480" rx="60" ry="4" fill="#FFE066" opacity="0.5"/>
+
+  <!-- Floating Diyas with Flames -->
+  <g filter="url(#glow)">
+    <circle cx="210" cy="430" r="6" fill="#FF5722"/>
+    <circle cx="210" cy="428" r="3" fill="#FFEE58"/>
+    <circle cx="380" cy="445" r="7" fill="#FF5722"/>
+    <circle cx="380" cy="443" r="3.5" fill="#FFEE58"/>
+    <circle cx="290" cy="460" r="8" fill="#FF5722"/>
+    <circle cx="290" cy="457" r="4" fill="#FFEE58"/>
+    <circle cx="160" cy="470" r="5" fill="#FF5722"/>
+    <circle cx="430" cy="480" r="6" fill="#FF5722"/>
+  </g>
+
+  <!-- Ghat Steps -->
+  <polygon points="35,380 200,380 180,420 35,420" fill="#4A3525"/>
+  <polygon points="35,420 220,420 200,460 35,460" fill="#3D2B1F"/>
+  <polygon points="35,460 250,460 230,500 35,500" fill="#2E2017"/>
+
+  <polygon points="565,380 400,380 420,420 565,420" fill="#4A3525"/>
+  <polygon points="565,420 380,420 400,460 565,460" fill="#3D2B1F"/>
+  <polygon points="565,460 350,460 370,500 565,500" fill="#2E2017"/>
+
+  <!-- Kashi Vishwanath Golden Temple Complex -->
+  <!-- Base Sanctum -->
+  <rect x="210" y="240" width="180" height="140" fill="#5D4037" stroke="url(#goldGrad)" stroke-width="3"/>
+  <rect x="230" y="260" width="140" height="120" fill="#3E2723"/>
+
+  <!-- Inner Sanctum Glow -->
+  <circle cx="300" cy="320" r="35" fill="#F39C12" opacity="0.6" filter="url(#glow)"/>
+  
+  <!-- Sacred Shiva Lingam -->
+  <ellipse cx="300" cy="340" rx="18" ry="8" fill="#212121"/>
+  <rect x="286" y="305" width="28" height="35" rx="14" fill="#1A1A1A"/>
+  <!-- Tripundra Sacred Ash Lines on Lingam -->
+  <line x1="292" y1="316" x2="308" y2="316" stroke="#FFF" stroke-width="2"/>
+  <line x1="292" y1="320" x2="308" y2="320" stroke="#FFF" stroke-width="2"/>
+  <line x1="292" y1="324" x2="308" y2="324" stroke="#FFF" stroke-width="2"/>
+  <circle cx="300" cy="320" r="2" fill="#E74C3C"/>
+
+  <!-- Golden Shikhara Spires (Kashi Vishwanath Gold Dome) -->
+  <polygon points="200,240 300,100 400,240" fill="url(#goldGrad)" stroke="#FFE066" stroke-width="2"/>
+  <polygon points="220,240 300,115 380,240" fill="#F1C40F"/>
+  <polygon points="250,240 300,135 350,240" fill="#FFE066"/>
+
+  <!-- Side Spires -->
+  <polygon points="170,260 220,160 250,260" fill="url(#goldGrad)"/>
+  <polygon points="350,260 380,160 430,260" fill="url(#goldGrad)"/>
+
+  <!-- Gold Kalasha & Trishul Spire Crown -->
+  <circle cx="300" cy="95" r="10" fill="#FFE066" filter="url(#glow)"/>
+  <path d="M 300,85 L 300,55 M 290,65 Q 300,75 310,65" stroke="#FFE066" stroke-width="3" fill="none" filter="url(#glow)"/>
+
+  <!-- Sacred Saffron Flag -->
+  <polygon points="300,55 330,65 300,75" fill="#E67E22"/>
+
+  <!-- Grand Title Banner at Bottom -->
+  <rect x="120" y="515" width="360" height="42" rx="8" fill="#1A140B" stroke="url(#goldGrad)" stroke-width="2"/>
+  <text x="300" y="542" font-family="'Cinzel', Georgia, serif" font-size="18" font-weight="bold" fill="#FFE066" text-anchor="middle" letter-spacing="3">KASHI VISHWANATH</text>
+</svg>

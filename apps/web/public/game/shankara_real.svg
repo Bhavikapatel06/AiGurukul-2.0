@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="ashramBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#140D07"/>
+      <stop offset="50%" stop-color="#2D1A0D"/>
+      <stop offset="100%" stop-color="#1A1209"/>
+    </linearGradient>
+    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#996515"/>
+    </linearGradient>
+    <radialGradient id="jnanaHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF9D2"/>
+      <stop offset="40%" stop-color="#F39C12"/>
+      <stop offset="80%" stop-color="#D35400"/>
+      <stop offset="100%" stop-color="#2D1A0D" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Ornate Frame Border -->
+  <rect x="0" y="0" width="600" height="600" fill="#1C1108"/>
+  <rect x="15" y="15" width="570" height="570" fill="url(#goldBorder)"/>
+  <rect x="25" y="25" width="550" height="550" fill="url(#ashramBg)"/>
+
+  <!-- Ancient Banyan / Peepal Tree Canopy -->
+  <path d="M 200,300 Q 150,150 50,100 Q 250,50 300,100 Q 350,50 550,100 Q 450,150 400,300" fill="#1D331D" opacity="0.6"/>
+  <path d="M 280,300 L 280,180 Q 260,120 180,80 M 320,300 L 320,180 Q 340,120 420,80" stroke="#3E2723" stroke-width="16" fill="none"/>
+
+  <!-- Radiant Golden Jnana Halo Behind Shankara -->
+  <circle cx="300" cy="220" r="140" fill="url(#jnanaHalo)" filter="url(#softGlow)"/>
+
+  <!-- Adi Shankaracharya Body & Robes -->
+  <!-- Lotus Asana / Tiger Skin Mat -->
+  <ellipse cx="300" cy="460" rx="160" ry="40" fill="#D35400" stroke="#E67E22" stroke-width="3"/>
+  <ellipse cx="300" cy="455" rx="145" ry="32" fill="#E67E22"/>
+
+  <!-- Crossed Legs (Padmasana) -->
+  <ellipse cx="230" cy="440" rx="70" ry="30" fill="#E67E22"/>
+  <ellipse cx="370" cy="440" rx="70" ry="30" fill="#E67E22"/>
+
+  <!-- Ochre Sannyasa Robes (Torso) -->
+  <path d="M 240,430 C 230,340 260,280 300,280 C 340,280 370,340 360,430 Z" fill="#D35400"/>
+  <!-- Shawl drape across chest -->
+  <path d="M 250,300 Q 300,350 360,420 L 330,440 Q 270,360 230,320 Z" fill="#E67E22"/>
+
+  <!-- Head & Radiant Face -->
+  <ellipse cx="300" cy="225" rx="42" ry="50" fill="#E8B88A"/>
+  <!-- Traditional Shaved Head with Shikha / Topknot -->
+  <path d="M 258,220 C 258,170 342,170 342,220 Z" fill="#422517"/>
+  <circle cx="300" cy="165" r="14" fill="#2E1B10"/>
+
+  <!-- Tripundra Sacred Vibhuti Ash on Forehead -->
+  <line x1="282" y1="205" x2="318" y2="205" stroke="#FFFFFF" stroke-width="3"/>
+  <line x1="282" y1="210" x2="318" y2="210" stroke="#FFFFFF" stroke-width="3"/>
+  <line x1="282" y1="215" x2="318" y2="215" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="300" cy="210" r="3" fill="#C0392B"/>
+
+  <!-- Peaceful Meditative Eyes, Eyebrows & Smile -->
+  <path d="M 276,218 Q 288,214 294,218" stroke="#3E2723" stroke-width="2.5" fill="none"/>
+  <path d="M 306,218 Q 312,214 324,218" stroke="#3E2723" stroke-width="2.5" fill="none"/>
+  <path d="M 278,226 Q 288,232 294,228" stroke="#3E2723" stroke-width="2" fill="none"/>
+  <path d="M 306,228 Q 312,232 322,226" stroke="#3E2723" stroke-width="2" fill="none"/>
+  <path d="M 292,248 Q 300,254 308,248" stroke="#A93226" stroke-width="2.5" fill="none"/>
+
+  <!-- Sacred Rudraksha Beads Mala -->
+  <circle cx="300" cy="275" r="5" fill="#5D4037"/>
+  <circle cx="288" cy="285" r="5" fill="#5D4037"/>
+  <circle cx="312" cy="285" r="5" fill="#5D4037"/>
+  <circle cx="280" cy="300" r="5" fill="#5D4037"/>
+  <circle cx="320" cy="300" r="5" fill="#5D4037"/>
+
+  <!-- Right Hand in Chin Mudra (Teaching of Advaita) -->
+  <circle cx="345" cy="350" r="16" fill="#E8B88A"/>
+  <!-- Left Hand holding Palm-Leaf Foliant -->
+  <circle cx="255" cy="360" r="16" fill="#E8B88A"/>
+  <rect x="230" y="365" width="85" height="24" rx="4" fill="#F5CBA7" stroke="#7E5109" stroke-width="2"/>
+  <text x="272" y="381" font-family="serif" font-size="10" font-weight="bold" fill="#7E5109" text-anchor="middle">अद्वैत वेदान्त</text>
+
+  <!-- Sacred Sannyasi Staff (Brahma Danda) -->
+  <line x1="420" y1="120" x2="420" y2="470" stroke="#783F04" stroke-width="8"/>
+  <polygon points="410,130 430,130 420,110" fill="url(#goldBorder)"/>
+  <rect x="405" y="150" width="30" height="40" fill="#E67E22"/>
+
+  <!-- Bottom Title Plate -->
+  <rect x="110" y="515" width="380" height="42" rx="8" fill="#140D07" stroke="url(#goldBorder)" stroke-width="2"/>
+  <text x="300" y="542" font-family="'Cinzel', Georgia, serif" font-size="18" font-weight="bold" fill="#FFE066" text-anchor="middle" letter-spacing="3">ADI SHANKARACHARYA</text>
+</svg>

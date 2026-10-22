@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="yogaBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0A1828"/>
+      <stop offset="50%" stop-color="#178582"/>
+      <stop offset="100%" stop-color="#0A1828"/>
+    </linearGradient>
+    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#996515"/>
+    </linearGradient>
+    <radialGradient id="pranaAura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#B4F8C8"/>
+      <stop offset="40%" stop-color="#4E878C"/>
+      <stop offset="80%" stop-color="#002C3E"/>
+      <stop offset="100%" stop-color="#0A1828" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="serpentGlow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Ornate Frame Border -->
+  <rect x="0" y="0" width="600" height="600" fill="#0A1828"/>
+  <rect x="15" y="15" width="570" height="570" fill="url(#goldBorder)"/>
+  <rect x="25" y="25" width="550" height="550" fill="url(#yogaBg)"/>
+
+  <!-- Prana Aura -->
+  <circle cx="300" cy="240" r="160" fill="url(#pranaAura)"/>
+
+  <!-- Adisesha Multi-Headed Divine Serpent Hood behind Patanjali -->
+  <g filter="url(#serpentGlow)" fill="#BFA054" stroke="#FFE066" stroke-width="2">
+    <!-- Center Hood -->
+    <path d="M 285,140 Q 300,90 315,140 Z"/>
+    <!-- Left Hoods -->
+    <path d="M 260,150 Q 260,105 280,145 Z"/>
+    <path d="M 235,170 Q 220,130 250,160 Z"/>
+    <path d="M 215,200 Q 190,165 225,185 Z"/>
+    <!-- Right Hoods -->
+    <path d="M 320,145 Q 340,105 340,150 Z"/>
+    <path d="M 350,160 Q 380,130 365,170 Z"/>
+    <path d="M 375,185 Q 410,165 385,200 Z"/>
+  </g>
+
+  <!-- Golden Kundalini Serpent Coils as Seat/Base -->
+  <ellipse cx="300" cy="460" rx="170" ry="35" fill="#2E4057" stroke="url(#goldBorder)" stroke-width="4"/>
+  <ellipse cx="300" cy="440" rx="150" ry="25" fill="#1D2D44"/>
+
+  <!-- Sage Patanjali Seated in Padmasana -->
+  <!-- Torso & Arms in Anjali Mudra (Prayer / Union) -->
+  <path d="M 245,420 C 235,340 265,280 300,280 C 335,280 365,340 355,420 Z" fill="#D35400"/>
+  
+  <!-- Arms & Hands in Namaskara (Anjali Mudra of Yoga) -->
+  <path d="M 245,310 Q 285,340 295,330" stroke="#E8B88A" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <path d="M 355,310 Q 315,340 305,330" stroke="#E8B88A" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <!-- Folded Hands -->
+  <polygon points="295,315 305,315 300,295" fill="#E8B88A" stroke="#C0392B" stroke-width="1"/>
+
+  <!-- Sage Head & Radiant Yogic Countenance -->
+  <ellipse cx="300" cy="225" rx="38" ry="46" fill="#E8B88A"/>
+  <!-- Ascetic Jatā (Matted Hair Knot) -->
+  <ellipse cx="300" cy="180" rx="26" ry="18" fill="#3E2723"/>
+  <circle cx="300" cy="165" r="12" fill="#2E1B10"/>
+
+  <!-- Third Eye Ajna Chakra Tilak -->
+  <ellipse cx="300" cy="210" rx="3" ry="7" fill="#C0392B"/>
+  <circle cx="300" cy="210" r="2" fill="#FFE066"/>
+
+  <!-- Closed Meditative Eyes & Peaceful Serene Smile -->
+  <path d="M 280,222 Q 288,228 294,223" stroke="#3E2723" stroke-width="2.5" fill="none"/>
+  <path d="M 306,223 Q 312,228 320,222" stroke="#3E2723" stroke-width="2.5" fill="none"/>
+  <path d="M 292,246 Q 300,252 308,246" stroke="#A93226" stroke-width="2" fill="none"/>
+
+  <!-- Sacred Palm-Leaf Scripture Scroll of Yoga Sutras -->
+  <rect x="220" y="450" width="160" height="26" rx="4" fill="#F9E79F" stroke="#7D6608" stroke-width="2"/>
+  <text x="300" y="468" font-family="serif" font-size="12" font-weight="bold" fill="#7D6608" text-anchor="middle">योगश्चित्तवृत्तिनिरोधः</text>
+
+  <!-- Bottom Title Plate -->
+  <rect x="130" y="515" width="340" height="42" rx="8" fill="#0A1828" stroke="url(#goldBorder)" stroke-width="2"/>
+  <text x="300" y="542" font-family="'Cinzel', Georgia, serif" font-size="18" font-weight="bold" fill="#FFE066" text-anchor="middle" letter-spacing="3">SAGE PATANJALI</text>
+</svg>

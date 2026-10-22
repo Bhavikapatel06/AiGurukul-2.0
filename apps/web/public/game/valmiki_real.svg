@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="forestDawn" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#192A56"/>
+      <stop offset="40%" stop-color="#487EB0"/>
+      <stop offset="70%" stop-color="#F5CD79"/>
+      <stop offset="100%" stop-color="#E15F41"/>
+    </linearGradient>
+    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#996515"/>
+    </linearGradient>
+    <radialGradient id="rishiHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF9D2"/>
+      <stop offset="50%" stop-color="#F39C12"/>
+      <stop offset="100%" stop-color="#E15F41" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Ornate Frame Border -->
+  <rect x="0" y="0" width="600" height="600" fill="#1C1108"/>
+  <rect x="15" y="15" width="570" height="570" fill="url(#goldBorder)"/>
+  <rect x="25" y="25" width="550" height="550" fill="#1E272C"/>
+
+  <!-- Hermitage Dawn Sky -->
+  <rect x="35" y="35" width="530" height="360" fill="url(#forestDawn)"/>
+
+  <!-- Tamasa River in Foreground -->
+  <path d="M 35,395 C 180,380 320,410 565,395 L 565,565 L 35,565 Z" fill="#2C3A47"/>
+
+  <!-- Sage Rishi Aura -->
+  <circle cx="300" cy="230" r="140" fill="url(#rishiHalo)"/>
+
+  <!-- Valmiki Ashram Thatched Cottage Silhouette in Background -->
+  <polygon points="90,320 150,260 210,320" fill="#574B3A"/>
+  <rect x="110" y="320" width="80" height="75" fill="#4B382A"/>
+
+  <!-- Seated Deer Listening Peacefully -->
+  <ellipse cx="460" cy="410" rx="28" ry="16" fill="#CD8434"/>
+  <circle cx="480" cy="395" r="10" fill="#CD8434"/>
+  <polygon points="485,385 490,375 495,388" fill="#CD8434"/>
+
+  <!-- Maharishi Valmiki Seated on Kusha Grass Mat -->
+  <ellipse cx="300" cy="450" rx="140" ry="32" fill="#D35400"/>
+  
+  <!-- Torso & White Beard of the Adi Kavi -->
+  <path d="M 250,420 C 240,330 265,270 300,270 C 335,270 360,330 350,420 Z" fill="#E67E22"/>
+  
+  <!-- Sage Head & Compassionate Face -->
+  <ellipse cx="300" cy="215" rx="36" ry="44" fill="#E8B88A"/>
+  <!-- Matted Jata Hair Bun -->
+  <ellipse cx="300" cy="170" rx="24" ry="18" fill="#4A3525"/>
+  <circle cx="300" cy="155" r="12" fill="#3D2B1F"/>
+
+  <!-- Flowing White Beard -->
+  <path d="M 270,225 Q 300,320 330,225 Q 300,290 270,225" fill="#ECF0F1" stroke="#BDC3C7" stroke-width="1.5"/>
+
+  <!-- Tilak on Forehead -->
+  <line x1="288" y1="195" x2="312" y2="195" stroke="#FFFFFF" stroke-width="2"/>
+  <circle cx="300" cy="195" r="2.5" fill="#C0392B"/>
+
+  <!-- Right Hand Writing with Peacock Quill Feather -->
+  <path d="M 335,320 Q 350,340 370,350" stroke="#E8B88A" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <!-- Peacock Quill (Mayur Pankh) -->
+  <path d="M 370,350 L 420,300" stroke="#27AE60" stroke-width="4"/>
+  <circle cx="420" cy="300" r="12" fill="#2980B9"/>
+  <circle cx="420" cy="300" r="6" fill="#F1C40F"/>
+
+  <!-- Left Hand Holding Sacred Palm-Leaf Manuscript -->
+  <rect x="210" y="360" width="160" height="35" rx="4" fill="#FAD7A0" stroke="#784212" stroke-width="2"/>
+  <text x="290" y="382" font-family="serif" font-size="12" font-weight="bold" fill="#784212" text-anchor="middle">श्रीमद्वाल्मीकीय रामायणम्</text>
+
+  <!-- Title Banner -->
+  <rect x="130" y="515" width="340" height="42" rx="8" fill="#140D07" stroke="url(#goldBorder)" stroke-width="2"/>
+  <text x="300" y="542" font-family="'Cinzel', Georgia, serif" font-size="18" font-weight="bold" fill="#FFE066" text-anchor="middle" letter-spacing="3">MAHARISHI VALMIKI</text>
+</svg>
