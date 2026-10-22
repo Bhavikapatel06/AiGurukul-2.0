@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   SupportedLanguage,
@@ -9,7 +9,10 @@ import {
   ManuscriptDTO,
   EtymologyEntryDTO,
   TranslationResultDTO,
+  TranslateSourceLanguage,
+  ImageOCRResultDTO,
 } from '@ai-gurukul/types';
+import { apiClient } from '../../lib/api';
 
 const CANONICAL_MANUSCRIPTS: ManuscriptDTO[] = [
   {
@@ -313,17 +316,32 @@ export default function LanguagesPage() {
   const [keyboardScript, setKeyboardScript] = useState<'sa' | 'gu'>('sa');
   const [isShifted, setIsShifted] = useState<boolean>(false);
   const [typedText, setTypedText] = useState<string>('');
+  const keyboardInputRef = useRef<HTMLTextAreaElement>(null);
+  const translatorInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Manuscript Workbench state
   const [selectedManuscriptSlug, setSelectedManuscriptSlug] = useState<string>('gita-2-47');
   const [translationTargetLang, setTranslationTargetLang] = useState<'en' | 'hi' | 'gu'>('en');
 
   // Multi-tradition Translator Tool state
-  const [transSourceLang, setTransSourceLang] = useState<SupportedLanguage>('sa');
+  const [translateMode, setTranslateMode] = useState<'text' | 'image'>('text');
+  const [transSourceLang, setTransSourceLang] = useState<TranslateSourceLanguage>('auto');
   const [transTargetLang, setTransTargetLang] = useState<SupportedLanguage>('en');
   const [transInputText, setTransInputText] = useState<string>('कर्मण्येवाधिकारस्ते मा फलेषु कदाचन');
   const [transResult, setTransResult] = useState<TranslationResultDTO | null>(null);
   const [transLoading, setTransLoading] = useState<boolean>(false);
+  const [transError, setTransError] = useState<string>('');
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Image & Manuscript OCR Translation state
+  const [ocrImageFile, setOcrImageFile] = useState<File | null>(null);
+  const [ocrImagePreview, setOcrImagePreview] = useState<string | null>(null);
+  const [ocrImageBase64, setOcrImageBase64] = useState<string | null>(null);
+  const [ocrImageMime, setOcrImageMime] = useState<string>('image/png');
+  const [ocrTargetLang, setOcrTargetLang] = useState<SupportedLanguage>('en');
+  const [ocrLoading, setOcrLoading] = useState<boolean>(false);
+  const [ocrResult, setOcrResult] = useState<ImageOCRResultDTO | null>(null);
+  const [ocrError, setOcrError] = useState<string>('');
 
   // Etymology state
   const [etymologySearch, setEtymologySearch] = useState<string>('');
@@ -473,29 +491,85 @@ export default function LanguagesPage() {
     ],
   ];
 
-  // Matra combination handler
+  // Matra combination handler supporting cursor position & selection
   function handleKeyPress(char: string) {
-    setTypedText((prev) => {
-      if (!prev) return char;
+    const textarea = keyboardInputRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart ?? typedText.length;
+      const end = textarea.selectionEnd ?? typedText.length;
+      const before = typedText.slice(0, start);
+      const after = typedText.slice(end);
 
       const isMatra = /^[\u093E-\u094F\u0951-\u0954\u0902\u0903\u0A82\u0A83\u0ABE-\u0ACF]$/.test(char);
-      if (isMatra) {
-        const lastChar = prev.slice(-1);
+      if (isMatra && before.length > 0) {
+        const lastChar = before.slice(-1);
         // If last character is halant (virama), replace with matra
         if (lastChar === '\u094D' || lastChar === '\u0ACD') {
-          return prev.slice(0, -1) + char;
+          const updatedBefore = before.slice(0, -1);
+          const newText = updatedBefore + char + after;
+          setTypedText(newText);
+          const newPos = updatedBefore.length + char.length;
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(newPos, newPos);
+          }, 0);
+          return;
         }
       }
-      return prev + char;
-    });
+
+      const newText = before + char + after;
+      setTypedText(newText);
+      const newPos = start + char.length;
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(newPos, newPos);
+      }, 0);
+    } else {
+      setTypedText((prev) => {
+        if (!prev) return char;
+        const isMatra = /^[\u093E-\u094F\u0951-\u0954\u0902\u0903\u0A82\u0A83\u0ABE-\u0ACF]$/.test(char);
+        if (isMatra) {
+          const lastChar = prev.slice(-1);
+          if (lastChar === '\u094D' || lastChar === '\u0ACD') {
+            return prev.slice(0, -1) + char;
+          }
+        }
+        return prev + char;
+      });
+    }
   }
 
   function handleBackspace() {
-    setTypedText((prev) => prev.slice(0, -1));
+    const textarea = keyboardInputRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart ?? typedText.length;
+      const end = textarea.selectionEnd ?? typedText.length;
+      if (start !== end) {
+        const newText = typedText.slice(0, start) + typedText.slice(end);
+        setTypedText(newText);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start, start);
+        }, 0);
+        return;
+      }
+      if (start > 0) {
+        const newText = typedText.slice(0, start - 1) + typedText.slice(start);
+        setTypedText(newText);
+        const newPos = start - 1;
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(newPos, newPos);
+        }, 0);
+        return;
+      }
+    } else {
+      setTypedText((prev) => prev.slice(0, -1));
+    }
   }
 
   function handleSpace() {
-    setTypedText((prev) => prev + ' ');
+    handleKeyPress(' ');
   }
 
   function handleClear() {
@@ -504,29 +578,119 @@ export default function LanguagesPage() {
 
   function handleCopy() {
     navigator.clipboard.writeText(typedText);
-    alert('Copied to clipboard!');
+    setCopiedKey('virtual-keyboard');
+    setTimeout(() => setCopiedKey(null), 2000);
+  }
+
+  function copyToClipboard(text: string, key: string) {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => {
+      setCopiedKey((k) => (k === key ? null : k));
+    }, 2000);
+  }
+
+  function handleSwapLanguages() {
+    if (transSourceLang === 'auto') return;
+    const oldSource = transSourceLang;
+    setTransSourceLang(transTargetLang);
+    setTransTargetLang(oldSource);
+    if (transResult?.translatedText) {
+      setTransInputText(transResult.translatedText);
+      setTransResult(null);
+    }
   }
 
   async function handleExecuteTranslation() {
+    if (!transInputText.trim()) return;
     setTransLoading(true);
+    setTransError('');
     try {
-      const res = await fetch('/api/v1/languages/translate', {
+      const res = await apiClient<TranslationResultDTO>('/languages/translate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sourceLanguage: transSourceLang,
           targetLanguage: transTargetLang,
-          text: transInputText,
+          text: transInputText.trim(),
         }),
       });
-      if (res.ok) {
-        const json = await res.json();
-        setTransResult(json.data);
+      if (res.success && res.data) {
+        setTransResult(res.data);
+      } else {
+        setTransError(res.error?.message || 'Translation failed');
       }
     } catch {
-      // Local fallback
+      setTransError('Network error during translation');
     } finally {
       setTransLoading(false);
+    }
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    setOcrError('');
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      setOcrError('File size exceeds 8MB limit. Please upload an image smaller than 8MB.');
+      return;
+    }
+
+    const validMimes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!validMimes.includes(file.type)) {
+      setOcrError('Unsupported image format. Please upload a PNG, JPG, or WebP image.');
+      return;
+    }
+
+    setOcrImageFile(file);
+    setOcrImageMime(file.type);
+    setOcrResult(null);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setOcrImagePreview(result);
+      setOcrImageBase64(result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleRemoveImage() {
+    setOcrImageFile(null);
+    setOcrImagePreview(null);
+    setOcrImageBase64(null);
+    setOcrResult(null);
+    setOcrError('');
+  }
+
+  async function handleExecuteImageOCR() {
+    if (!ocrImageBase64) {
+      setOcrError('Please upload an image first');
+      return;
+    }
+
+    setOcrLoading(true);
+    setOcrError('');
+    try {
+      const res = await apiClient<ImageOCRResultDTO>('/languages/ocr-translate', {
+        method: 'POST',
+        body: JSON.stringify({
+          imageBase64: ocrImageBase64,
+          mimeType: ocrImageMime,
+          targetLanguage: ocrTargetLang,
+        }),
+      });
+
+      if (res.success && res.data) {
+        setOcrResult(res.data);
+      } else {
+        setOcrError(res.error?.message || 'Failed to extract or translate manuscript image');
+      }
+    } catch {
+      setOcrError('Network error while processing manuscript image');
+    } finally {
+      setOcrLoading(false);
     }
   }
 
@@ -774,22 +938,41 @@ export default function LanguagesPage() {
                 </div>
               </div>
 
-              <div
+              <textarea
+                ref={keyboardInputRef}
+                value={typedText}
+                onChange={(e) => setTypedText(e.target.value)}
+                placeholder="Click virtual keys below, or type directly with your physical keyboard..."
+                rows={3}
                 style={{
-                  minHeight: '80px',
-                  fontSize: '1.5rem',
+                  width: '100%',
+                  minHeight: '88px',
+                  fontSize: '1.45rem',
                   lineHeight: 1.6,
                   color: '#F2D675',
+                  caretColor: '#F2D675',
                   background: 'rgba(0,0,0,0.4)',
                   padding: '0.75rem 1rem',
                   borderRadius: '6px',
-                  border: '1px solid rgba(212,175,55,0.2)',
+                  border: '1px solid rgba(212,175,55,0.3)',
                   wordBreak: 'break-word',
                   fontFamily: keyboardScript === 'gu' ? 'sans-serif' : 'var(--font-serif)',
+                  outline: 'none',
+                  resize: 'vertical',
+                  cursor: 'text',
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text',
+                  boxSizing: 'border-box',
                 }}
-              >
-                {typedText || <span style={{ color: 'rgba(154, 144, 120, 0.4)' }}>Click keys below to inscribe in Devanagari or Gujarati...</span>}
-              </div>
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(242, 214, 117, 0.8)';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(212, 175, 55, 0.25)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              />
 
               <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 <button
@@ -1050,7 +1233,7 @@ export default function LanguagesPage() {
           </div>
         )}
 
-        {/* TAB 3: MULTILINGUAL TRANSLATION ENGINE */}
+        {/* TAB 3: MULTILINGUAL TRANSLATION & VISION OCR ENGINE */}
         {activeTab === 'translator' && (
           <div>
             <div
@@ -1063,122 +1246,965 @@ export default function LanguagesPage() {
                 marginBottom: '2rem',
               }}
             >
-              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: '#D4AF37', marginBottom: '1.25rem' }}>
-                Shastric Translation Workbench
-              </h3>
-
-              {/* Language Selection Row */}
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', color: '#9A9078' }}>Source:</label>
-                  <select
-                    value={transSourceLang}
-                    onChange={(e) => setTransSourceLang(e.target.value as SupportedLanguage)}
-                    style={{
-                      background: 'rgba(0,0,0,0.6)',
-                      border: '1px solid rgba(212,175,55,0.3)',
-                      color: '#F2D675',
-                      padding: '0.4rem 0.75rem',
-                      borderRadius: '6px',
-                    }}
-                  >
-                    <option value="sa">Sanskrit (संस्कृतम्)</option>
-                    <option value="ta">Tamil (தமிழ்)</option>
-                    <option value="pli">Pali (पाळि)</option>
-                    <option value="gu">Gujarati (ગુજરાતી)</option>
-                    <option value="hi">Hindi (हिन्दी)</option>
-                    <option value="en">English</option>
-                  </select>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1.5rem',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                }}
+              >
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', color: '#D4AF37', margin: 0 }}>
+                    Shastric Translation &amp; Manuscript Vision
+                  </h3>
+                  <p style={{ color: '#9A9078', fontSize: '0.9rem', margin: '0.25rem 0 0 0' }}>
+                    End-to-end translation for typed/pasted sacred literature and uploaded manuscript imagery.
+                  </p>
                 </div>
 
-                <span style={{ color: '#D4AF37', fontSize: '1.2rem' }}>➔</span>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', color: '#9A9078' }}>Target:</label>
-                  <select
-                    value={transTargetLang}
-                    onChange={(e) => setTransTargetLang(e.target.value as SupportedLanguage)}
-                    style={{
-                      background: 'rgba(0,0,0,0.6)',
-                      border: '1px solid rgba(212,175,55,0.3)',
-                      color: '#F2D675',
-                      padding: '0.4rem 0.75rem',
-                      borderRadius: '6px',
-                    }}
-                  >
-                    <option value="en">English</option>
-                    <option value="hi">Hindi (हिन्दी)</option>
-                    <option value="gu">Gujarati (ગુજરાતી)</option>
-                    <option value="sa">Sanskrit (संस्कृतम्)</option>
-                    <option value="ta">Tamil (தமிழ்)</option>
-                    <option value="pli">Pali (पाळિ)</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={handleExecuteTranslation}
-                  disabled={transLoading || !transInputText}
-                  style={{
-                    marginLeft: 'auto',
-                    padding: '0.5rem 1.5rem',
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
-                    color: '#0D0B08',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontWeight: 700,
-                    cursor: transLoading ? 'wait' : 'pointer',
-                  }}
-                >
-                  {transLoading ? 'Translating...' : 'Translate'}
-                </button>
-              </div>
-
-              {/* Source Input Box */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <textarea
-                  value={transInputText}
-                  onChange={(e) => setTransInputText(e.target.value)}
-                  placeholder="Enter sacred verse, shloka, or philosophical inquiry..."
-                  rows={4}
-                  style={{
-                    width: '100%',
-                    background: 'rgba(0,0,0,0.5)',
-                    border: '1px solid rgba(212, 175, 55, 0.3)',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    color: '#EDE8D5',
-                    fontSize: '1.1rem',
-                    lineHeight: 1.6,
-                    resize: 'vertical',
-                  }}
-                />
-              </div>
-
-              {/* Translation Result Output Box */}
-              {transResult && (
+                {/* Sub-mode selector (Text vs Image OCR) */}
                 <div
                   style={{
-                    background: 'rgba(212, 175, 55, 0.1)',
-                    border: '1px solid rgba(212, 175, 55, 0.4)',
-                    borderRadius: '8px',
-                    padding: '1.5rem',
+                    display: 'flex',
+                    background: 'rgba(13, 11, 8, 0.8)',
+                    padding: '4px',
+                    borderRadius: '24px',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#9A9078', fontSize: '0.8rem' }}>
-                    <span>Method: {transResult.method}</span>
-                    <span>Confidence: {Math.round(transResult.confidence * 100)}%</span>
+                  <button
+                    onClick={() => setTranslateMode('text')}
+                    style={{
+                      padding: '0.45rem 1.25rem',
+                      background:
+                        translateMode === 'text'
+                          ? 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)'
+                          : 'transparent',
+                      color: translateMode === 'text' ? '#0D0B08' : '#EDE8D5',
+                      border: 'none',
+                      borderRadius: '20px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <span>✍️</span> Text Translation
+                  </button>
+                  <button
+                    onClick={() => setTranslateMode('image')}
+                    style={{
+                      padding: '0.45rem 1.25rem',
+                      background:
+                        translateMode === 'image'
+                          ? 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)'
+                          : 'transparent',
+                      color: translateMode === 'image' ? '#0D0B08' : '#EDE8D5',
+                      border: 'none',
+                      borderRadius: '20px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <span>🖼️</span> Image &amp; Manuscript OCR
+                  </button>
+                </div>
+              </div>
+
+              {/* =========================================================================
+                  SUB-MODE A: TEXT TRANSLATION
+              ========================================================================== */}
+              {translateMode === 'text' && (
+                <div>
+                  {/* Language Selection Row */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '1rem',
+                      alignItems: 'center',
+                      marginBottom: '1.25rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    {/* Source Language Picker */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: '#9A9078', fontWeight: 600 }}>Source:</label>
+                      <select
+                        value={transSourceLang}
+                        onChange={(e) => setTransSourceLang(e.target.value as TranslateSourceLanguage)}
+                        style={{
+                          background: 'rgba(0,0,0,0.6)',
+                          border: '1px solid rgba(212,175,55,0.3)',
+                          color: '#F2D675',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                        }}
+                      >
+                        <option value="auto">✨ Auto Detect (स्वचालित)</option>
+                        <option value="sa">Sanskrit (संस्कृतम्)</option>
+                        <option value="ta">Tamil (தமிழ்)</option>
+                        <option value="pli">Pali (पाळि)</option>
+                        <option value="gu">Gujarati (ગુજરાતી)</option>
+                        <option value="hi">Hindi (हिन्दी)</option>
+                        <option value="en">English</option>
+                      </select>
+                    </div>
+
+                    {/* Swap Button */}
+                    <button
+                      onClick={handleSwapLanguages}
+                      disabled={transSourceLang === 'auto'}
+                      title={transSourceLang === 'auto' ? 'Cannot swap with Auto Detect' : 'Swap languages'}
+                      style={{
+                        background: 'rgba(212, 175, 55, 0.1)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        color: transSourceLang === 'auto' ? '#555' : '#F2D675',
+                        borderRadius: '50%',
+                        width: '34px',
+                        height: '34px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: transSourceLang === 'auto' ? 'not-allowed' : 'pointer',
+                        fontSize: '1rem',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      ⇄
+                    </button>
+
+                    {/* Target Language Picker */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: '#9A9078', fontWeight: 600 }}>Target:</label>
+                      <select
+                        value={transTargetLang}
+                        onChange={(e) => setTransTargetLang(e.target.value as SupportedLanguage)}
+                        style={{
+                          background: 'rgba(0,0,0,0.6)',
+                          border: '1px solid rgba(212,175,55,0.3)',
+                          color: '#F2D675',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                        }}
+                      >
+                        <option value="en">English</option>
+                        <option value="hi">Hindi (हिन्दी)</option>
+                        <option value="gu">Gujarati (ગુજરાતી)</option>
+                        <option value="sa">Sanskrit (संस्कृतम्)</option>
+                        <option value="ta">Tamil (தமிழ்)</option>
+                        <option value="pli">Pali (पाळિ)</option>
+                      </select>
+                    </div>
+
+                    {/* Action Button */}
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => {
+                          setTransInputText('');
+                          setTransResult(null);
+                          setTransError('');
+                        }}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          background: 'transparent',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          color: '#9A9078',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Clear
+                      </button>
+                      <button
+                        onClick={handleExecuteTranslation}
+                        disabled={transLoading || !transInputText.trim()}
+                        style={{
+                          padding: '0.5rem 1.6rem',
+                          background:
+                            transLoading || !transInputText.trim()
+                              ? 'rgba(212, 175, 55, 0.3)'
+                              : 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
+                          color: '#0D0B08',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          cursor: transLoading || !transInputText.trim() ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          boxShadow: '0 4px 15px rgba(212, 175, 55, 0.25)',
+                        }}
+                      >
+                        {transLoading ? 'Translating...' : 'Translate ➔'}
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '1.25rem', color: '#F2D675', lineHeight: 1.6, marginBottom: '0.75rem' }}>
-                    {transResult.translatedText}
+
+                  {/* Input Text Box with character counter */}
+                  <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+                    <textarea
+                      ref={translatorInputRef}
+                      id="translation-source-input"
+                      value={transInputText}
+                      onChange={(e) => setTransInputText(e.target.value)}
+                      placeholder="Enter sacred verse, shloka, sutra, or philosophical inquiry to translate..."
+                      rows={5}
+                      maxLength={10000}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0,0,0,0.5)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        borderRadius: '8px',
+                        padding: '1rem 1rem 2.4rem 1rem',
+                        color: '#EDE8D5',
+                        caretColor: '#F2D675',
+                        fontSize: '1.05rem',
+                        lineHeight: 1.6,
+                        resize: 'vertical',
+                        outline: 'none',
+                        cursor: 'text',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(242, 214, 117, 0.8)';
+                        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(212, 175, 55, 0.25)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        right: '14px',
+                        fontSize: '0.75rem',
+                        color: '#716b5c',
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                        zIndex: 2,
+                      }}
+                    >
+                      {transInputText.length} / 10,000 characters
+                    </div>
                   </div>
-                  {transResult.transliteration && (
-                    <div style={{ color: '#9A9078', fontStyle: 'italic', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                      Transliteration: {transResult.transliteration}
+
+                  {/* Error Notification */}
+                  {transError && (
+                    <div
+                      style={{
+                        background: 'rgba(229, 62, 62, 0.15)',
+                        border: '1px solid rgba(229, 62, 62, 0.4)',
+                        color: '#fc8181',
+                        padding: '0.85rem 1.25rem',
+                        borderRadius: '8px',
+                        marginBottom: '1.5rem',
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>⚠️ {transError}</span>
+                      <button
+                        onClick={() => setTransError('')}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#fc8181',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                        }}
+                      >
+                        ✕
+                      </button>
                     </div>
                   )}
-                  {transResult.etymologyNotes && (
-                    <div style={{ color: '#c4b5fd', fontSize: '0.85rem' }}>
-                      💡 {transResult.etymologyNotes}
+
+                  {/* Text Translation Output */}
+                  {transResult && (
+                    <div
+                      style={{
+                        background: 'rgba(212, 175, 55, 0.08)',
+                        border: '1px solid rgba(212, 175, 55, 0.35)',
+                        borderRadius: '10px',
+                        padding: '1.5rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '1rem',
+                          flexWrap: 'wrap',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <span
+                            style={{
+                              background: 'rgba(212, 175, 55, 0.15)',
+                              border: '1px solid rgba(212, 175, 55, 0.3)',
+                              color: '#F2D675',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '12px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Source: {transResult.sourceLanguage.toUpperCase()}
+                          </span>
+                          <span style={{ color: '#D4AF37' }}>➔</span>
+                          <span
+                            style={{
+                              background: 'rgba(72, 187, 120, 0.15)',
+                              border: '1px solid rgba(72, 187, 120, 0.3)',
+                              color: '#68d391',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '12px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Target: {transResult.targetLanguage.toUpperCase()}
+                          </span>
+                          <span
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              color: '#9A9078',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '12px',
+                              fontSize: '0.78rem',
+                            }}
+                          >
+                            Engine: {transResult.method.toUpperCase()}
+                          </span>
+                          <span
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              color: '#9A9078',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '12px',
+                              fontSize: '0.78rem',
+                            }}
+                          >
+                            Confidence: {Math.round(transResult.confidence * 100)}%
+                          </span>
+                        </div>
+
+                        {/* Copy Translated Text Button */}
+                        <button
+                          onClick={() => copyToClipboard(transResult.translatedText, 'text-translation')}
+                          style={{
+                            background:
+                              copiedKey === 'text-translation'
+                                ? 'rgba(72, 187, 120, 0.2)'
+                                : 'rgba(212, 175, 55, 0.15)',
+                            border: `1px solid ${
+                              copiedKey === 'text-translation' ? '#48bb78' : 'rgba(212, 175, 55, 0.3)'
+                            }`,
+                            color: copiedKey === 'text-translation' ? '#68d391' : '#F2D675',
+                            padding: '0.3rem 0.8rem',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontWeight: 600,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {copiedKey === 'text-translation' ? '✓ Copied!' : '📋 Copy Translation'}
+                        </button>
+                      </div>
+
+                      {/* Main Translated Text */}
+                      <div
+                        style={{
+                          fontSize: '1.25rem',
+                          color: '#EDE8D5',
+                          lineHeight: 1.7,
+                          marginBottom: '1rem',
+                          whiteSpace: 'pre-line',
+                        }}
+                      >
+                        {transResult.translatedText}
+                      </div>
+
+                      {/* Transliteration (IAST / Romanized) */}
+                      {transResult.transliteration && (
+                        <div
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.35)',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(212, 175, 55, 0.15)',
+                            marginBottom: '0.75rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <div style={{ color: '#c4b5fd', fontStyle: 'italic', fontSize: '0.92rem' }}>
+                            <span style={{ color: '#9A9078', fontWeight: 600, fontStyle: 'normal' }}>IAST: </span>
+                            {transResult.transliteration}
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(transResult.transliteration!, 'text-translit')}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: copiedKey === 'text-translit' ? '#48bb78' : '#9A9078',
+                              cursor: 'pointer',
+                              fontSize: '0.8rem',
+                              marginLeft: '0.5rem',
+                            }}
+                          >
+                            {copiedKey === 'text-translit' ? '✓ Copied' : '📋'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Philosophical / Etymological Notes */}
+                      {transResult.etymologyNotes && (
+                        <div
+                          style={{
+                            background: 'rgba(196, 107, 58, 0.1)',
+                            borderLeft: '3px solid #C46B3A',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '0 6px 6px 0',
+                            color: '#e2d9c8',
+                            fontSize: '0.88rem',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <span style={{ color: '#F2D675', fontWeight: 600 }}>💡 Philosophical Commentary: </span>
+                          {transResult.etymologyNotes}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* =========================================================================
+                  SUB-MODE B: IMAGE & MANUSCRIPT OCR TRANSLATION
+              ========================================================================== */}
+              {translateMode === 'image' && (
+                <div>
+                  {/* Target Language & Controls Row */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '1rem',
+                      alignItems: 'center',
+                      marginBottom: '1.5rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: '#9A9078', fontWeight: 600 }}>
+                        Translate Inscription To:
+                      </label>
+                      <select
+                        value={ocrTargetLang}
+                        onChange={(e) => setOcrTargetLang(e.target.value as SupportedLanguage)}
+                        style={{
+                          background: 'rgba(0,0,0,0.6)',
+                          border: '1px solid rgba(212,175,55,0.3)',
+                          color: '#F2D675',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                        }}
+                      >
+                        <option value="en">English</option>
+                        <option value="hi">Hindi (हिन्दी)</option>
+                        <option value="gu">Gujarati (ગુજરાતી)</option>
+                        <option value="sa">Sanskrit (संस्कृतम्)</option>
+                        <option value="ta">Tamil (தமிழ்)</option>
+                        <option value="pli">Pali (पाळિ)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ color: '#716b5c', fontSize: '0.85rem' }}>
+                      (Supports Devanagari, Grantha, Tamil, Gujarati, and Romanized Sanskrit)
+                    </div>
+                  </div>
+
+                  {/* Dropzone & Upload Box */}
+                  {!ocrImagePreview ? (
+                    <label
+                      style={{
+                        display: 'block',
+                        border: '2px dashed rgba(212, 175, 55, 0.4)',
+                        borderRadius: '12px',
+                        padding: '3rem 2rem',
+                        textAlign: 'center',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) {
+                          const pseudoEvent = {
+                            target: { files: [file] },
+                          } as any;
+                          handleImageSelect(pseudoEvent);
+                        }
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        onChange={handleImageSelect}
+                        style={{ display: 'none' }}
+                      />
+                      <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>📜</div>
+                      <div style={{ fontSize: '1.2rem', color: '#F2D675', fontWeight: 600, marginBottom: '0.5rem' }}>
+                        Upload Ancient Manuscript, Palm Leaf, or Inscription Photo
+                      </div>
+                      <p style={{ color: '#9A9078', fontSize: '0.9rem', maxWidth: '520px', margin: '0 auto 1rem' }}>
+                        Click to browse or drag and drop an image containing sacred verses or script. Max size 8MB (PNG, JPG, WebP).
+                      </p>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          background: 'rgba(212, 175, 55, 0.15)',
+                          border: '1px solid var(--gold-sacred)',
+                          color: '#F2D675',
+                          padding: '0.5rem 1.4rem',
+                          borderRadius: '20px',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Select Image From Device
+                      </span>
+                    </label>
+                  ) : (
+                    /* Image Preview Card */
+                    <div
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        borderRadius: '10px',
+                        padding: '1.25rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '1rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={ocrImagePreview}
+                          alt="Manuscript Preview"
+                          style={{
+                            width: '90px',
+                            height: '90px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(212, 175, 55, 0.4)',
+                          }}
+                        />
+                        <div>
+                          <div style={{ color: '#F2D675', fontWeight: 600, fontSize: '1rem', marginBottom: '0.2rem' }}>
+                            {ocrImageFile?.name || 'Manuscript Image'}
+                          </div>
+                          <div style={{ color: '#9A9078', fontSize: '0.85rem' }}>
+                            Size: {ocrImageFile ? (ocrImageFile.size / (1024 * 1024)).toFixed(2) + ' MB' : '—'} • Format:{' '}
+                            {ocrImageMime.split('/')[1]?.toUpperCase()}
+                          </div>
+                          <div style={{ color: '#48bb78', fontSize: '0.8rem', marginTop: '0.3rem' }}>
+                            ✓ Validated for OCR scanning
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        <button
+                          onClick={handleRemoveImage}
+                          disabled={ocrLoading}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid rgba(229, 62, 62, 0.4)',
+                            color: '#fc8181',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          ✕ Remove Image
+                        </button>
+                        <button
+                          onClick={handleExecuteImageOCR}
+                          disabled={ocrLoading}
+                          style={{
+                            background: ocrLoading
+                              ? 'rgba(212, 175, 55, 0.3)'
+                              : 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
+                            color: '#0D0B08',
+                            border: 'none',
+                            padding: '0.55rem 1.6rem',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            cursor: ocrLoading ? 'wait' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
+                          }}
+                        >
+                          {ocrLoading ? 'Scanning & Translating...' : '⚡ Scan & Translate Image'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* OCR Loading State Indicator */}
+                  {ocrLoading && (
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '2.5rem',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(212, 175, 55, 0.2)',
+                        marginBottom: '1.5rem',
+                      }}
+                    >
+                      <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔍</div>
+                      <div style={{ color: '#F2D675', fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.3rem' }}>
+                        Extracting Sacred Text &amp; Synthesizing Translation
+                      </div>
+                      <p style={{ color: '#9A9078', fontSize: '0.88rem', margin: 0 }}>
+                        Analyzing script strokes, isolating characters, and applying cross-lingual philosophical grounding...
+                      </p>
+                    </div>
+                  )}
+
+                  {/* OCR Error Notification */}
+                  {ocrError && (
+                    <div
+                      style={{
+                        background: 'rgba(229, 62, 62, 0.15)',
+                        border: '1px solid rgba(229, 62, 62, 0.4)',
+                        color: '#fc8181',
+                        padding: '1rem 1.25rem',
+                        borderRadius: '8px',
+                        marginBottom: '1.5rem',
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>⚠️ {ocrError}</span>
+                      <button
+                        onClick={() => setOcrError('')}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#fc8181',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Dual Panel OCR Results */}
+                  {ocrResult && (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+                        gap: '1.5rem',
+                        marginTop: '1.5rem',
+                      }}
+                    >
+                      {/* Left Panel: Extracted Original Text */}
+                      <div
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: '1px solid rgba(212, 175, 55, 0.35)',
+                          borderRadius: '10px',
+                          padding: '1.5rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '1rem',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ color: '#D4AF37', fontWeight: 700, fontSize: '0.95rem' }}>
+                              📜 Extracted Original Text (मूल पाठ)
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                            <span
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                color: '#9A9078',
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '10px',
+                                fontSize: '0.75rem',
+                              }}
+                            >
+                              {ocrResult.ocrProvider || 'Vision OCR'}
+                            </span>
+                            <span
+                              style={{
+                                background:
+                                  ocrResult.confidence >= 0.75
+                                    ? 'rgba(72, 187, 120, 0.15)'
+                                    : 'rgba(212, 175, 55, 0.15)',
+                                color: ocrResult.confidence >= 0.75 ? '#68d391' : '#F2D675',
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '10px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {Math.round(ocrResult.confidence * 100)}% Confidence
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(ocrResult.extractedText, 'ocr-extracted')}
+                              style={{
+                                background:
+                                  copiedKey === 'ocr-extracted'
+                                    ? 'rgba(72, 187, 120, 0.2)'
+                                    : 'rgba(212, 175, 55, 0.15)',
+                                border: `1px solid ${
+                                  copiedKey === 'ocr-extracted' ? '#48bb78' : 'rgba(212, 175, 55, 0.3)'
+                                }`,
+                                color: copiedKey === 'ocr-extracted' ? '#68d391' : '#F2D675',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {copiedKey === 'ocr-extracted' ? '✓ Copied' : '📋 Copy'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setTransInputText(ocrResult.extractedText);
+                                setTranslateMode('text');
+                              }}
+                              style={{
+                                background: 'rgba(212, 175, 55, 0.15)',
+                                border: '1px solid rgba(212, 175, 55, 0.3)',
+                                color: '#F2D675',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                            >
+                              ✎ Edit in Text Translator
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Low Confidence Warning Alert */}
+                        {ocrResult.warning && (
+                          <div
+                            style={{
+                              background: 'rgba(196, 107, 58, 0.15)',
+                              border: '1px solid rgba(196, 107, 58, 0.4)',
+                              color: '#fbd38d',
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: '6px',
+                              fontSize: '0.8rem',
+                              marginBottom: '0.85rem',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            ⚠️ {ocrResult.warning}
+                          </div>
+                        )}
+
+                        {/* Extracted Text Body */}
+                        <div
+                          style={{
+                            flex: 1,
+                            fontFamily: 'var(--font-serif)',
+                            fontSize: '1.25rem',
+                            color: '#F2D675',
+                            lineHeight: 1.8,
+                            whiteSpace: 'pre-line',
+                            background: 'rgba(13, 11, 8, 0.6)',
+                            padding: '1rem',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(212, 175, 55, 0.15)',
+                          }}
+                        >
+                          {ocrResult.extractedText || '(No readable script detected)'}
+                        </div>
+                      </div>
+
+                      {/* Right Panel: Translated Sacred Text */}
+                      <div
+                        style={{
+                          background: 'rgba(212, 175, 55, 0.08)',
+                          border: '1px solid rgba(212, 175, 55, 0.4)',
+                          borderRadius: '10px',
+                          padding: '1.5rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '1rem',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ color: '#F2D675', fontWeight: 700, fontSize: '0.95rem' }}>
+                              ✨ Translated Shastra (अनुवाद)
+                            </span>
+                            <span
+                              style={{
+                                background: 'rgba(72, 187, 120, 0.15)',
+                                border: '1px solid rgba(72, 187, 120, 0.3)',
+                                color: '#68d391',
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '10px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              Target: {ocrTargetLang.toUpperCase()}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => copyToClipboard(ocrResult.translatedText || '', 'ocr-translated')}
+                            style={{
+                              background:
+                                copiedKey === 'ocr-translated'
+                                  ? 'rgba(72, 187, 120, 0.2)'
+                                  : 'rgba(212, 175, 55, 0.15)',
+                              border: `1px solid ${
+                                copiedKey === 'ocr-translated' ? '#48bb78' : 'rgba(212, 175, 55, 0.3)'
+                              }`,
+                              color: copiedKey === 'ocr-translated' ? '#68d391' : '#F2D675',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {copiedKey === 'ocr-translated' ? '✓ Copied' : '📋 Copy Translation'}
+                          </button>
+                        </div>
+
+                        {/* Translated Text Body */}
+                        <div
+                          style={{
+                            fontSize: '1.15rem',
+                            color: '#EDE8D5',
+                            lineHeight: 1.7,
+                            whiteSpace: 'pre-line',
+                            marginBottom: '1rem',
+                            background: 'rgba(13, 11, 8, 0.6)',
+                            padding: '1rem',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(212, 175, 55, 0.15)',
+                            flex: 1,
+                          }}
+                        >
+                          {ocrResult.translatedText || '(Translation will appear here)'}
+                        </div>
+
+                        {/* Transliteration if available */}
+                        {ocrResult.transliteration && (
+                          <div
+                            style={{
+                              background: 'rgba(0, 0, 0, 0.35)',
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(212, 175, 55, 0.15)',
+                              marginBottom: '0.75rem',
+                              fontSize: '0.88rem',
+                              color: '#c4b5fd',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            <span style={{ color: '#9A9078', fontWeight: 600, fontStyle: 'normal' }}>IAST: </span>
+                            {ocrResult.transliteration}
+                          </div>
+                        )}
+
+                        {/* Philosophical Commentary if available */}
+                        {ocrResult.etymologyNotes && (
+                          <div
+                            style={{
+                              background: 'rgba(196, 107, 58, 0.1)',
+                              borderLeft: '3px solid #C46B3A',
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: '0 6px 6px 0',
+                              color: '#e2d9c8',
+                              fontSize: '0.85rem',
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            <span style={{ color: '#F2D675', fontWeight: 600 }}>💡 Context &amp; Commentary: </span>
+                            {ocrResult.etymologyNotes}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

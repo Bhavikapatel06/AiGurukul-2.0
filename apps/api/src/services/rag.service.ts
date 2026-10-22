@@ -1,6 +1,6 @@
 import { DocumentRepository, DocumentChunkRepository } from '../repositories/index.js';
 import { EmbeddingProvider } from '@ai-gurukul/embeddings';
-import { VectorStoreProvider } from '@ai-gurukul/vector-store';
+import { VectorStoreProvider, VectorRecord } from '@ai-gurukul/vector-store';
 import { DocumentChunkModel } from '@ai-gurukul/database';
 import {
   CitationReferenceDTO,
@@ -14,6 +14,7 @@ export class RAGService {
   private chunkRepo: DocumentChunkRepository;
   private embeddingProvider: EmbeddingProvider;
   private vectorStore: VectorStoreProvider;
+  private isHydrated = false;
 
   constructor(
     docRepo: DocumentRepository,
@@ -27,39 +28,125 @@ export class RAGService {
     this.vectorStore = vectorStore;
   }
 
+  /**
+   * Ensures the vector store is populated from canonical chunks stored in MongoDB.
+   * Runs idempotently on server startup or lazily before the first query.
+   */
+  public async ensureHydrated(): Promise<void> {
+    if (this.isHydrated) return;
+
+    try {
+      const chunks = await DocumentChunkModel.find().lean().exec();
+      if (chunks.length === 0) return;
+
+      // Enrich chunk text with canonical metadata so vector embeddings capture speaker, author, and granth title
+      const texts = chunks.map((c) => {
+        const meta = c.metadata || {};
+        const titleStr = (meta.title as string) || '';
+        const authorStr = (meta.author as string) || '';
+        const focusStr = (meta.focus as string) || '';
+        return `${c.canonicalReference || ''} ${titleStr} ${authorStr} ${focusStr} ${c.text}`.trim();
+      });
+      const embeddings = await this.embeddingProvider.generateEmbeddings(texts);
+
+      const vectorRecords: VectorRecord[] = chunks.map((chunk, idx) => {
+        const meta = chunk.metadata || {};
+        return {
+          id: `${chunk.documentId}_chunk_${chunk.chunkIndex}`,
+          values: embeddings[idx].embedding,
+          metadata: {
+            documentId: chunk.documentId.toString(),
+            title: (meta.title as string) || 'Canonical Vedic Text',
+            author: meta.author as string | undefined,
+            canonicalReference: chunk.canonicalReference,
+            domain: (meta.domain as string || '').toLowerCase(),
+            chunkText: chunk.text,
+            chunkIndex: chunk.chunkIndex,
+          },
+        };
+      });
+
+      await this.vectorStore.upsert(vectorRecords);
+      this.isHydrated = true;
+    } catch {
+      // Degraded fallback: continues with MongoDB text search if vector store hydration encounters an issue
+    }
+  }
+
   public async query(options: RAGQueryRequestDTO): Promise<RAGQueryResponseDTO> {
+    await this.ensureHydrated();
+
     const topK = options.topK ?? 5;
-    const minScore = options.minScore ?? 0.01;
+    const minScore = options.minScore ?? 0.05;
     const cleanQuery = options.query.trim();
 
-    // 1. Generate query embedding
+    // 1. Generate query embedding using semantic provider
     const queryEmb = await this.embeddingProvider.generateEmbedding(cleanQuery);
 
-    // 2. Query Vector Store with cosine similarity
-    const filter: Record<string, unknown> = {};
-    if (options.domainFilter) {
-      filter.domain = options.domainFilter.toLowerCase();
-    }
-
-    const vectorResults = await this.vectorStore.query(queryEmb.embedding, {
-      topK,
-      filter: Object.keys(filter).length > 0 ? filter : undefined,
-      minScore,
-    });
-
     const citations: CitationReferenceDTO[] = [];
+    const seenRefs = new Set<string>();
 
-    for (const vRes of vectorResults) {
-      const meta = vRes.metadata;
-      citations.push({
-        documentId: (meta.documentId as string) || vRes.id.split('_chunk_')[0],
-        documentTitle: (meta.title as string) || 'Canonical Vedic Text',
-        author: meta.author as string | undefined,
-        canonicalReference: meta.canonicalReference as string | undefined,
-        chunkIndex: typeof meta.chunkIndex === 'number' ? meta.chunkIndex : 0,
-        snippet: (meta.chunkText as string) || '',
-        similarityScore: vRes.score,
+    // 2. Query Vector Store with domain mapping for compatible traditions
+    const targetDomain = options.domainFilter ? options.domainFilter.toLowerCase() : undefined;
+    const domainMapping: Record<string, string[]> = {
+      gita: ['gita', 'mahabharata'],
+      mahabharata: ['mahabharata', 'gita'],
+      chanakya: ['chanakya'],
+      ayurveda: ['ayurveda'],
+      classical_texts: ['yoga', 'classical_texts'],
+      yoga: ['yoga', 'classical_texts'],
+    };
+
+    if (targetDomain) {
+      const allowedDomains = domainMapping[targetDomain] || [targetDomain];
+
+      for (const d of allowedDomains) {
+        const domainResults = await this.vectorStore.query(queryEmb.embedding, {
+          topK,
+          filter: { domain: d },
+          minScore: 0.05,
+        });
+
+        for (const vRes of domainResults) {
+          const meta = vRes.metadata;
+          const ref = (meta.canonicalReference as string) || vRes.id;
+          if (!seenRefs.has(ref.toLowerCase())) {
+            seenRefs.add(ref.toLowerCase());
+            citations.push({
+              documentId: (meta.documentId as string) || vRes.id.split('_chunk_')[0],
+              documentTitle: (meta.title as string) || 'Canonical Vedic Text',
+              author: meta.author as string | undefined,
+              canonicalReference: meta.canonicalReference as string | undefined,
+              chunkIndex: typeof meta.chunkIndex === 'number' ? meta.chunkIndex : 0,
+              snippet: (meta.chunkText as string) || '',
+              similarityScore: vRes.score,
+            });
+          }
+        }
+      }
+    } else {
+      // General RAG search across all indexed canonical texts
+      const generalResults = await this.vectorStore.query(queryEmb.embedding, {
+        topK,
+        minScore,
       });
+
+      for (const vRes of generalResults) {
+        const meta = vRes.metadata;
+        const ref = (meta.canonicalReference as string) || vRes.id;
+        if (!seenRefs.has(ref.toLowerCase())) {
+          seenRefs.add(ref.toLowerCase());
+          citations.push({
+            documentId: (meta.documentId as string) || vRes.id.split('_chunk_')[0],
+            documentTitle: (meta.title as string) || 'Canonical Vedic Text',
+            author: meta.author as string | undefined,
+            canonicalReference: meta.canonicalReference as string | undefined,
+            chunkIndex: typeof meta.chunkIndex === 'number' ? meta.chunkIndex : 0,
+            snippet: (meta.chunkText as string) || '',
+            similarityScore: vRes.score,
+          });
+        }
+      }
     }
 
     // 3. Hybrid fallback: If vector store yielded fewer results than topK, search DocumentChunkModel in MongoDB
@@ -71,8 +158,9 @@ export class RAGService {
         .filter((w) => w.length > 2);
 
       const filterCond: Record<string, unknown> = {};
-      if (options.domainFilter) {
-        filterCond['metadata.domain'] = options.domainFilter.toLowerCase();
+      if (targetDomain) {
+        const mongoDomains = domainMapping[targetDomain] || [targetDomain];
+        filterCond['metadata.domain'] = { $in: mongoDomains };
       }
 
       if (queryWords.length > 0) {
@@ -89,7 +177,9 @@ export class RAGService {
         .exec();
 
       for (const cDoc of chunkDocs) {
-        if (!existingDocIds.has(cDoc.documentId.toString())) {
+        const ref = cDoc.canonicalReference || cDoc._id.toString();
+        if (!seenRefs.has(ref.toLowerCase()) && !existingDocIds.has(cDoc.documentId.toString())) {
+          seenRefs.add(ref.toLowerCase());
           const meta = cDoc.metadata || {};
           citations.push({
             documentId: cDoc.documentId.toString(),
@@ -104,7 +194,7 @@ export class RAGService {
       }
     }
 
-    // 4. Synthesize structured provenance context
+    // 5. Synthesize structured provenance context
     let synthesizedContext = '';
     if (citations.length > 0) {
       const contextBlocks = citations.map((c, i) => {

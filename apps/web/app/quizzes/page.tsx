@@ -69,6 +69,7 @@ const DOMAIN_LABELS: Record<string, { label: string; icon: string; color: string
   mahabharata: { label: 'Mahabharata', icon: '⚔️', color: '#e53e3e' },
   ramayana: { label: 'Ramayana', icon: '🔆', color: '#f6ad55' },
   panchatantra: { label: 'Panchatantra', icon: '📖', color: '#3182ce' },
+  yoga: { label: 'Patanjali Yoga', icon: '🧘', color: '#38bdf8' },
   general: { label: 'Universal Vedic', icon: '🕉️', color: '#d69e2e' },
 };
 
@@ -92,6 +93,7 @@ export default function QuizzesPage() {
   // Dynamic Quiz Modal State
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [genDomain, setGenDomain] = useState('gita');
+  const [genGuru, setGenGuru] = useState('');
   const [genTopic, setGenTopic] = useState('');
   const [genDifficulty, setGenDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>(
     'intermediate'
@@ -192,9 +194,9 @@ export default function QuizzesPage() {
     }
   };
 
-  // Generate Dynamic AI Quiz
-  const handleGenerateAIQuiz = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Generate Dynamic AI Quiz grounded in RAG
+  const handleGenerateAIQuiz = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsGenerating(true);
     setErrorMsg('');
 
@@ -203,7 +205,8 @@ export default function QuizzesPage() {
         method: 'POST',
         body: JSON.stringify({
           domain: genDomain,
-          topic: genTopic || undefined,
+          guru: genGuru || undefined,
+          topic: genTopic.trim() || undefined,
           difficulty: genDifficulty,
           questionCount: Number(genCount),
         }),
@@ -217,10 +220,42 @@ export default function QuizzesPage() {
         setQuizTimer(0);
         setAttemptResult(null);
       } else {
-        setErrorMsg(res.error?.message || 'Failed to synthesize AI quiz');
+        setErrorMsg(res.error?.message || 'Failed to synthesize AI quiz grounded in RAG data');
       }
     } catch {
-      setErrorMsg('Error generating dynamic quiz');
+      setErrorMsg('Error communicating with knowledge base to generate dynamic quiz');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Retry with New Dynamic Questions from RAG
+  const handleRetryWithNewQuestions = async () => {
+    if (!attemptResult) return;
+    setIsGenerating(true);
+    setErrorMsg('');
+
+    try {
+      const res = await apiClient<ActiveQuiz>('/quizzes/generate', {
+        method: 'POST',
+        body: JSON.stringify({
+          domain: attemptResult.domain || 'gita',
+          difficulty: attemptResult.difficulty,
+          questionCount: attemptResult.totalQuestions || 5,
+        }),
+      });
+
+      if (res.success && res.data) {
+        setActiveQuiz(res.data);
+        setCurrentQuestionIdx(0);
+        setSelectedAnswers({});
+        setQuizTimer(0);
+        setAttemptResult(null);
+      } else {
+        setErrorMsg(res.error?.message || 'Failed to synthesize new quiz questions from knowledge base');
+      }
+    } catch {
+      setErrorMsg('Error generating new questions from the scriptural knowledge base');
     } finally {
       setIsGenerating(false);
     }
@@ -333,16 +368,55 @@ export default function QuizzesPage() {
         {errorMsg && (
           <div
             style={{
-              background: 'rgba(229, 62, 62, 0.15)',
-              border: '1px solid rgba(229, 62, 62, 0.4)',
-              color: '#fc8181',
-              padding: '1rem',
-              borderRadius: '8px',
+              background: errorMsg.toLowerCase().includes('knowledge base') || errorMsg.toLowerCase().includes('passages')
+                ? 'rgba(196, 107, 58, 0.15)'
+                : 'rgba(229, 62, 62, 0.15)',
+              border: `1px solid ${
+                errorMsg.toLowerCase().includes('knowledge base') || errorMsg.toLowerCase().includes('passages')
+                  ? 'rgba(196, 107, 58, 0.45)'
+                  : 'rgba(229, 62, 62, 0.4)'
+              }`,
+              color: errorMsg.toLowerCase().includes('knowledge base') || errorMsg.toLowerCase().includes('passages')
+                ? '#fbd38d'
+                : '#fc8181',
+              padding: '1.25rem 1.5rem',
+              borderRadius: '10px',
               marginBottom: '2rem',
-              textAlign: 'center',
+              maxWidth: '850px',
+              margin: '0 auto 2rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '1rem',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
             }}
           >
-            {errorMsg}
+            <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>
+              {errorMsg.toLowerCase().includes('knowledge base') || errorMsg.toLowerCase().includes('passages')
+                ? '📜'
+                : '⚠️'}
+            </span>
+            <div style={{ flex: 1, fontSize: '0.92rem', lineHeight: 1.5 }}>
+              <div style={{ fontWeight: 700, marginBottom: '0.25rem', color: '#fff' }}>
+                {errorMsg.toLowerCase().includes('knowledge base') || errorMsg.toLowerCase().includes('passages')
+                  ? 'RAG Knowledge Grounding Advisory'
+                  : 'Assessment System Advisory'}
+              </div>
+              <p style={{ margin: 0 }}>{errorMsg}</p>
+            </div>
+            <button
+              onClick={() => setErrorMsg('')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-dust)',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                padding: '0 0.5rem',
+              }}
+              title="Dismiss"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -662,18 +736,34 @@ export default function QuizzesPage() {
               style={{
                 display: 'flex',
                 justifyContent: 'center',
+                flexWrap: 'wrap',
                 gap: '1rem',
                 marginTop: '2.5rem',
               }}
             >
               <button
-                onClick={() => {
-                  if (activeQuiz) handleStartQuiz(activeQuiz.id);
-                }}
+                onClick={handleRetryWithNewQuestions}
+                disabled={isGenerating}
                 className="gold-button"
                 style={{ padding: '0.75rem 1.75rem', borderRadius: '24px' }}
               >
-                🔄 Retake Assessment
+                {isGenerating ? 'Synthesizing...' : '🎲 Retry with New Questions'}
+              </button>
+              <button
+                onClick={() => {
+                  if (activeQuiz) handleStartQuiz(activeQuiz.id);
+                }}
+                style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1px solid var(--gold-sacred)',
+                  color: 'var(--gold-radiance)',
+                  padding: '0.75rem 1.75rem',
+                  borderRadius: '24px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                🔄 Retake Same Quiz
               </button>
               <button
                 onClick={() => {
@@ -683,8 +773,8 @@ export default function QuizzesPage() {
                 }}
                 style={{
                   background: 'transparent',
-                  border: '1px solid var(--gold-sacred)',
-                  color: 'var(--gold-sacred)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  color: 'var(--text-vellum)',
                   padding: '0.75rem 1.75rem',
                   borderRadius: '24px',
                   cursor: 'pointer',
@@ -1357,6 +1447,49 @@ export default function QuizzesPage() {
               </p>
 
               <form onSubmit={handleGenerateAIQuiz}>
+                {/* Guru / Sage Selector */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.85rem',
+                      marginBottom: '0.5rem',
+                      color: 'var(--text-vellum)',
+                    }}
+                  >
+                    Guru or Lineage (Optional)
+                  </label>
+                  <select
+                    value={genGuru}
+                    onChange={(e) => {
+                      const guru = e.target.value;
+                      setGenGuru(guru);
+                      if (guru === 'krishna') setGenDomain('gita');
+                      else if (guru === 'chanakya') setGenDomain('chanakya');
+                      else if (guru === 'charaka') setGenDomain('ayurveda');
+                      else if (guru === 'vyasa') setGenDomain('mahabharata');
+                      else if (guru === 'patanjali') setGenDomain('yoga');
+                    }}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(13, 11, 8, 0.8)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      color: 'var(--text-vellum)',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '6px',
+                      fontSize: '0.9rem',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="">All Gurus / Canonical Sources</option>
+                    <option value="krishna">Lord Krishna (Bhagavad Gita & Life Guidance)</option>
+                    <option value="chanakya">Chanakya Pandit (Arthashastra & Neeti)</option>
+                    <option value="charaka">Vaidya Charaka (Charaka Samhita & Ayurveda)</option>
+                    <option value="vyasa">Sage Vyasa (Mahabharata & Dharma)</option>
+                    <option value="patanjali">Sage Patanjali (Yoga Sutras & Mind Mastery)</option>
+                  </select>
+                </div>
+
                 {/* Domain Picker */}
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label
@@ -1390,6 +1523,7 @@ export default function QuizzesPage() {
                     <option value="mahabharata">Mahabharata (Dharma & War)</option>
                     <option value="ramayana">Ramayana (Maryada Purushottama)</option>
                     <option value="panchatantra">Panchatantra (Moral Fables)</option>
+                    <option value="yoga">Patanjali Yoga & Mind Mastery</option>
                     <option value="general">Universal Vedic Philosophy</option>
                   </select>
                 </div>
@@ -1473,8 +1607,31 @@ export default function QuizzesPage() {
                         color: 'var(--text-vellum)',
                       }}
                     >
-                      Question Count: {genCount}
+                      Question Count: <strong style={{ color: 'var(--gold-radiance)' }}>{genCount}</strong>
                     </label>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem' }}>
+                      {[3, 5, 8, 10].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setGenCount(num)}
+                          style={{
+                            flex: 1,
+                            padding: '0.35rem 0.5rem',
+                            borderRadius: '6px',
+                            border: `1px solid ${genCount === num ? 'var(--gold-sacred)' : 'rgba(212, 175, 55, 0.25)'}`,
+                            background: genCount === num ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(184, 134, 11, 0.2) 100%)' : 'rgba(0,0,0,0.4)',
+                            color: genCount === num ? 'var(--gold-radiance)' : 'var(--text-dust)',
+                            fontWeight: genCount === num ? 700 : 500,
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {num} Questions
+                        </button>
+                      ))}
+                    </div>
                     <input
                       type="range"
                       min="3"
@@ -1483,7 +1640,7 @@ export default function QuizzesPage() {
                       onChange={(e) => setGenCount(Number(e.target.value))}
                       style={{
                         width: '100%',
-                        marginTop: '0.75rem',
+                        marginTop: '0.4rem',
                         accentColor: 'var(--gold-sacred)',
                       }}
                     />

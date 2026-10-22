@@ -65,6 +65,7 @@ export const QuizSchema = new Schema<IQuizDocument>(
         'mahabharata',
         'ramayana',
         'panchatantra',
+        'yoga',
         'general',
       ],
       required: true,

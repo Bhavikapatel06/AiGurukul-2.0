@@ -19,6 +19,10 @@ export function createLanguageRouter(options: LanguageRoutesOptions): Router {
   // 3. Translation engine (Sanskrit/Tamil/Pali -> English/Hindi and bidirectional)
   router.post('/translate', controller.translate);
 
+  // 3b. Image OCR extraction & Image Translation
+  router.post('/ocr', controller.extractOcr);
+  router.post('/ocr-translate', controller.translateImage);
+
   // 4. Canonical Manuscripts with word breakdowns
   router.get('/manuscripts', controller.getManuscripts);
   router.get('/manuscripts/:slug', controller.getManuscriptBySlug);

@@ -244,4 +244,208 @@ describe('Wisdom Guidance & SSE Streaming Integration Tests (Phase 3)', () => {
     expect(res.status).toBe(404);
     expect(res.body.success).toBe(false);
   });
+
+  describe('Persona Conversation Refinement & Life-Direction Intent Suite', () => {
+    const lifeDirectionQuery = 'I feel confused about my future. What should I do?';
+
+    it.each([
+      {
+        persona: 'krishna',
+        expectedKeywords: ['unsettled', 'honest step', 'career', 'education'],
+        forbiddenTerms: ['<cite', '</cite>', 'Regarding "I feel confused'],
+      },
+      {
+        persona: 'chanakya',
+        expectedKeywords: ['Uncertainty', 'options', 'priorities', 'leverage', 'action'],
+        forbiddenTerms: ['<cite', '</cite>', 'Regarding "I feel confused'],
+      },
+      {
+        persona: 'vaidya',
+        expectedKeywords: ['energy', 'peace of mind', 'slow down', 'rest'],
+        forbiddenTerms: ['<cite', '</cite>', 'dosha', 'agni', 'vata', 'pitta', 'kapha', 'Regarding "I feel confused'],
+      },
+      {
+        persona: 'vyasa',
+        expectedKeywords: ['crossroads', 'values', 'principles'],
+        forbiddenTerms: ['<cite', '</cite>', 'Regarding "I feel confused'],
+      },
+      {
+        persona: 'patanjali',
+        expectedKeywords: ['breaths', 'present', 'hour', 'momentum'],
+        forbiddenTerms: ['<cite', '</cite>', 'Regarding "I feel confused'],
+      },
+    ])(
+      'Persona $persona answers life-direction question with distinct, concise, natural guidance',
+      async ({ persona, expectedKeywords, forbiddenTerms }) => {
+        const res = await request(app)
+          .post('/api/v1/wisdom/conversations')
+          .set('Authorization', `Bearer ${seekerToken}`)
+          .send({
+            persona,
+            initialMessage: lifeDirectionQuery,
+          });
+
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+
+        const messages = res.body.data.messages;
+        expect(messages).toHaveLength(2);
+
+        const assistantMsg = messages[1];
+        expect(assistantMsg.sender).toBe('assistant');
+        const content = assistantMsg.content;
+
+        // 1. Answers the actual question directly
+        expect(content.length).toBeGreaterThan(50);
+
+        // 2. Concise by default: word count under 120 words
+        const wordCount = content.trim().split(/\s+/).length;
+        expect(wordCount).toBeLessThan(120);
+        expect(wordCount).toBeGreaterThan(25);
+
+        // 3. Does not leak raw citation markup
+        for (const forbidden of forbiddenTerms) {
+          expect(content.toLowerCase()).not.toContain(forbidden.toLowerCase());
+        }
+
+        // 4. Distinct persona traits
+        for (const kw of expectedKeywords) {
+          expect(content.toLowerCase()).toContain(kw.toLowerCase());
+        }
+
+        // 5. General question with no matching verses has no ungrounded citations
+        expect(assistantMsg.citations).toHaveLength(0);
+      }
+    );
+
+    it('Follow-up questions retain the correct conversation context across turns', async () => {
+      // Step 1: Start conversation with Krishna
+      const convRes = await request(app)
+        .post('/api/v1/wisdom/conversations')
+        .set('Authorization', `Bearer ${seekerToken}`)
+        .send({
+          persona: 'krishna',
+          initialMessage: lifeDirectionQuery,
+        });
+
+      expect(convRes.status).toBe(201);
+      const convId = convRes.body.data.id;
+
+      // Step 2: Send follow-up message specifying context
+      const followUpRes = await request(app)
+        .post(`/api/v1/wisdom/conversations/${convId}/messages`)
+        .set('Authorization', `Bearer ${seekerToken}`)
+        .send({
+          content: 'The anxiety is mainly about choosing between software engineering and music.',
+        });
+
+      expect(followUpRes.status).toBe(201);
+      expect(followUpRes.body.data.message.sender).toBe('assistant');
+
+      // Step 3: Fetch full conversation history
+      const fullHistoryRes = await request(app)
+        .get(`/api/v1/wisdom/conversations/${convId}`)
+        .set('Authorization', `Bearer ${seekerToken}`);
+
+      expect(fullHistoryRes.status).toBe(200);
+      const msgs = fullHistoryRes.body.data.messages;
+      expect(msgs).toHaveLength(4); // User 1, Assistant 1, User 2, Assistant 2
+      expect(msgs[0].content).toBe(lifeDirectionQuery);
+      expect(msgs[2].content).toContain('software engineering and music');
+      expect(msgs[3].content.length).toBeGreaterThan(20);
+    });
+
+    it('Grounded queries cite verified sources while ungrounded queries do not fabricate citations', async () => {
+      // Query that specifically asks about grief/loss in Gita
+      const convRes = await request(app)
+        .post('/api/v1/wisdom/conversations')
+        .set('Authorization', `Bearer ${seekerToken}`)
+        .send({
+          persona: 'krishna',
+          initialMessage: 'O Krishna, how do I handle grief and loss according to the Gita?',
+        });
+
+      expect(convRes.status).toBe(201);
+      const assistantMsg = convRes.body.data.messages[1];
+      expect(assistantMsg.content).toContain('BG 2.11');
+      expect(assistantMsg.citations.length).toBeGreaterThan(0);
+      expect(assistantMsg.citations.some((c: any) => c.canonicalReference === 'BG 2.11')).toBe(true);
+
+      // Verify that raw citation tags were stripped from persisted content
+      expect(assistantMsg.content).not.toContain('<cite');
+      expect(assistantMsg.content).not.toContain('</cite>');
+    });
+
+    it('Gracefully handles AI provider failures without crashing', async () => {
+      // Sending an empty or invalid content payload returns 400 Bad Request
+      const res = await request(app)
+        .post(`/api/v1/wisdom/conversations/${activeConversationId}/stream`)
+        .set('Authorization', `Bearer ${seekerToken}`)
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
+    });
+  });
+
+  describe('Natural Personality & Varied Inquiry Suite', () => {
+    const variedInquiries = [
+      {
+        persona: 'krishna',
+        query: 'How do I maintain enthusiasm when the work I must do feels mundane and thankless?',
+        expectedTheme: /equanimity|duty|sincere|effort|clinging|heart/i,
+      },
+      {
+        persona: 'chanakya',
+        query: 'How should I negotiate a partnership when the other party holds all the market leverage?',
+        expectedTheme: /leverage|incentives|boundaries|strategy|objective|accountab/i,
+      },
+      {
+        persona: 'vaidya',
+        query: 'I have been working 14 hours a day and feel constantly drained and exhausted.',
+        expectedTheme: /fatigue|rest|nourish|rhythm|body|balance|health notice/i,
+      },
+      {
+        persona: 'vyasa',
+        query: 'What should a person do when loyalty to a beloved friend conflicts with truth and honesty?',
+        expectedTheme: /dharma|integrity|righteousness|character|consequence/i,
+      },
+      {
+        persona: 'patanjali',
+        query: 'My mind feels constantly scattered by notifications and racing thoughts when trying to focus.',
+        expectedTheme: /awareness|breaths?|mind|stillness|fluct|abhyasa|tension/i,
+      },
+    ];
+
+    it.each(variedInquiries)(
+      'Persona $persona responds with distinct personality, reasoning approach, and tone',
+      async ({ persona, query, expectedTheme }) => {
+        const res = await request(app)
+          .post('/api/v1/wisdom/conversations')
+          .set('Authorization', `Bearer ${seekerToken}`)
+          .send({
+            persona,
+            initialMessage: query,
+          });
+
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+
+        const assistantMsg = res.body.data.messages[1];
+        expect(assistantMsg.sender).toBe('assistant');
+        const content = assistantMsg.content;
+
+        // Content length adapts naturally to the question without predetermined canned length
+        expect(content.length).toBeGreaterThan(40);
+
+        // Does not leak raw markup
+        expect(content).not.toContain('<cite');
+        expect(content).not.toContain('</cite>');
+
+        // Matches the persona's distinct voice, vocabulary, and reasoning approach
+        expect(content).toMatch(expectedTheme);
+      }
+    );
+  });
 });

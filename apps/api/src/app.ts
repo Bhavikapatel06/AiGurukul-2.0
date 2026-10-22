@@ -32,6 +32,7 @@ import { GamificationService } from './services/gamification.service.js';
 import { LanguageController } from './controllers/language.controller.js';
 import { TranslationService } from './services/translation.service.js';
 import { EtymologyService } from './services/etymology.service.js';
+import { OCRProviderFactory } from './services/ocr/index.js';
 import {
   UserRepository,
   SessionRepository,
@@ -184,15 +185,6 @@ export function createApp(options: CreateAppOptions): Express {
     options.authService ||
     new AuthService(userRepo, sessionRepo, googleAuthService, config, logger);
 
-  const aiProvider = options.aiProvider || AIProviderFactory.create(config.AI_PROVIDER);
-  const wisdomService =
-    options.wisdomService ||
-    new WisdomService(conversationRepo, messageRepo, verseRepo, userRepo, aiProvider, logger);
-
-  const ayurvedaService = options.ayurvedaService || new AyurvedaService(ayurvedaRepo);
-
-  const graphService = options.graphService || new KnowledgeGraphService(graphRepo);
-
   const storageProvider = StorageProviderFactory.create(config.STORAGE_PROVIDER);
   const embeddingProvider = EmbeddingProviderFactory.create(config.EMBEDDING_PROVIDER);
   const vectorStore = VectorStoreFactory.create(config.VECTOR_STORE_PROVIDER);
@@ -204,12 +196,38 @@ export function createApp(options: CreateAppOptions): Express {
   const ragService =
     options.ragService || new RAGService(docRepo, chunkRepo, embeddingProvider, vectorStore);
 
-  const quizService = options.quizService || new QuizService(quizRepo, quizAttemptRepo, aiProvider);
+  // Trigger non-blocking vector store hydration from canonical documents on startup
+  ragService.ensureHydrated().catch((err) => {
+    logger.warn({ err }, 'RAG vector store initial hydration deferred');
+  });
+
+  const aiProvider = options.aiProvider || AIProviderFactory.create(config.AI_PROVIDER);
+  const wisdomService =
+    options.wisdomService ||
+    new WisdomService(
+      conversationRepo,
+      messageRepo,
+      verseRepo,
+      userRepo,
+      aiProvider,
+      logger,
+      ragService
+    );
+
+  const ayurvedaService = options.ayurvedaService || new AyurvedaService(ayurvedaRepo);
+
+  const graphService = options.graphService || new KnowledgeGraphService(graphRepo);
+
+  const quizService =
+    options.quizService || new QuizService(quizRepo, quizAttemptRepo, aiProvider, ragService);
 
   const gamificationService =
     options.gamificationService || new GamificationService(gamificationRepo);
 
-  const translationService = options.translationService || new TranslationService(manuscriptRepo);
+  const ocrProvider = OCRProviderFactory.create(config.GEMINI_API_KEY);
+
+  const translationService =
+    options.translationService || new TranslationService(manuscriptRepo, aiProvider, ocrProvider);
 
   const etymologyService = options.etymologyService || new EtymologyService();
 

@@ -7,10 +7,19 @@ import {
   TranslationResultDTO,
   ManuscriptDTO,
   VirtualKeyboardLayout,
+  ImageOCRRequestDTO,
+  ImageOCRResultDTO,
+  BadRequestError,
 } from '@ai-gurukul/types';
+import { AIProvider } from '@ai-gurukul/ai';
+import { OCRProvider } from './ocr/ocr.interface.js';
 
 export class TranslationService {
-  constructor(private manuscriptRepo: ManuscriptRepository) {}
+  constructor(
+    private manuscriptRepo: ManuscriptRepository,
+    private aiProvider?: AIProvider,
+    private ocrProvider?: OCRProvider
+  ) {}
 
   getSupportedLanguages(): Record<SupportedLanguage, LanguageInfo> {
     return SUPPORTED_LANGUAGES_REGISTRY;
@@ -213,9 +222,34 @@ export class TranslationService {
     return currentText + keyChar;
   }
 
+  public detectLanguage(text: string): SupportedLanguage {
+    const clean = text.trim();
+    if (/[\u0B80-\u0BFF]/.test(clean)) return 'ta'; // Tamil
+    if (/[\u0A80-\u0AFF]/.test(clean)) return 'gu'; // Gujarati
+    if (/[\u0900-\u097F]/.test(clean)) {
+      if (/\b(धम्म|धम्मो|दुक्ख|पुब्ब|सेट्ठ|मना|ततो|चे|भासति|विञ्ञा|सुत्त|अत्त|सब्ब)\b/i.test(clean)) {
+        return 'pli'; // Pali
+      }
+      if (/\b(है|हैं|था|थी|थे|हूँ|का|की|के|में|से|को|और|नहीं|यह|वह|कर|किया|होता)\b/.test(clean)) {
+        return 'hi'; // Hindi
+      }
+      return 'sa'; // Default classical Devanagari is Sanskrit
+    }
+    return 'en'; // Default Latin / English
+  }
+
   async translateText(request: TranslateRequestDTO): Promise<TranslationResultDTO> {
-    const { sourceLanguage, targetLanguage, text } = request;
-    const cleanText = text.trim();
+    const cleanText = request.text.trim();
+    if (!cleanText) {
+      throw new BadRequestError('Text to translate cannot be empty');
+    }
+
+    const effectiveSource: SupportedLanguage =
+      !request.sourceLanguage || request.sourceLanguage === 'auto'
+        ? this.detectLanguage(cleanText)
+        : request.sourceLanguage;
+
+    const targetLanguage = request.targetLanguage || 'en';
 
     const normalize = (s: string) =>
       s
@@ -226,7 +260,7 @@ export class TranslationService {
         .toLowerCase();
     const cleanNorm = normalize(cleanText);
 
-    // 1. Check if the text matches a known manuscript or verse directly
+    // 1. Check if the text matches a known canonical manuscript or verse directly
     const allManuscripts = await this.manuscriptRepo.findAll();
     for (const m of allManuscripts) {
       const origNorm = normalize(m.originalText);
@@ -244,28 +278,82 @@ export class TranslationService {
         const trans = m.translations[targetLanguage];
         if (trans) {
           return {
-            sourceLanguage,
+            sourceLanguage: effectiveSource,
             targetLanguage,
             sourceText: cleanText,
             translatedText: trans.translation,
             transliteration: m.transliteration,
-            confidence: 0.98,
+            confidence: 0.99,
             method: 'canonical_cache',
             breakdown: m.wordBreakdown,
             etymologyNotes: trans.philosophicalCommentary,
+            detectedSourceLanguage: effectiveSource,
           };
         }
       }
     }
 
     // 2. Lexical canonical translation dictionary for key philosophical terms and shlokas
-    const lexiconMatch = this.getLexicalTranslation(cleanText, sourceLanguage, targetLanguage);
+    const lexiconMatch = this.getLexicalTranslation(cleanText, effectiveSource, targetLanguage);
     if (lexiconMatch) {
-      return lexiconMatch;
+      return {
+        ...lexiconMatch,
+        detectedSourceLanguage: effectiveSource,
+      };
     }
 
-    // 3. Fallback Synthesizer for arbitrary text
-    return this.synthesizeTranslation(cleanText, sourceLanguage, targetLanguage);
+    // 3. AI Translation using configured AI Provider
+    if (this.aiProvider) {
+      try {
+        const prompt = `You are a Vedic linguist and multi-tradition translator.
+Translate the following text faithfully from ${effectiveSource.toUpperCase()} to ${targetLanguage.toUpperCase()}.
+CRITICAL TRANSLATION RULES:
+- Faithfully preserve the exact meaning, technical nuances, proper names, numbers, paragraphs, and formatting.
+- For ancient philosophical or spiritual terms (like Dharma, Karma, Sattva, Moksha, etc.), maintain their rich context without oversimplifying.
+- If source is Sanskrit or classical language, provide an accurate IAST / romanized transliteration.
+- Provide concise grammatical or etymological notes explaining key terms.
+
+Return strictly valid JSON without markdown wrapping:
+{
+  "translatedText": "the faithful translation",
+  "transliteration": "romanized transliteration if applicable or empty string",
+  "confidence": 0.95,
+  "etymologyNotes": "concise philosophical/grammatical insights",
+  "detectedSourceLanguage": "${effectiveSource}"
+}
+
+Text to translate:
+${cleanText}`;
+
+        const aiResponse = await this.aiProvider.generateCompletion([
+          { role: 'system', content: 'You are an authoritative Sanskrit and ancient Indian language translator.' },
+          { role: 'user', content: prompt },
+        ]);
+
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed && parsed.translatedText) {
+            return {
+              sourceLanguage: effectiveSource,
+              targetLanguage,
+              sourceText: cleanText,
+              translatedText: String(parsed.translatedText).trim(),
+              transliteration: parsed.transliteration ? String(parsed.transliteration).trim() : undefined,
+              confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.95,
+              method: 'ai_synthesizer',
+              etymologyNotes: parsed.etymologyNotes ? String(parsed.etymologyNotes).trim() : undefined,
+              detectedSourceLanguage: effectiveSource,
+            };
+          }
+        }
+      } catch {
+        // Fallback to synthesizer
+      }
+    }
+
+    // 4. Fallback Synthesizer for arbitrary text
+    return this.synthesizeTranslation(cleanText, effectiveSource, targetLanguage);
   }
 
   private getLexicalTranslation(
@@ -393,5 +481,82 @@ export class TranslationService {
       throw new Error(`Manuscript with slug "${slug}" not found.`);
     }
     return m;
+  }
+
+  async extractImageText(request: ImageOCRRequestDTO): Promise<ImageOCRResultDTO> {
+    if (!request.imageBase64 || typeof request.imageBase64 !== 'string') {
+      throw new BadRequestError('Image data must be provided as a base64 encoded string.');
+    }
+
+    let base64Clean = request.imageBase64.trim();
+    let detectedMime = request.mimeType || 'image/jpeg';
+
+    const dataUrlMatch = base64Clean.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+    if (dataUrlMatch) {
+      detectedMime = dataUrlMatch[1];
+      base64Clean = dataUrlMatch[2];
+    }
+
+    const buffer = Buffer.from(base64Clean, 'base64');
+    if (buffer.length === 0) {
+      throw new BadRequestError('Uploaded image payload is empty or corrupted.');
+    }
+
+    const maxSizeBytes = 8 * 1024 * 1024; // 8MB
+    if (buffer.length > maxSizeBytes) {
+      throw new BadRequestError('Uploaded image exceeds the 8MB size limit. Please upload a smaller image.');
+    }
+
+    if (!this.ocrProvider) {
+      throw new BadRequestError('OCR engine is currently not configured on this server.');
+    }
+
+    const ocrResult = await this.ocrProvider.extractText(buffer, {
+      mimeType: detectedMime,
+      languageHint:
+        request.sourceLanguage && request.sourceLanguage !== 'auto' ? request.sourceLanguage : undefined,
+    });
+
+    const text = ocrResult.text.trim();
+    const detectedLanguage = ocrResult.detectedLanguage || (text ? this.detectLanguage(text) : undefined);
+
+    return {
+      extractedText: text,
+      detectedLanguage,
+      confidence: ocrResult.confidence,
+      isReadable: ocrResult.isReadable && text.length > 0,
+      warning: ocrResult.warning,
+    };
+  }
+
+  async translateImage(request: ImageOCRRequestDTO): Promise<ImageOCRResultDTO> {
+    const ocrRes = await this.extractImageText(request);
+
+    if (!ocrRes.isReadable || !ocrRes.extractedText.trim()) {
+      return {
+        ...ocrRes,
+        warning:
+          ocrRes.warning ||
+          'No readable text could be recognized from the image. Please verify that the image is sharply focused and well illuminated.',
+        translation: undefined,
+      };
+    }
+
+    const effectiveSource =
+      (ocrRes.detectedLanguage as SupportedLanguage) ||
+      (request.sourceLanguage && request.sourceLanguage !== 'auto'
+        ? request.sourceLanguage
+        : this.detectLanguage(ocrRes.extractedText));
+
+    const translationResult = await this.translateText({
+      text: ocrRes.extractedText,
+      sourceLanguage: effectiveSource,
+      targetLanguage: request.targetLanguage || 'en',
+    });
+
+    return {
+      ...ocrRes,
+      translation: translationResult,
+    };
   }
 }
