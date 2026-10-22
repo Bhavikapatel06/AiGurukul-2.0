@@ -49,17 +49,184 @@ a:hover {
 }
 
 .temple-card {
-  background: var(--surface-stone);
-  border: 1px solid rgba(212, 175, 55, 0.15);
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  background: linear-gradient(155deg, rgba(35, 30, 20, 0.82) 0%, rgba(18, 15, 10, 0.94) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 14px;
+  padding: 1.75rem;
+  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(242, 214, 117, 0.15);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.28s ease, 
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top edge golden light beam */
+.temple-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(242, 214, 117, 0.4) 50%, transparent);
+  opacity: 0.6;
+  transition: opacity 0.3s ease, height 0.3s ease;
 }
 
 .temple-card:hover {
-  border-color: rgba(212, 175, 55, 0.4);
-  transform: translateY(-2px);
+  border-color: rgba(242, 214, 117, 0.5);
+  transform: translateY(-5px) scale(1.006);
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.85), 
+              0 0 30px rgba(212, 175, 55, 0.2), 
+              inset 0 1px 1px rgba(242, 214, 117, 0.35);
+}
+
+.temple-card:hover::before {
+  opacity: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(242, 214, 117, 0.85) 50%, transparent);
+}
+
+/* Featured Card with Radiant Gold Aura */
+.temple-card-featured {
+  background: linear-gradient(160deg, rgba(46, 38, 22, 0.88) 0%, rgba(22, 18, 11, 0.96) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.75), 
+              0 0 28px rgba(212, 175, 55, 0.22), 
+              inset 0 1px 2px rgba(242, 214, 117, 0.3);
+}
+
+.temple-card-featured:hover {
+  border-color: var(--gold-radiance);
+  box-shadow: 0 24px 56px -6px rgba(0, 0, 0, 0.9), 
+              0 0 42px rgba(212, 175, 55, 0.35), 
+              inset 0 1px 2px rgba(242, 214, 117, 0.5);
+}
+
+/* Card Interactive Click Response */
+.temple-card-interactive {
+  cursor: pointer;
+}
+
+.temple-card-interactive:active {
+  transform: translateY(-2px) scale(0.992);
+}
+
+/* Card Icon Bubble */
+.card-icon-bubble {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.temple-card:hover .card-icon-bubble {
+  transform: scale(1.08) rotate(3deg);
+  background: rgba(212, 175, 55, 0.18);
+  border-color: rgba(242, 214, 117, 0.5);
+}
+
+/* Card Action Link / Button with animated arrow */
+.card-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.card-action-link .action-arrow {
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.temple-card:hover .card-action-link .action-arrow,
+.card-action-link:hover .action-arrow {
+  transform: translateX(4px);
+}
+
+/* =========================================================================
+   CARD NAVIGATION HEADERS & SEGMENTED TABS
+   ========================================================================= */
+
+.card-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card-nav-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(20, 17, 11, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 9999px;
+  padding: 0.32rem;
+  gap: 0.32rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(212, 175, 55, 0.12);
+}
+
+.card-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.52rem 1.15rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-dust);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-nav-tab:hover:not(.active) {
+  color: var(--gold-radiance);
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.18);
+}
+
+.card-nav-tab.active {
+  background: linear-gradient(135deg, var(--gold-radiance) 0%, var(--gold-sacred) 100%);
+  color: #0D0B08;
+  font-weight: 700;
+  border-color: rgba(242, 214, 117, 0.6);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.card-nav-badge {
+  font-size: 0.72rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+}
+
+.card-nav-tab.active .card-nav-badge {
+  background: rgba(13, 11, 8, 0.2);
+  color: #0D0B08;
 }
 
 .gold-gradient-text {
@@ -74,22 +241,30 @@ a:hover {
   justify-content: center;
   background: linear-gradient(135deg, var(--gold-sacred) 0%, var(--gold-antique) 100%);
   color: #0D0B08;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0.65rem 1.4rem;
-  border-radius: 6px;
-  border: none;
+  border-radius: 8px;
+  border: 1px solid rgba(242, 214, 117, 0.4);
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-sacred:hover {
-  opacity: 0.95;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  filter: brightness(1.08);
+}
+
+.btn-sacred:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .badge {
-  display: inline-block;
-  padding: 0.25rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -98,45 +273,104 @@ a:hover {
   border: 1px solid var(--gold-antique);
   color: var(--gold-radiance);
   background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .input-sacred {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--bg-obsidian);
+  background: rgba(13, 11, 8, 0.85);
   border: 1px solid rgba(212, 175, 55, 0.25);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-vellum);
   font-family: var(--font-sans);
   font-size: 0.95rem;
   outline: none;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input-sacred:focus {
-  border-color: var(--gold-sacred);
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+  border-color: var(--gold-radiance);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25), inset 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .btn-outline-sacred {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: rgba(212, 175, 55, 0.04);
   color: var(--gold-radiance);
   font-weight: 600;
   padding: 0.6rem 1.3rem;
-  border-radius: 6px;
-  border: 1px solid var(--gold-sacred);
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 .btn-outline-sacred:hover {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.16);
   border-color: var(--gold-radiance);
   color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
+}
+
+.btn-outline-sacred:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Accessible Keyboard Focus Rings */
+:focus-visible {
+  outline: 2px solid var(--gold-radiance);
+  outline-offset: 2px;
+}
+
+/* Standardized Sacred Metadata Pills */
+.sacred-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sacred-pill-gold {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: var(--gold-radiance);
+}
+
+.sacred-pill-cyan {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #7dd3fc;
+}
+
+.sacred-pill-purple {
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  color: #c4b5fd;
+}
+
+.sacred-pill-teal {
+  background: rgba(94, 234, 212, 0.12);
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  color: #5eead4;
+}
+
+.sacred-pill-amber {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
 }
 
 .form-group {
@@ -162,7 +396,27 @@ a:hover {
   }
 }
 
-@media (max-width: 960px) {
+/* Custom Scrollbars for Reader Modals & Tabs */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(13, 11, 8, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.55);
+}
+
+/* Responsive Navigation Breakpoint: 1080px for compact single-row desktop navigation */
+@media (max-width: 1080px) {
   .desktop-nav {
     display: none !important;
   }
@@ -170,5 +424,6 @@ a:hover {
     display: inline-flex !important;
   }
 }
+
 
 

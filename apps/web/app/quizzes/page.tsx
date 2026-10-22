@@ -963,42 +963,27 @@ export default function QuizzesPage() {
         ========================================================================== */}
         {!activeQuiz && !attemptResult && (
           <div>
-            {/* Filter Tabs */}
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '0.5rem',
-                justifyContent: 'center',
-                marginBottom: '1.75rem',
-              }}
-            >
-              {Object.entries(DOMAIN_LABELS).map(([domainKey, meta]) => {
-                const isActive = selectedDomain === domainKey;
-                return (
-                  <button
-                    key={domainKey}
-                    onClick={() => setSelectedDomain(domainKey)}
-                    style={{
-                      background: isActive ? 'rgba(212, 175, 55, 0.2)' : 'var(--surface-stone)',
-                      border: `1px solid ${isActive ? 'var(--gold-sacred)' : 'rgba(212, 175, 55, 0.15)'}`,
-                      color: isActive ? 'var(--gold-radiance)' : 'var(--text-vellum)',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '20px',
-                      fontSize: '0.85rem',
-                      fontWeight: isActive ? 600 : 400,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <span>{meta.icon}</span>
-                    <span>{meta.label}</span>
-                  </button>
-                );
-              })}
+            {/* Card Navigation Segmented Tabs */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+              <div className="card-nav-tabs" style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+                {Object.entries(DOMAIN_LABELS).map(([domainKey, meta]) => {
+                  const isActive = selectedDomain === domainKey;
+                  return (
+                    <button
+                      key={domainKey}
+                      onClick={() => setSelectedDomain(domainKey)}
+                      className={`card-nav-tab ${isActive ? 'active' : ''}`}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        fontSize: '0.84rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.05rem' }}>{meta.icon}</span>
+                      <span>{meta.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Secondary Controls: Search & Difficulty */}
@@ -1009,36 +994,47 @@ export default function QuizzesPage() {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '1rem',
-                marginBottom: '2rem',
-                background: 'rgba(33, 29, 18, 0.5)',
-                padding: '0.75rem 1.25rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(212, 175, 55, 0.1)',
+                marginBottom: '2.5rem',
+                background: 'rgba(20, 17, 11, 0.88)',
+                backdropFilter: 'blur(12px)',
+                padding: '0.85rem 1.4rem',
+                borderRadius: '12px',
+                border: '1px solid rgba(212, 175, 55, 0.22)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
               }}
             >
               {/* Difficulty selector */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-dust)' }}>Difficulty:</span>
-                {['all', 'beginner', 'intermediate', 'advanced'].map((diff) => (
-                  <button
-                    key={diff}
-                    onClick={() => setSelectedDifficulty(diff)}
-                    style={{
-                      background:
-                        selectedDifficulty === diff ? 'var(--gold-sacred)' : 'transparent',
-                      color: selectedDifficulty === diff ? '#0D0B08' : 'var(--text-vellum)',
-                      border: 'none',
-                      padding: '0.25rem 0.65rem',
-                      borderRadius: '12px',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {diff}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-dust)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                  Difficulty:
+                </span>
+                <div style={{ display: 'flex', gap: '0.35rem', background: 'rgba(13, 11, 8, 0.7)', padding: '3px', borderRadius: '20px', border: '1px solid rgba(212, 175, 55, 0.15)' }}>
+                  {['all', 'beginner', 'intermediate', 'advanced'].map((diff) => {
+                    const isDiffActive = selectedDifficulty === diff;
+                    return (
+                      <button
+                        key={diff}
+                        onClick={() => setSelectedDifficulty(diff)}
+                        style={{
+                          background: isDiffActive
+                            ? 'linear-gradient(135deg, var(--gold-sacred) 0%, var(--gold-antique) 100%)'
+                            : 'transparent',
+                          color: isDiffActive ? '#0D0B08' : 'var(--text-vellum)',
+                          border: 'none',
+                          padding: '0.3rem 0.75rem',
+                          borderRadius: '16px',
+                          fontSize: '0.78rem',
+                          fontWeight: isDiffActive ? 700 : 500,
+                          cursor: 'pointer',
+                          textTransform: 'capitalize',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {diff}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Search Bar */}
@@ -1133,13 +1129,15 @@ export default function QuizzesPage() {
                   return (
                     <div
                       key={quiz.id}
-                      className="temple-card"
+                      className="temple-card temple-card-interactive"
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        padding: '1.75rem',
+                        borderTop: `3px solid ${domainMeta.color}`,
+                        boxShadow: `0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 20px ${domainMeta.color}15`,
                       }}
+                      onClick={() => handleStartQuiz(quiz.id)}
                     >
                       <div>
                         {/* Domain Badge & Difficulty */}
@@ -1148,20 +1146,17 @@ export default function QuizzesPage() {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            marginBottom: '1rem',
+                            marginBottom: '1.25rem',
                           }}
                         >
                           <span
+                            className="badge"
                             style={{
-                              background: 'rgba(212, 175, 55, 0.1)',
+                              background: `${domainMeta.color}14`,
                               color: domainMeta.color,
+                              borderColor: `${domainMeta.color}45`,
                               fontSize: '0.78rem',
-                              fontWeight: 600,
-                              padding: '0.25rem 0.65rem',
-                              borderRadius: '12px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
+                              fontWeight: 700,
                             }}
                           >
                             <span>{domainMeta.icon}</span>
@@ -1170,7 +1165,7 @@ export default function QuizzesPage() {
 
                           <span
                             style={{
-                              fontSize: '0.75rem',
+                              fontSize: '0.74rem',
                               textTransform: 'uppercase',
                               color:
                                 quiz.difficulty === 'advanced'
@@ -1179,7 +1174,11 @@ export default function QuizzesPage() {
                                     ? 'var(--gold-radiance)'
                                     : '#68d391',
                               fontWeight: 700,
-                              letterSpacing: '0.05em',
+                              letterSpacing: '0.06em',
+                              background: 'rgba(0, 0, 0, 0.3)',
+                              padding: '0.15rem 0.55rem',
+                              borderRadius: '9999px',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
                             }}
                           >
                             {quiz.difficulty}
@@ -1190,10 +1189,11 @@ export default function QuizzesPage() {
                         <h3
                           style={{
                             fontFamily: 'var(--font-serif)',
-                            fontSize: '1.18rem',
-                            fontWeight: 600,
+                            fontSize: '1.25rem',
+                            fontWeight: 700,
                             marginBottom: '0.75rem',
-                            lineHeight: 1.4,
+                            color: 'var(--text-vellum)',
+                            lineHeight: 1.35,
                           }}
                         >
                           {quiz.title}
@@ -1204,7 +1204,8 @@ export default function QuizzesPage() {
                           <p
                             style={{
                               color: 'var(--text-dust)',
-                              fontSize: '0.88rem',
+                              fontSize: '0.9rem',
+                              lineHeight: 1.6,
                               marginBottom: '1.25rem',
                               display: '-webkit-box',
                               WebkitLineClamp: 3,
@@ -1231,10 +1232,11 @@ export default function QuizzesPage() {
                                 key={tIdx}
                                 style={{
                                   fontSize: '0.72rem',
-                                  background: 'rgba(255, 255, 255, 0.04)',
-                                  color: 'var(--text-dust)',
-                                  padding: '0.15rem 0.5rem',
-                                  borderRadius: '4px',
+                                  background: 'rgba(212, 175, 55, 0.08)',
+                                  color: 'var(--gold-radiance)',
+                                  padding: '0.18rem 0.55rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(212, 175, 55, 0.18)',
                                 }}
                               >
                                 #{tag}
@@ -1250,23 +1252,31 @@ export default function QuizzesPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          borderTop: '1px solid rgba(212, 175, 55, 0.1)',
-                          paddingTop: '1rem',
+                          borderTop: '1px solid rgba(212, 175, 55, 0.15)',
+                          paddingTop: '1.25rem',
+                          marginTop: '0.5rem',
                         }}
                       >
-                        <span style={{ fontSize: '0.82rem', color: 'var(--text-dust)' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-dust)', fontWeight: 600 }}>
                           📝 {quiz.questionCount} Questions
                         </span>
                         <button
-                          onClick={() => handleStartQuiz(quiz.id)}
-                          className="gold-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartQuiz(quiz.id);
+                          }}
+                          className="btn-outline-sacred card-action-link"
                           style={{
-                            padding: '0.5rem 1.25rem',
-                            fontSize: '0.85rem',
-                            borderRadius: '16px',
+                            padding: '0.45rem 1.15rem',
+                            fontSize: '0.84rem',
+                            fontWeight: 700,
+                            borderColor: domainMeta.color,
+                            color: domainMeta.color,
+                            background: `${domainMeta.color}10`,
                           }}
                         >
-                          Begin Test →
+                          <span>Begin Test</span>
+                          <span className="action-arrow">→</span>
                         </button>
                       </div>
                     </div>
