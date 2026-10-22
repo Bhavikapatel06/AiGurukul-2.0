@@ -856,7 +856,7 @@ export function GlobalFooter() {
                     {(user.displayName || user.email || 'U')[0].toUpperCase()}
                   </div>
                   <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#F2D675', truncate: 'ellipsis' }}>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#F2D675', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                       {user.displayName || user.email.split('@')[0]}
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#8F856F' }}>Learner Account</div>

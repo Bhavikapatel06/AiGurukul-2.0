@@ -8,9 +8,9 @@ import { apiClient } from '../../lib/api';
 // TYPES & DATA DEFINITIONS
 // ---------------------------------------------------------------------------
 
-export type GameCategory = 'ramayana' | 'mahabharata' | 'ayurveda' | 'temples' | 'wisdom';
+type GameCategory = 'ramayana' | 'mahabharata' | 'ayurveda' | 'temples' | 'wisdom';
 
-export interface LevelData {
+interface LevelData {
   id: number;
   name: string;
   title: string;
@@ -22,7 +22,7 @@ export interface LevelData {
   loreQuote: string;
 }
 
-export interface ShopItem {
+interface ShopItem {
   id: string;
   name: string;
   category: 'Jewelry' | 'Weapon' | 'Relic' | 'Decoration' | 'Accessory';
@@ -34,7 +34,7 @@ export interface ShopItem {
   benefit: string;
 }
 
-export const CATEGORIES: { id: GameCategory; name: string; subtitle: string; icon: string; bannerColor: string }[] = [
+const CATEGORIES: { id: GameCategory; name: string; subtitle: string; icon: string; bannerColor: string }[] = [
   { id: 'ramayana', name: 'RAMAYANA', subtitle: 'The Journey of Rama', icon: '🏹', bannerColor: '#eab308' },
   { id: 'mahabharata', name: 'MAHABHARATA', subtitle: 'The Great Epic of India', icon: '🦚', bannerColor: '#3b82f6' },
   { id: 'ayurveda', name: 'AYURVEDA', subtitle: 'Ancient science of life', icon: '🌿', bannerColor: '#10b981' },
@@ -42,7 +42,7 @@ export const CATEGORIES: { id: GameCategory; name: string; subtitle: string; ico
   { id: 'wisdom', name: 'VEDIC WISDOM', subtitle: 'Chanakya & Immortal Sages', icon: '📜', bannerColor: '#f97316' },
 ];
 
-export const CATEGORY_LEVELS: Record<GameCategory, LevelData[]> = {
+const CATEGORY_LEVELS: Record<GameCategory, LevelData[]> = {
   ramayana: [
     {
       id: 1,
@@ -594,7 +594,7 @@ export const CATEGORY_LEVELS: Record<GameCategory, LevelData[]> = {
   ],
 };
 
-export const SHOP_ITEMS: ShopItem[] = [
+const SHOP_ITEMS: ShopItem[] = [
   {
     id: 'gold-crown',
     name: 'Sacred Gold Crown (मुकुट)',
@@ -919,7 +919,7 @@ export default function GamificationPage() {
     } finally {
       setUserLoaded(true);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.displayName, user?.email]);
 
   // Persist game state specifically for the current authenticated user
   useEffect(() => {
@@ -941,7 +941,7 @@ export default function GamificationPage() {
     } catch {
       // Ignore storage error
     }
-  }, [user?.id, userLoaded, coins, unlockedLevels, completedLevels, inventory]);
+  }, [user?.id, user?.displayName, user?.email, userLoaded, coins, unlockedLevels, completedLevels, inventory]);
 
   const activeCategoryData = CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
   const activeLevelData: LevelData = useMemo(() => {
@@ -1502,7 +1502,7 @@ export default function GamificationPage() {
               </button>
             </div>
             <p style={{ color: '#736B59', fontSize: '0.75rem', marginTop: '0.6rem' }}>
-              Levels solved by User 1 remain exclusively on User 1's track and never affect User 2.
+              Levels solved by User 1 remain exclusively on User 1&apos;s track and never affect User 2.
             </p>
           </div>
         </div>
@@ -3139,7 +3139,7 @@ export default function GamificationPage() {
                 margin: 0,
               }}
             >
-              "{activeHintModal}"
+              &ldquo;{activeHintModal}&rdquo;
             </p>
           </div>
         </div>
