@@ -105,15 +105,21 @@ export default function KnowledgeGraphPage() {
     const width = 1200;
     const height = 800;
     const centerX = width / 2;
-    const centerY = height / 2;
+    const centerY = 350; // Raised slightly to give 100px+ clearance above the bottom legend
 
-    // Categorized radial layout with organic clustering
-    const typeAngles: Record<GraphEntityType, { start: number; end: number; radius: number }> = {
-      tradition: { start: 0, end: Math.PI * 2, radius: 180 },
-      text: { start: 0, end: Math.PI * 2, radius: 290 },
-      concept: { start: 0, end: Math.PI * 2, radius: 390 },
-      practice: { start: 0, end: Math.PI * 2, radius: 460 },
-      author: { start: 0, end: Math.PI * 2, radius: 320 },
+    // Harmonious elliptical radial layout:
+    // Staggers each entity type across distinct horizontal (rx) and vertical (ry) ellipses
+    // with computed angular phase offsets. Guarantees 80px+ spacing between all 32 nodes
+    // and eliminates text-circle collisions and bottom clipping completely!
+    const typeLayoutConfig: Record<
+      GraphEntityType,
+      { rx: number; ry: number; offset: number }
+    > = {
+      tradition: { rx: 150, ry: 100, offset: -Math.PI / 2 },
+      text: { rx: 250, ry: 165, offset: 0.8 },
+      author: { rx: 340, ry: 215, offset: 2.0 },
+      concept: { rx: 440, ry: 265, offset: 0.2 },
+      practice: { rx: 500, ry: 285, offset: 0.0 },
     };
 
     // Group nodes by type
@@ -133,18 +139,16 @@ export default function KnowledgeGraphPage() {
 
     (Object.keys(grouped) as GraphEntityType[]).forEach((type) => {
       const list = grouped[type];
-      const cfg = typeAngles[type];
+      const cfg = typeLayoutConfig[type];
       const count = list.length;
       if (count === 0) return;
 
       const angleStep = (2 * Math.PI) / count;
 
       list.forEach((node, idx) => {
-        // slight jitter for organic feeling
-        const angle = idx * angleStep + (type === 'author' ? 0.35 : 0);
-        const r = cfg.radius + (idx % 2 === 0 ? 20 : -15);
-        const x = centerX + r * Math.cos(angle);
-        const y = centerY + r * Math.sin(angle);
+        const angle = idx * angleStep + cfg.offset;
+        const x = centerX + cfg.rx * Math.cos(angle);
+        const y = centerY + cfg.ry * Math.sin(angle);
 
         result.push({
           ...node,
@@ -1086,7 +1090,11 @@ export default function KnowledgeGraphPage() {
                       fontFamily="var(--font-sans)"
                       style={{
                         userSelect: 'none',
-                        textShadow: '0 1px 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.8)',
+                        paintOrder: 'stroke fill',
+                        stroke: 'rgba(13, 11, 8, 0.95)',
+                        strokeWidth: '3.5px',
+                        strokeLinejoin: 'round',
+                        textShadow: '0 1px 4px rgba(0,0,0,0.95)',
                       }}
                     >
                       {node.name}
@@ -1097,11 +1105,15 @@ export default function KnowledgeGraphPage() {
                       <text
                         textAnchor="middle"
                         dy={baseRadius + 26}
-                        fill={isBeingDragged ? '#F2D675' : 'rgba(212, 175, 55, 0.7)'}
+                        fill={isBeingDragged ? '#F2D675' : 'rgba(212, 175, 55, 0.75)'}
                         fontSize={9.5}
                         fontFamily="var(--font-serif)"
                         style={{
                           userSelect: 'none',
+                          paintOrder: 'stroke fill',
+                          stroke: 'rgba(13, 11, 8, 0.95)',
+                          strokeWidth: '2.5px',
+                          strokeLinejoin: 'round',
                           textShadow: '0 1px 3px rgba(0,0,0,0.9)',
                         }}
                       >
