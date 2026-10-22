@@ -1,7 +1,16 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '../hooks/useAuth';
 
 export function GlobalFooter() {
+  const { user, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   return (
     <footer
       style={{
@@ -238,20 +247,80 @@ export function GlobalFooter() {
               Sanctum Gateway
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <Link
-                href="/login"
-                className="btn-outline-sacred"
-                style={{ textAlign: 'center', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-              >
-                Seeker Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="btn-sacred"
-                style={{ textAlign: 'center', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-              >
-                New Seeker Enrollment
-              </Link>
+              {mounted && user ? (
+                <div
+                  style={{
+                    background: 'rgba(212, 175, 55, 0.08)',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
+                    borderRadius: '8px',
+                    padding: '0.85rem 1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <span style={{ fontSize: '1.1rem' }}>🧘</span>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#F2D675' }}>
+                      {user.displayName || user.email.split('@')[0]}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#9A9078', wordBreak: 'break-all' }}>
+                    Seeker Active • {user.email}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem' }}>
+                    <Link
+                      href="/gamification"
+                      style={{
+                        flex: 1,
+                        background: '#D4AF37',
+                        color: '#0D0B08',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        padding: '0.4rem 0.6rem',
+                        borderRadius: '4px',
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      🏆 Sagas
+                    </Link>
+                    <button
+                      onClick={() => logout()}
+                      style={{
+                        flex: 1,
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        color: '#F87171',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '0.4rem 0.6rem',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Log Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="btn-outline-sacred"
+                    style={{ textAlign: 'center', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    Seeker Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="btn-sacred"
+                    style={{ textAlign: 'center', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    New Seeker Enrollment
+                  </Link>
+                </>
+              )}
               <a
                 href="http://localhost:5000/api/v1/wisdom/verses"
                 target="_blank"

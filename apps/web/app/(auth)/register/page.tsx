@@ -25,9 +25,10 @@ export default function RegisterPage() {
     });
     if (ok) {
       setSuccess(true);
+      const redirectUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
       setTimeout(() => {
-        router.push('/');
-      }, 1000);
+        router.push(redirectUrl || '/');
+      }, 800);
     }
   };
 
