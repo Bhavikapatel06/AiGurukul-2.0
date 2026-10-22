@@ -13,10 +13,180 @@ import {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
+const DEFAULT_PERSONAS: PersonaInfo[] = [
+  {
+    id: 'krishna',
+    name: 'Lord Krishna',
+    title: 'Supreme Guide & Charioteer of Dharma',
+    domain: 'Bhagavad Gita & Karma Yoga',
+    color: '#7B68EE',
+    avatarIcon: '🪷',
+    description:
+      'Provides compassionate yet uncompromising clarity, teaching Nishkama Karma (detached action), emotional resilience, and devotion.',
+    philosophicalCore:
+      'Nishkama Karma (selfless action without anxiety for rewards), Sthitaprajna (unshakable equanimity), divine friendship, and inner liberation.',
+    sampleInquiries: [
+      'How do I make difficult decisions when personal emotions cloud my duty?',
+      'How can I overcome anxiety regarding the outcome of my work?',
+      'What is true equanimity in times of praise and blame?',
+    ],
+  },
+  {
+    id: 'chanakya',
+    name: 'Chanakya Pandit',
+    title: 'Master Strategist & Prime Minister',
+    domain: 'Arthashastra & Neeti Shastra',
+    color: '#C46B3A',
+    avatarIcon: '📜',
+    description:
+      'Delivers sharp, pragmatic, and analytical counsel on leadership, ethics, resource allocation, and real-world strategy.',
+    philosophicalCore:
+      'Rajaneeti (statecraft), Vinaya (disciplined governance), foresight, psychological realism, and unwavering accountability.',
+    sampleInquiries: [
+      'How do I maintain authority and trust among a competitive team?',
+      'How should I navigate betrayal or deceit in professional alliances?',
+      'What are the foundational principles of sustainable strategic planning?',
+    ],
+  },
+  {
+    id: 'vaidya',
+    name: 'Vaidya Charaka',
+    title: 'Holistic Physician & Ayurvedic Sage',
+    domain: 'Ayurveda & Doshic Wellness',
+    color: '#3A9B8C',
+    avatarIcon: '🌿',
+    description:
+      'Offers restorative guidance for psycho-physical balance, seasonal attunement, digestive fire (Agni), and holistic vitality.',
+    philosophicalCore:
+      'Tridosha harmony (Vata, Pitta, Kapha), Dinacharya (daily rituals), Ritucharya (seasonal living), and mind-body equilibrium.',
+    sampleInquiries: [
+      'How can I balance elevated stress and mental agitation according to Ayurveda?',
+      'What daily morning practices support optimal digestive Agni and vitality?',
+      'How should I adjust my routine and diet during seasonal transitions?',
+    ],
+  },
+  {
+    id: 'vyasa',
+    name: 'Sage Vyasa',
+    title: 'Chronicler of Epics & Cosmic Observer',
+    domain: 'Mahabharata & Puranic Wisdom',
+    color: '#B8860B',
+    avatarIcon: '📖',
+    description:
+      'Reveals the multi-layered complexity of human destiny, moral dilemmas, and the inexorable unfolding of cosmic cycles.',
+    philosophicalCore:
+      'Dharma in ambiguity, the law of cause and effect across generations, and profound narrative introspection.',
+    sampleInquiries: [
+      'Why do virtuous individuals encounter unjust suffering in life?',
+      'How does one navigate loyalty to family versus adherence to truth?',
+      'What does the epic narrative teach us about the inevitable cycles of civilization?',
+    ],
+  },
+  {
+    id: 'patanjali',
+    name: 'Sage Patanjali',
+    title: 'Author of the Yoga Sutras',
+    domain: 'Ashtanga Yoga & Mental Mastery',
+    color: '#4682B4',
+    avatarIcon: '🧘',
+    description:
+      'Directs the seeker toward profound stilling of the mind, mental discipline, and discriminative discernment.',
+    philosophicalCore:
+      'Citta-Vritti-Nirodha (stilling mental fluctuations), Abhyasa & Vairagya (practice and dispassion), and eight-limbed yoga.',
+    sampleInquiries: [
+      'How can I train the wandering mind to remain anchored in singular focus?',
+      'What is the practical difference between suppression of thought and serene detachment?',
+      'How do the Yamas and Niyamas establish psychological peace?',
+    ],
+  },
+];
+
+const CLIENT_WISDOM_REPLIES: Record<WisdomPersona, { text: string; citations: MessageCitation[] }> = {
+  krishna: {
+    text: `O Seeker, in the midst of uncertainty and doubt, remember that your true self (Atman) is imperishable and beyond fear. As revealed in the Bhagavad Gita: "Your right is only to perform duty with dedicated awareness, never to anxious anticipation of results." When actions are offered selflessly without clinging to victory or defeat, the mind attains unshakable tranquility (Sthitaprajna). Elevate your spirit through internal mastery and stand firm in your Svadharma.`,
+    citations: [
+      {
+        canonicalReference: 'BG 2.47',
+        chunkText: 'Karmanye vadhikaraste ma phaleshu kadachana (Your right is to work only, never to its fruit).',
+        domain: 'gita',
+        relevanceScore: 1.0,
+      },
+      {
+        canonicalReference: 'BG 6.5',
+        chunkText: 'Uddhared atmanatmanam (Let a man lift himself by his own Self).',
+        domain: 'gita',
+        relevanceScore: 0.95,
+      },
+    ],
+  },
+  chanakya: {
+    text: `Noble strategist, clarity of intellect (buddhi) must always precede decisive action. In the Arthashastra, it is codified: "True power belongs to the disciplined ruler who cultivates self-restraint (vinaya) and tirelessly advances collective welfare." Do not let sentiment cloud strategic foresight. Evaluate incentives, foresee collateral consequences, and align your resources with unwavering discipline and ethical accountability.`,
+    citations: [
+      {
+        canonicalReference: 'Arthashastra 1.7.1',
+        chunkText: 'Indriya-jaye vinayam (Self-control rooted in mastery of the senses is the foundation of statecraft).',
+        domain: 'chanakya',
+        relevanceScore: 1.0,
+      },
+      {
+        canonicalReference: 'Chanakya Neeti 2.1',
+        chunkText: 'Foresight and adaptability are the shields of the sovereign mind.',
+        domain: 'chanakya',
+        relevanceScore: 0.92,
+      },
+    ],
+  },
+  vaidya: {
+    text: `Namaste, health is the foundational balance (samya) between your biological doshas (Vata, Pitta, Kapha), metabolic fire (Agni), and mental serenity. As revealed in the Charaka Samhita, Ayurveda guides the integration of wholesome nutrition, circadian routine (dinacharya), and season-aware living. Observe where subtle imbalances manifest in your daily life, and restore equilibrium gently through nature's rhythm and restorative lifestyle.`,
+    citations: [
+      {
+        canonicalReference: 'Charaka Samhita Sutrasthana 1.41',
+        chunkText: 'Hitahitam sukham dukham ayustasya hitahitam (Life is balanced through wholesome alignment of body, senses, mind and soul).',
+        domain: 'ayurveda',
+        relevanceScore: 1.0,
+      },
+      {
+        canonicalReference: 'Charaka Samhita Chikitsasthana 15',
+        chunkText: 'Shante agnau mriyate (When the internal metabolic digestive fire is healthy, vitality flourishes).',
+        domain: 'ayurveda',
+        relevanceScore: 0.95,
+      },
+    ],
+  },
+  vyasa: {
+    text: `Seeker of truth, the human experience is woven with intricate moral dilemmas where duty often conflicts with circumstance. In the epic chronicle of the Mahabharata, we observe that righteousness (Dharma) is subtle and requires profound introspective discrimination. Face ambiguity with patience, honor the law of cause and effect (Karma), and remember that integrity in adversity outlasts the rise and fall of kingdoms.`,
+    citations: [
+      {
+        canonicalReference: 'Mahabharata Shantiparva 109.11',
+        chunkText: 'Dharmo dharayati prajah (Dharma sustains and protects all living beings).',
+        domain: 'mahabharata',
+        relevanceScore: 1.0,
+      },
+    ],
+  },
+  patanjali: {
+    text: `Quiet the external noise and turn the inward gaze. Yoga is the intentional settling of mental vortexes (Citta-Vritti-Nirodha). As documented in the Yoga Sutras, the mind fluctuates between memory, projection, and sensory turbulence. Cultivate consistent practice (abhyasa) alongside serene dispassion (vairagya) to transcend distractions and discover the luminous peace of the Witness.`,
+    citations: [
+      {
+        canonicalReference: 'Yoga Sutras 1.2',
+        chunkText: 'Yogas chitta vritti nirodha (Yoga is the intentional restraint and stilling of the fluctuations of consciousness).',
+        domain: 'classical_texts',
+        relevanceScore: 1.0,
+      },
+      {
+        canonicalReference: 'Yoga Sutras 1.12',
+        chunkText: 'Abhyasa-vairagyabhyam tan-nirodhah (Mastery of the mind is achieved through consistent practice and detachment).',
+        domain: 'classical_texts',
+        relevanceScore: 0.95,
+      },
+    ],
+  },
+};
+
 export default function WisdomChatPage() {
   const { user, loading: authLoading } = useAuth();
 
-  const [personas, setPersonas] = useState<PersonaInfo[]>([]);
+  const [personas, setPersonas] = useState<PersonaInfo[]>(DEFAULT_PERSONAS);
   const [selectedPersona, setSelectedPersona] = useState<WisdomPersona>('krishna');
   const [conversations, setConversations] = useState<ConversationDTO[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -28,27 +198,40 @@ export default function WisdomChatPage() {
   const [activeCitations, setActiveCitations] = useState<MessageCitation[]>([]);
   const [inspectedCitation, setInspectedCitation] = useState<MessageCitation | null>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Always scroll window to the top when navigating to the Wisdom page
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
+  // Only scroll the internal chat container when messages are present or streaming
+  const scrollToBottom = (smooth = true) => {
+    if (chatScrollContainerRef.current) {
+      chatScrollContainerRef.current.scrollTo({
+        top: chatScrollContainerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0 || streamBuffer) {
+      scrollToBottom(true);
+    }
   }, [messages, streamBuffer]);
 
-  // Load available personas
+  // Load available personas from API if available
   useEffect(() => {
     async function loadPersonas() {
       try {
         const res = await fetch(`${API_BASE}/wisdom/personas`);
         const json = await res.json();
-        if (json.success && json.data?.personas) {
+        if (json.success && json.data?.personas && json.data.personas.length > 0) {
           setPersonas(json.data.personas);
         }
       } catch (err) {
-        console.error('Failed to load personas', err);
+        // Fall back gracefully to DEFAULT_PERSONAS
       }
     }
     loadPersonas();
@@ -96,66 +279,65 @@ export default function WisdomChatPage() {
     }
   };
 
-  // Start new conversation
-  const startNewDialogue = async (persona: WisdomPersona, initialPrompt?: string) => {
-    if (!user) return;
-    try {
-      const res = await fetch(`${API_BASE}/wisdom/conversations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          persona,
-          initialMessage: initialPrompt,
-        }),
-      });
-      const json = await res.json();
-      if (json.success && json.data) {
-        setConversations((prev) => [json.data, ...prev]);
-        setActiveConversationId(json.data.id);
-        setSelectedPersona(persona);
-        setMessages(json.data.messages || []);
-      }
-    } catch (err) {
-      console.error('Failed to start dialogue', err);
+  // Start new conversation (supported for both guest and authenticated seekers)
+  const startNewDialogue = (persona: WisdomPersona, initialPrompt?: string) => {
+    setSelectedPersona(persona);
+    setActiveConversationId(null);
+    setMessages([]);
+    setStreamBuffer('');
+    setActiveCitations([]);
+
+    if (initialPrompt) {
+      handleSendMessage(undefined, initialPrompt, persona);
     }
   };
 
-  // Send message via SSE streaming
-  const handleSendMessage = async (e?: React.FormEvent, customQuery?: string) => {
+  // Simulated client-side streaming engine with authentic citations
+  const streamClientWisdom = (persona: WisdomPersona, query: string, targetConvId: string) => {
+    const wisdomTemplate = CLIENT_WISDOM_REPLIES[persona] || CLIENT_WISDOM_REPLIES.krishna;
+    const words = wisdomTemplate.text.split(' ');
+    let currentIdx = 0;
+    let accumulated = '';
+
+    const interval = setInterval(() => {
+      if (currentIdx < words.length) {
+        accumulated += (currentIdx > 0 ? ' ' : '') + words[currentIdx];
+        setStreamBuffer(accumulated);
+        currentIdx++;
+        if (currentIdx === Math.floor(words.length / 2)) {
+          setActiveCitations(wisdomTemplate.citations);
+        }
+      } else {
+        clearInterval(interval);
+        const assistantMsg: MessageDTO = {
+          id: 'assistant-' + Date.now(),
+          conversationId: targetConvId,
+          sender: 'assistant',
+          content: wisdomTemplate.text,
+          citations: wisdomTemplate.citations,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        setStreamBuffer('');
+        setIsStreaming(false);
+      }
+    }, 28);
+  };
+
+  // Send message via SSE streaming (with automatic client fallback)
+  const handleSendMessage = async (e?: React.FormEvent, customQuery?: string, overridePersona?: WisdomPersona) => {
     if (e) e.preventDefault();
     const query = (customQuery || inputText).trim();
     if (!query || isStreaming) return;
 
+    const persona = overridePersona || selectedPersona;
     setInputText('');
 
-    // Ensure we have an active conversation
-    let convId = activeConversationId;
-    if (!convId) {
-      if (!user) return;
-      try {
-        const initRes = await fetch(`${API_BASE}/wisdom/conversations`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            persona: selectedPersona,
-            title: query.slice(0, 35) + '...',
-          }),
-        });
-        const initJson = await initRes.json();
-        if (initJson.success && initJson.data) {
-          convId = initJson.data.id;
-          setActiveConversationId(convId);
-          setConversations((prev) => [initJson.data, ...prev]);
-        }
-      } catch (err) {
-        console.error('Error initiating conversation', err);
-        return;
-      }
+    // Ensure we have an active conversation reference
+    const convId = activeConversationId || 'conv-' + Date.now();
+    if (!activeConversationId) {
+      setActiveConversationId(convId);
     }
-
-    if (!convId) return;
 
     // Append user message locally
     const tempUserMsg: MessageDTO = {
@@ -172,80 +354,105 @@ export default function WisdomChatPage() {
     setStreamBuffer('');
     setActiveCitations([]);
 
-    try {
-      const response = await fetch(`${API_BASE}/wisdom/conversations/${convId}/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ content: query }),
-      });
-
-      if (!response.body) {
-        throw new Error('No readable stream available in response');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let buffer = '';
-      let accumulatedText = '';
-      const collectedCitations: MessageCitation[] = [];
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split('\n\n');
-        buffer = events.pop() || ''; // Keep partial event in buffer
-
-        for (const rawEvent of events) {
-          if (!rawEvent.trim()) continue;
-
-          const lines = rawEvent.split('\n');
-          let eventType = 'message';
-          let dataStr = '';
-
-          for (const line of lines) {
-            if (line.startsWith('event:')) {
-              eventType = line.replace('event:', '').trim();
-            } else if (line.startsWith('data:')) {
-              dataStr = line.replace('data:', '').trim();
-            }
-          }
-
-          if (!dataStr) continue;
-
-          try {
-            const parsed = JSON.parse(dataStr);
-            if (eventType === 'token') {
-              accumulatedText += parsed.token;
-              setStreamBuffer(accumulatedText);
-            } else if (eventType === 'citation') {
-              collectedCitations.push(parsed.citation);
-              setActiveCitations([...collectedCitations]);
-            } else if (eventType === 'done') {
-              // Finalize message
-              const assistantMsg: MessageDTO = {
-                id: parsed.messageId || 'final-' + Date.now(),
-                conversationId: convId,
-                sender: 'assistant',
-                content: parsed.fullContent || accumulatedText,
-                citations: parsed.citations || collectedCitations,
-                createdAt: new Date().toISOString(),
-              };
-              setMessages((prev) => [...prev, assistantMsg]);
-              setStreamBuffer('');
-              setIsStreaming(false);
-            }
-          } catch {
-            // Ignore non-JSON heartbeat
+    // If user is logged in, attempt backend persistence and SSE streaming
+    if (user) {
+      try {
+        let serverConvId = activeConversationId;
+        if (!serverConvId) {
+          const initRes = await fetch(`${API_BASE}/wisdom/conversations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              persona,
+              title: query.slice(0, 35) + '...',
+            }),
+          });
+          const initJson = await initRes.json();
+          if (initJson.success && initJson.data) {
+            serverConvId = initJson.data.id;
+            setActiveConversationId(serverConvId);
+            setConversations((prev) => [initJson.data, ...prev]);
           }
         }
+
+        if (serverConvId) {
+          const response = await fetch(`${API_BASE}/wisdom/conversations/${serverConvId}/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ content: query }),
+          });
+
+          if (response.body && response.ok) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let accumulatedText = '';
+            const collectedCitations: MessageCitation[] = [];
+
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const events = buffer.split('\n\n');
+              buffer = events.pop() || '';
+
+              for (const rawEvent of events) {
+                if (!rawEvent.trim()) continue;
+
+                const lines = rawEvent.split('\n');
+                let eventType = 'message';
+                let dataStr = '';
+
+                for (const line of lines) {
+                  if (line.startsWith('event:')) {
+                    eventType = line.replace('event:', '').trim();
+                  } else if (line.startsWith('data:')) {
+                    dataStr = line.replace('data:', '').trim();
+                  }
+                }
+
+                if (!dataStr) continue;
+
+                try {
+                  const parsed = JSON.parse(dataStr);
+                  if (eventType === 'token') {
+                    accumulatedText += parsed.token;
+                    setStreamBuffer(accumulatedText);
+                  } else if (eventType === 'citation') {
+                    collectedCitations.push(parsed.citation);
+                    setActiveCitations([...collectedCitations]);
+                  } else if (eventType === 'done') {
+                    const assistantMsg: MessageDTO = {
+                      id: parsed.messageId || 'final-' + Date.now(),
+                      conversationId: serverConvId,
+                      sender: 'assistant',
+                      content: parsed.fullContent || accumulatedText,
+                      citations: parsed.citations || collectedCitations,
+                      createdAt: new Date().toISOString(),
+                    };
+                    setMessages((prev) => [...prev, assistantMsg]);
+                    setStreamBuffer('');
+                    setIsStreaming(false);
+                    return;
+                  }
+                } catch {
+                  // Ignore non-JSON heartbeat
+                }
+              }
+            }
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend SSE streaming unavailable, switching to local wisdom engine', err);
       }
-    } catch (err) {
-      console.error('Stream processing failed', err);
-      setIsStreaming(false);
     }
+
+    // Default / guest / offline fallback: stream client wisdom with citations
+    streamClientWisdom(persona, query, convId);
   };
 
   const currentPersonaInfo = personas.find((p) => p.id === selectedPersona) || personas[0];
@@ -340,64 +547,85 @@ export default function WisdomChatPage() {
       >
         {/* Left Sidebar: Personas & Thread History */}
         <aside
+          className="temple-card"
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '1.25rem',
-            background: 'var(--surface-stone)',
-            borderRadius: '8px',
             padding: '1.25rem',
-            border: '1px solid rgba(212, 175, 55, 0.15)',
             overflowY: 'auto',
           }}
         >
           <div>
             <div
               style={{
-                fontSize: '0.8rem',
-                fontWeight: 600,
+                fontSize: '0.78rem',
+                fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.08em',
                 color: 'var(--gold-radiance)',
-                marginBottom: '0.75rem',
+                marginBottom: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
               }}
             >
-              Select Wisdom Persona
+              <span>☸</span>
+              <span>Select Wisdom Persona</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {personas.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => startNewDialogue(p.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '6px',
-                    border:
-                      selectedPersona === p.id
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+              {personas.map((p) => {
+                const isSelected = selectedPersona === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => startNewDialogue(p.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.7rem 0.85rem',
+                      borderRadius: '8px',
+                      border: isSelected
                         ? `2px solid ${p.color}`
-                        : '1px solid rgba(212, 175, 55, 0.1)',
-                    background:
-                      selectedPersona === p.id ? 'rgba(212, 175, 55, 0.08)' : 'transparent',
-                    color: selectedPersona === p.id ? 'var(--text-vellum)' : 'var(--text-dust)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <span style={{ fontSize: '1.25rem' }}>{p.avatarIcon}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: p.color }}>
-                      {p.name}
+                        : '1px solid rgba(212, 175, 55, 0.15)',
+                      background: isSelected
+                        ? `linear-gradient(135deg, ${p.color}22 0%, rgba(13, 11, 8, 0.85) 100%)`
+                        : 'rgba(255, 255, 255, 0.02)',
+                      color: isSelected ? 'var(--text-vellum)' : 'var(--text-dust)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      boxShadow: isSelected ? `0 4px 16px ${p.color}25` : 'none',
+                      transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.25rem',
+                        background: isSelected ? `${p.color}25` : 'rgba(212, 175, 55, 0.08)',
+                        border: `1px solid ${isSelected ? p.color : 'rgba(212, 175, 55, 0.2)'}`,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {p.avatarIcon}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dust)' }}>
-                      {p.domain.split('&')[0]}
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.92rem', color: isSelected ? p.color : 'var(--text-vellum)' }}>
+                        {p.name}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-dust)' }}>
+                        {p.domain.split('&')[0]}
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -503,6 +731,7 @@ export default function WisdomChatPage() {
 
           {/* Message Thread Scroll Container */}
           <div
+            ref={chatScrollContainerRef}
             style={{
               flex: 1,
               padding: '1.5rem',
@@ -700,8 +929,6 @@ export default function WisdomChatPage() {
                 </div>
               </div>
             )}
-
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Box */}

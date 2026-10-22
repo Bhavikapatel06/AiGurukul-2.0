@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: 'AI Gurukul 2.0 – Ancient Wisdom for Modern Life',
   description:
     'Production-grade Vedic intelligence platform: AI Guidance, Ayurveda Diagnostics, Vedic Knowledge Graph, Sacred RAG, and Interactive Quizzes.',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

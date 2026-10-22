@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 
 // =========================================================================
@@ -1067,20 +1067,211 @@ export default function AncientKnowledgePage() {
   const [selectedBookId, setSelectedBookId] = useState<string>('gita');
   const [activeModalChapter, setActiveModalChapter] = useState<ChapterDetail | null>(null);
   const [searchFilter, setSearchFilter] = useState<string>('');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
+  const [fontSizeScale, setFontSizeScale] = useState<number>(1);
+  const [copiedFeedback, setCopiedFeedback] = useState<boolean>(false);
+  const [isReciting, setIsReciting] = useState<boolean>(false);
+  const [isDronePlaying, setIsDronePlaying] = useState<boolean>(false);
+
+  // Persistence: Last read chapter per book & Completed chapters per book
+  const [lastReadChapters, setLastReadChapters] = useState<Record<string, string>>({});
+  const [completedChapters, setCompletedChapters] = useState<Record<string, string[]>>({});
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const oscRef = useRef<OscillatorNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
 
   const currentBook =
     ANCIENT_BOOKS.find((b) => b.id === selectedBookId) || ANCIENT_BOOKS[0];
 
+  // Load persistence from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedLast = localStorage.getItem('aigurukul_last_read_chapters');
+      if (storedLast) setLastReadChapters(JSON.parse(storedLast));
+      const storedComp = localStorage.getItem('aigurukul_completed_chapters');
+      if (storedComp) setCompletedChapters(JSON.parse(storedComp));
+    } catch {
+      // Ignore storage errors in restricted contexts
+    }
+  }, []);
+
+  // Sync modal scroll lock
+  useEffect(() => {
+    if (activeModalChapter) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsReciting(false);
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [activeModalChapter]);
+
+  // Handle open chapter modal & update last read
+  const handleOpenChapter = useCallback(
+    (chapter: ChapterDetail) => {
+      setActiveModalChapter(chapter);
+      setLastReadChapters((prev) => {
+        const next = { ...prev, [currentBook.id]: chapter.id };
+        try {
+          localStorage.setItem('aigurukul_last_read_chapters', JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    },
+    [currentBook.id]
+  );
+
+  // Navigation within modal
+  const currentChapterIdx = activeModalChapter
+    ? currentBook.chapters.findIndex((c) => c.id === activeModalChapter.id)
+    : -1;
+
+  const handlePrevChapter = useCallback(() => {
+    if (currentChapterIdx > 0) {
+      handleOpenChapter(currentBook.chapters[currentChapterIdx - 1]);
+    }
+  }, [currentChapterIdx, currentBook.chapters, handleOpenChapter]);
+
+  const handleNextChapter = useCallback(() => {
+    if (currentChapterIdx >= 0 && currentChapterIdx < currentBook.chapters.length - 1) {
+      handleOpenChapter(currentBook.chapters[currentChapterIdx + 1]);
+    }
+  }, [currentChapterIdx, currentBook.chapters, handleOpenChapter]);
+
+  // Keyboard navigation for modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (activeModalChapter) {
+        if (e.key === 'Escape') {
+          setActiveModalChapter(null);
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          handlePrevChapter();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          handleNextChapter();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeModalChapter, handlePrevChapter, handleNextChapter]);
+
+  // Mark chapter as read/completed
+  const handleToggleCompleted = (chapterId: string) => {
+    setCompletedChapters((prev) => {
+      const bookList = prev[currentBook.id] || [];
+      const updated = bookList.includes(chapterId)
+        ? bookList.filter((id) => id !== chapterId)
+        : [...bookList, chapterId];
+      const next = { ...prev, [currentBook.id]: updated };
+      try {
+        localStorage.setItem('aigurukul_completed_chapters', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  // Copy Shloka to clipboard
+  const handleCopyShloka = (chapter: ChapterDetail) => {
+    const textToCopy = `${chapter.keyShloka.speaker ? chapter.keyShloka.speaker + '\n' : ''}${chapter.keyShloka.sanskrit}\n\n${chapter.keyShloka.transliteration}\n\nTranslation:\n"${chapter.keyShloka.translation}"\n\n— ${currentBook.title}, Chapter ${chapter.number}: ${chapter.englishTitle}`;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopiedFeedback(true);
+      setTimeout(() => setCopiedFeedback(false), 2200);
+    });
+  };
+
+  // Recite Sanskrit Shloka audio
+  const handleToggleRecitation = (chapter: ChapterDetail) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (isReciting) {
+      window.speechSynthesis.cancel();
+      setIsReciting(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const text = `${chapter.sanskritTitle}. ${chapter.englishTitle}. ${chapter.keyShloka.transliteration}. ${chapter.keyShloka.translation}`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.88;
+      utterance.pitch = 0.95;
+      utterance.onend = () => setIsReciting(false);
+      utterance.onerror = () => setIsReciting(false);
+      window.speechSynthesis.speak(utterance);
+      setIsReciting(true);
+    }
+  };
+
+  // Ambient Meditative Om Drone (Web Audio API)
+  const handleToggleDrone = () => {
+    if (typeof window === 'undefined') return;
+    if (isDronePlaying) {
+      oscRef.current?.stop();
+      oscRef.current?.disconnect();
+      setIsDronePlaying(false);
+    } else {
+      try {
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(136.1, ctx.currentTime); // Sacred Om frequency (C#)
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        audioCtxRef.current = ctx;
+        oscRef.current = osc;
+        gainRef.current = gain;
+        setIsDronePlaying(true);
+      } catch (err) {
+        console.warn('Audio not allowed', err);
+      }
+    }
+  };
+
+  // Last read chapter computation
+  const lastReadChapterId = lastReadChapters[currentBook.id];
+  const continueChapter =
+    currentBook.chapters.find((c) => c.id === lastReadChapterId) ||
+    currentBook.chapters[1] ||
+    currentBook.chapters[0];
+
+  const bookCompletedList = completedChapters[currentBook.id] || [];
+  const completedCount = bookCompletedList.length;
+  const progressPercent = Math.round((completedCount / currentBook.chapters.length) * 100);
+
+  // Thematic tags collection for filter chips
+  const allBookTags = Array.from(
+    new Set(currentBook.chapters.flatMap((c) => c.tags))
+  ).slice(0, 8);
+
   const filteredChapters = currentBook.chapters.filter((ch) => {
-    if (!searchFilter.trim()) return true;
-    const q = searchFilter.toLowerCase();
-    return (
-      ch.sanskritTitle.toLowerCase().includes(q) ||
-      ch.transliteration.toLowerCase().includes(q) ||
-      ch.englishTitle.toLowerCase().includes(q) ||
-      ch.summary.toLowerCase().includes(q) ||
-      ch.tags.some((t) => t.toLowerCase().includes(q))
-    );
+    const matchesSearch =
+      !searchFilter.trim() ||
+      ch.sanskritTitle.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      ch.transliteration.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      ch.englishTitle.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      ch.summary.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      ch.tags.some((t) => t.toLowerCase().includes(searchFilter.toLowerCase()));
+
+    const matchesTag =
+      selectedTag === 'all' ||
+      ch.tags.some((t) => t.toLowerCase() === selectedTag.toLowerCase());
+
+    return matchesSearch && matchesTag;
   });
 
   return (
@@ -1093,179 +1284,254 @@ export default function AncientKnowledgePage() {
       }}
     >
       {/* ===================================================================
-          1. TOP MINIMAL NAVIGATION BAR (Image 1 Style)
+          1. BREADCRUMBS & SANCTUM STATUS BAR (Clean, non-colliding subheader)
           =================================================================== */}
-      <header
+      <div
         style={{
-          borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
-          background: 'rgba(13, 11, 8, 0.95)',
-          backdropFilter: 'blur(12px)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 90,
-          padding: '0.85rem 1.5rem',
+          borderBottom: '1px solid rgba(212, 175, 55, 0.15)',
+          background: 'rgba(20, 17, 11, 0.65)',
+          padding: '0.65rem 1.25rem',
         }}
       >
         <div
           style={{
-            maxWidth: '1360px',
+            maxWidth: '1440px',
             margin: '0 auto',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <Link
-              href="/"
+          {/* Breadcrumbs */}
+          <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}>
+            <Link href="/" style={{ color: '#b8ae96', textDecoration: 'none' }}>
+              Sanctum Home
+            </Link>
+            <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>›</span>
+            <span style={{ color: 'var(--gold-radiance)', fontWeight: 600 }}>Canonical Scriptures</span>
+            <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>›</span>
+            <span style={{ color: '#EDE8D5', fontWeight: 600 }}>{currentBook.title}</span>
+          </nav>
+
+          {/* Seeker Progress Badge & Quick Links */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                color: 'var(--gold-radiance, #F2D675)',
-                textDecoration: 'none',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                padding: '0.4rem 0.85rem',
-                borderRadius: '6px',
-                border: '1px solid rgba(212, 175, 55, 0.3)',
+                fontSize: '0.78rem',
+                color: '#EDE8D5',
                 background: 'rgba(212, 175, 55, 0.08)',
-                transition: 'all 0.2s ease',
+                padding: '0.25rem 0.65rem',
+                borderRadius: '9999px',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
               }}
             >
-              ← Back
-            </Link>
-            <span
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: '1.15rem',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                color: 'var(--gold-sacred, #D4AF37)',
-                textTransform: 'uppercase',
-              }}
-            >
-              Ancient Knowledge
-            </span>
-          </div>
+              <span>☸</span>
+              <span>
+                {completedCount} of {currentBook.chapters.length} Chapters Studied ({progressPercent}%)
+              </span>
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Link
-              href="/wisdom"
-              style={{
-                color: 'var(--text-vellum, #EDE8D5)',
-                fontSize: '0.85rem',
-                textDecoration: 'none',
-                opacity: 0.85,
-              }}
-            >
-              💬 Ask Sages
-            </Link>
-            <span style={{ color: 'rgba(212, 175, 55, 0.3)' }}>•</span>
-            <Link
-              href="/quizzes"
-              style={{
-                color: 'var(--text-vellum, #EDE8D5)',
-                fontSize: '0.85rem',
-                textDecoration: 'none',
-                opacity: 0.85,
-              }}
-            >
-              🎯 Quizzes
-            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <Link
+                href="/wisdom"
+                style={{
+                  color: 'var(--gold-radiance)',
+                  fontSize: '0.82rem',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
+                💬 Ask Sages
+              </Link>
+              <span style={{ color: 'rgba(212, 175, 55, 0.3)' }}>•</span>
+              <Link
+                href="/quizzes"
+                style={{
+                  color: 'var(--gold-radiance)',
+                  fontSize: '0.82rem',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
+                🎯 Vedic Quizzes
+              </Link>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* ===================================================================
-          2. HORIZONTAL BOOK TABS (Matching Image 1: Gita, Panchatantra, etc.)
+          2. STANDARDIZED SCRIPTURE TABS (6 Canonical Books)
           =================================================================== */}
       <nav
+        aria-label="Scripture Selection"
         style={{
-          borderBottom: '1px solid rgba(212, 175, 55, 0.15)',
-          background: 'rgba(20, 17, 11, 0.7)',
+          borderBottom: '1px solid rgba(212, 175, 55, 0.22)',
+          background: 'rgba(15, 12, 8, 0.94)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           overflowX: 'auto',
           whiteSpace: 'nowrap',
+          scrollbarWidth: 'none',
+          position: 'sticky',
+          top: '4.25rem',
+          zIndex: 90,
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
         }}
       >
         <div
           style={{
-            maxWidth: '1360px',
+            maxWidth: '1440px',
             margin: '0 auto',
             display: 'flex',
-            padding: '0 1rem',
+            padding: '0 1.25rem',
+            gap: '0.5rem',
           }}
+          role="tablist"
         >
           {ANCIENT_BOOKS.map((book) => {
             const isSelected = book.id === currentBook.id;
             return (
               <button
                 key={book.id}
+                role="tab"
+                aria-selected={isSelected}
                 onClick={() => {
                   setSelectedBookId(book.id);
                   setSearchFilter('');
+                  setSelectedTag('all');
                 }}
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '1rem 1.4rem',
-                  background: isSelected ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
+                  gap: '0.65rem',
+                  padding: '0.95rem 1.35rem',
+                  background: isSelected
+                    ? 'linear-gradient(180deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%)'
+                    : 'transparent',
                   border: 'none',
-                  borderBottom: isSelected ? '2px solid #D4AF37' : '2px solid transparent',
-                  borderRight: '1px solid rgba(212, 175, 55, 0.1)',
-                  color: isSelected ? '#F2D675' : '#9A9078',
+                  borderBottom: isSelected ? '3px solid var(--gold-radiance)' : '3px solid transparent',
+                  color: isSelected ? 'var(--gold-radiance)' : '#b8ae96',
                   fontFamily: 'var(--font-serif)',
-                  fontSize: '0.88rem',
+                  fontSize: '0.92rem',
                   fontWeight: isSelected ? 700 : 500,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                  flexShrink: 0,
+                  minHeight: '50px',
+                  boxShadow: isSelected ? 'inset 0 -1px 8px rgba(212, 175, 55, 0.25)' : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.color = '#EDE8D5';
+                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.color = '#b8ae96';
+                    e.currentTarget.style.background = 'transparent';
+                  }
                 }}
               >
-                <span>{book.icon}</span>
-                <span>{book.title}</span>
+                <span style={{ fontSize: '1.25rem' }}>{book.icon}</span>
+                <span style={{ textTransform: 'uppercase' }}>{book.title}</span>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '9999px',
+                    background: isSelected ? 'rgba(212, 175, 55, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                    color: isSelected ? '#ffffff' : '#b8ae96',
+                    fontWeight: 700,
+                  }}
+                >
+                  {book.chapters.length} ch
+                </span>
               </button>
             );
           })}
         </div>
       </nav>
 
-      {/* ===================================================================
-          3. SCRIPTURE HEADER & METADATA BANNER (Matching Image 1)
-          =================================================================== */}
-      <main style={{ maxWidth: '1360px', margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
-        <div style={{ marginBottom: '2.5rem' }}>
-          <span
+      <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '2rem 1.25rem 0' }}>
+        {/* ===================================================================
+            3. REDESIGNED SCRIPTURE HERO & PRIMARY ACTIONS HUB
+            =================================================================== */}
+        <section
+          style={{
+            position: 'relative',
+            borderRadius: '16px',
+            border: '1px solid rgba(212, 175, 55, 0.28)',
+            background:
+              'radial-gradient(ellipse 90% 70% at 50% -20%, rgba(212, 175, 55, 0.16) 0%, rgba(33, 29, 18, 0.6) 60%, rgba(13, 11, 8, 0.98) 100%)',
+            padding: '2.5rem 2.25rem',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.7)',
+            marginBottom: '2rem',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Subtle Ambient Mandala Watermark */}
+          <div
             style={{
-              fontSize: '0.78rem',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'var(--gold-sacred, #D4AF37)',
-              fontWeight: 600,
+              position: 'absolute',
+              right: '-2rem',
+              top: '-2rem',
+              fontSize: '12rem',
+              opacity: 0.04,
+              pointerEvents: 'none',
+              userSelect: 'none',
             }}
           >
-            Sacred Scripture
-          </span>
+            {currentBook.icon}
+          </div>
 
+          {/* Super-Header Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem' }}>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: 'var(--gold-sacred)',
+                fontWeight: 700,
+              }}
+            >
+              ✦ CANONICAL VEDIC SCRIPTURE · {currentBook.tradition.split('·')[0].trim().toUpperCase()} ✦
+            </span>
+          </div>
+
+          {/* Dual-Script Scripture Title */}
           <div
             style={{
               display: 'flex',
               alignItems: 'baseline',
-              gap: '1rem',
+              gap: '1.25rem',
               flexWrap: 'wrap',
-              marginTop: '0.35rem',
               marginBottom: '1rem',
             }}
           >
             <h1
               style={{
                 fontFamily: 'var(--font-serif)',
-                fontSize: 'clamp(2.2rem, 4vw, 3rem)',
+                fontSize: 'clamp(2.4rem, 4.5vw, 3.4rem)',
                 margin: 0,
-                color: 'var(--gold-radiance, #F2D675)',
+                color: 'var(--gold-radiance)',
                 letterSpacing: '0.04em',
+                lineHeight: 1.15,
+                fontWeight: 700,
                 textTransform: 'uppercase',
               }}
             >
@@ -1274,113 +1540,197 @@ export default function AncientKnowledgePage() {
             <span
               style={{
                 fontFamily: 'var(--font-serif)',
-                fontSize: '1.35rem',
-                color: '#9A9078',
+                fontSize: 'clamp(1.5rem, 3vw, 2.1rem)',
+                color: 'var(--gold-sacred)',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
               }}
             >
-              ({currentBook.sanskritTitle})
+              {currentBook.sanskritTitle}
             </span>
           </div>
 
-          {/* Metadata Badges Cluster */}
+          {/* Standardized Metadata Badges Cluster */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.65rem',
+              gap: '0.5rem',
               flexWrap: 'wrap',
               marginBottom: '1.5rem',
             }}
           >
-            <span
-              style={{
-                fontSize: '0.82rem',
-                padding: '0.3rem 0.75rem',
-                borderRadius: '20px',
-                background: 'rgba(212, 175, 55, 0.1)',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
-                color: '#EDE8D5',
-              }}
-            >
+            <span className="sacred-pill sacred-pill-amber">
               ✍️ {currentBook.author}
             </span>
-
-            <span
-              style={{
-                fontSize: '0.82rem',
-                padding: '0.3rem 0.75rem',
-                borderRadius: '20px',
-                background: 'rgba(56, 189, 248, 0.1)',
-                border: '1px solid rgba(56, 189, 248, 0.25)',
-                color: '#7dd3fc',
-              }}
-            >
-              📅 {currentBook.period}
+            <span className="sacred-pill sacred-pill-cyan">
+              ⏳ {currentBook.period}
             </span>
-
-            <span
-              style={{
-                fontSize: '0.82rem',
-                padding: '0.3rem 0.75rem',
-                borderRadius: '20px',
-                background: 'rgba(154, 144, 120, 0.12)',
-                border: '1px solid rgba(154, 144, 120, 0.25)',
-                color: '#EDE8D5',
-              }}
-            >
+            <span className="sacred-pill sacred-pill-gold">
               📖 {currentBook.scope}
             </span>
-
-            <span
-              style={{
-                fontSize: '0.82rem',
-                padding: '0.3rem 0.75rem',
-                borderRadius: '20px',
-                background: 'rgba(123, 104, 238, 0.1)',
-                border: '1px solid rgba(123, 104, 238, 0.25)',
-                color: '#c4b5fd',
-              }}
-            >
+            <span className="sacred-pill sacred-pill-purple">
               🏛️ {currentBook.tradition}
             </span>
-
-            {/* Online External Reading Link Requested by User */}
-            <a
-              href={currentBook.fullOnlineUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontSize: '0.82rem',
-                padding: '0.3rem 0.85rem',
-                borderRadius: '20px',
-                background: 'rgba(94, 234, 212, 0.12)',
-                border: '1px solid rgba(94, 234, 212, 0.4)',
-                color: '#5eead4',
-                textDecoration: 'none',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
-            >
-              🔗 Read Complete Unabridged Text Online ↗
-            </a>
+            <span className="sacred-pill sacred-pill-teal">
+              ⏱️ ~45 min deep study
+            </span>
           </div>
 
-          {/* Book Summary */}
+          {/* Scripture Overview Summary */}
           <p
             style={{
-              maxWidth: '920px',
-              fontSize: '1.05rem',
-              lineHeight: 1.65,
-              color: 'rgba(237, 232, 213, 0.85)',
-              margin: '0 0 2rem',
+              maxWidth: '960px',
+              fontSize: '1.08rem',
+              lineHeight: 1.7,
+              color: 'rgba(237, 232, 213, 0.92)',
+              marginBottom: '2rem',
             }}
           >
             {currentBook.overview}
           </p>
 
-          {/* Section Subheader & Quick Search Filter */}
+          {/* Primary Actions Hub */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.85rem',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(212, 175, 55, 0.18)',
+            }}
+          >
+            {/* Primary Action 1: Resume / Start Reading */}
+            <button
+              onClick={() => handleOpenChapter(continueChapter)}
+              className="btn-sacred"
+              style={{
+                padding: '0.75rem 1.6rem',
+                fontSize: '0.95rem',
+                gap: '0.5rem',
+                fontWeight: 700,
+                boxShadow: '0 4px 16px rgba(212, 175, 55, 0.35)',
+              }}
+            >
+              <span>▶</span>
+              <span>
+                {bookCompletedList.length > 0 ? `Resume Ch ${continueChapter.number}` : `Start Reading (Ch 1)`}
+              </span>
+            </button>
+
+            {/* Primary Action 2: Explore All Chapters (Smooth scroll) */}
+            <a
+              href="#chapter-explorer"
+              className="btn-outline-sacred"
+              style={{
+                padding: '0.75rem 1.4rem',
+                fontSize: '0.9rem',
+                gap: '0.45rem',
+              }}
+            >
+              <span>📜</span>
+              <span>Explore All {currentBook.chapters.length} Chapters</span>
+            </a>
+
+            {/* Primary Action 3: Ask Sages about this Scripture */}
+            <Link
+              href="/wisdom"
+              className="btn-outline-sacred"
+              style={{
+                padding: '0.75rem 1.3rem',
+                fontSize: '0.9rem',
+                gap: '0.45rem',
+              }}
+            >
+              <span>💬</span>
+              <span>Consult Sages on this Text</span>
+            </Link>
+
+            {/* Primary Action 4: Take Scripture Quiz */}
+            <Link
+              href="/quizzes"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '6px',
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                color: '#fcd34d',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <span>🎯</span>
+              <span>Test Discernment</span>
+            </Link>
+
+            {/* Primary Action 5: Complete Unabridged Text */}
+            <a
+              href={currentBook.fullOnlineUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.75rem 1.2rem',
+                borderRadius: '6px',
+                background: 'rgba(94, 234, 212, 0.1)',
+                border: '1px solid rgba(94, 234, 212, 0.35)',
+                color: '#5eead4',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              <span>🔗</span>
+              <span>Complete Unabridged Text ↗</span>
+            </a>
+
+            {/* Primary Action 6: Meditative Om Drone Audio Toggle */}
+            <button
+              onClick={handleToggleDrone}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.75rem 1.1rem',
+                borderRadius: '6px',
+                background: isDronePlaying ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                border: isDronePlaying ? '1px solid var(--gold-sacred)' : '1px solid rgba(212, 175, 55, 0.2)',
+                color: isDronePlaying ? 'var(--gold-radiance)' : '#b8ae96',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              title="Toggle 136.1Hz Sacred Om Frequency Drone"
+            >
+              <span>{isDronePlaying ? '🔊' : '🔔'}</span>
+              <span>{isDronePlaying ? 'Om Drone Playing' : 'Meditative Drone'}</span>
+            </button>
+          </div>
+        </section>
+
+        {/* ===================================================================
+            4. "CONTINUE READING" SANCTUM SECTION
+            =================================================================== */}
+        <section
+          style={{
+            marginBottom: '2.5rem',
+            background: 'linear-gradient(135deg, rgba(33, 29, 18, 0.85) 0%, rgba(18, 15, 10, 0.95) 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
+            borderLeft: '5px solid #D4AF37',
+            borderRadius: '12px',
+            padding: '1.5rem 1.75rem',
+            boxShadow: '0 6px 24px rgba(0, 0, 0, 0.5)',
+          }}
+        >
           <div
             style={{
               display: 'flex',
@@ -1388,214 +1738,609 @@ export default function AncientKnowledgePage() {
               justifyContent: 'space-between',
               flexWrap: 'wrap',
               gap: '1rem',
-              borderTop: '1px solid rgba(212, 175, 55, 0.15)',
-              paddingTop: '1.5rem',
+              marginBottom: '1rem',
             }}
           >
-            <div
-              style={{
-                fontSize: '0.82rem',
-                letterSpacing: '0.08em',
-                color: '#9A9078',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-              }}
-            >
-              ALL {currentBook.chapters.length} CHAPTERS / SECTIONS — CLICK READ MORE FOR FULL SHLOKA + LESSON
-            </div>
-
-            <div style={{ minWidth: '260px' }}>
-              <input
-                type="text"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="🔍 Filter chapters or tags..."
-                style={{
-                  width: '100%',
-                  background: 'rgba(33, 29, 18, 0.8)',
-                  border: '1px solid rgba(212, 175, 55, 0.25)',
-                  borderRadius: '20px',
-                  padding: '0.5rem 1rem',
-                  color: '#EDE8D5',
-                  fontSize: '0.85rem',
-                  outline: 'none',
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ===================================================================
-            4. CHAPTER CARDS GRID (Matching Image 1: 3-Column Layout)
-            =================================================================== */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-            gap: '1.5rem',
-          }}
-        >
-          {filteredChapters.map((chapter) => (
-            <div
-              key={chapter.id}
-              style={{
-                background: 'linear-gradient(180deg, #1A160E 0%, #120F0A 100%)',
-                border: '1px solid rgba(212, 175, 55, 0.2)',
-                borderRadius: '12px',
-                padding: '1.75rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.45)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.6)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.2)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>🔖</span>
               <div>
                 <span
                   style={{
-                    fontSize: '0.72rem',
-                    letterSpacing: '0.1em',
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.12em',
                     textTransform: 'uppercase',
-                    color: '#9A9078',
-                    fontWeight: 600,
+                    color: 'var(--gold-sacred)',
+                    fontWeight: 700,
                   }}
                 >
-                  Chapter {chapter.number} of {currentBook.chapters.length}
+                  Continue Reading / Resume Sadhana
                 </span>
-
                 <h3
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: '1.45rem',
-                    color: 'var(--gold-radiance, #F2D675)',
-                    margin: '0.4rem 0 0.2rem',
-                    lineHeight: 1.3,
+                    fontSize: '1.25rem',
+                    color: 'var(--gold-radiance)',
+                    margin: '0.15rem 0 0',
                   }}
                 >
-                  {chapter.sanskritTitle}
+                  Chapter {continueChapter.number}: {continueChapter.englishTitle} ({continueChapter.sanskritTitle})
                 </h3>
+              </div>
+            </div>
 
+            {/* Progress status */}
+            <div style={{ minWidth: '220px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.78rem',
+                  color: '#b8ae96',
+                  marginBottom: '0.35rem',
+                }}
+              >
+                <span>Scripture Progress</span>
+                <span style={{ color: 'var(--gold-radiance)', fontWeight: 600 }}>{progressPercent}% Complete</span>
+              </div>
+              <div
+                style={{
+                  width: '100%',
+                  height: '6px',
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  borderRadius: '9999px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(212, 175, 55, 0.2)',
+                }}
+              >
                 <div
                   style={{
-                    fontSize: '0.82rem',
-                    fontStyle: 'italic',
-                    color: '#9A9078',
-                    marginBottom: '0.75rem',
+                    width: `${Math.max(5, progressPercent)}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #D4AF37 0%, #F2D675 100%)',
+                    borderRadius: '9999px',
+                    transition: 'width 0.4s ease',
                   }}
-                >
-                  {chapter.transliteration}
-                </div>
+                />
+              </div>
+            </div>
+          </div>
 
-                <h4
-                  style={{
-                    fontSize: '1rem',
-                    color: '#EDE8D5',
-                    margin: '0 0 0.6rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  {chapter.englishTitle}
-                </h4>
+          <p
+            style={{
+              fontSize: '0.92rem',
+              lineHeight: 1.6,
+              color: 'rgba(237, 232, 213, 0.85)',
+              margin: '0 0 1.25rem',
+              fontStyle: 'italic',
+            }}
+          >
+            &ldquo;{continueChapter.coreLesson}&rdquo;
+          </p>
 
-                <p
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => handleOpenChapter(continueChapter)}
+              className="btn-sacred"
+              style={{
+                padding: '0.55rem 1.3rem',
+                fontSize: '0.88rem',
+                gap: '0.4rem',
+              }}
+            >
+              <span>▶ Resume Chapter {continueChapter.number}</span>
+            </button>
+
+            <button
+              onClick={() => handleToggleCompleted(continueChapter.id)}
+              className="btn-outline-sacred"
+              style={{
+                padding: '0.55rem 1.15rem',
+                fontSize: '0.85rem',
+                gap: '0.4rem',
+              }}
+            >
+              <span>{bookCompletedList.includes(continueChapter.id) ? '✓ Completed' : 'Mark as Finished'}</span>
+            </button>
+
+            {currentBook.chapters.length > 1 && (
+              <button
+                onClick={() => {
+                  const nextIdx = (continueChapter.number % currentBook.chapters.length);
+                  handleOpenChapter(currentBook.chapters[nextIdx]);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#b8ae96',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  padding: '0.55rem 0.75rem',
+                  textDecoration: 'underline',
+                }}
+              >
+                Jump to Next Chapter →
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* ===================================================================
+            5. CHAPTER EXPLORATION SECTION HEADER & FILTERS
+            =================================================================== */}
+        <section id="chapter-explorer" style={{ marginBottom: '3rem' }}>
+          <div
+            className="card-nav-header"
+            style={{
+              borderBottom: '1px solid rgba(212, 175, 55, 0.22)',
+              paddingBottom: '1.25rem',
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: '0.78rem',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: 'var(--gold-sacred)',
+                  fontWeight: 700,
+                  marginBottom: '0.25rem',
+                }}
+              >
+                Comprehensive Chapter Index
+              </div>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 'clamp(1.5rem, 2.8vw, 2.1rem)',
+                  margin: 0,
+                  color: 'var(--gold-radiance)',
+                  fontWeight: 700,
+                }}
+              >
+                Chapter Exploration &amp; Sutras
+              </h2>
+              <span style={{ fontSize: '0.85rem', color: '#b8ae96', marginTop: '0.25rem', display: 'inline-block' }}>
+                Showing {filteredChapters.length} of {currentBook.chapters.length} Chapters · Click any card to read verbatim shloka &amp; modern relevance
+              </span>
+            </div>
+
+            {/* Search Input & View Mode Toggles */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', minWidth: '280px' }}>
+                <input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="🔍 Search chapters, shlokas, themes..."
+                  aria-label="Search chapters"
+                  className="input-sacred"
                   style={{
+                    borderRadius: '24px',
+                    padding: '0.65rem 2.4rem 0.65rem 1.15rem',
                     fontSize: '0.88rem',
-                    lineHeight: 1.55,
-                    color: 'rgba(237, 232, 213, 0.75)',
-                    marginBottom: '1.25rem',
                   }}
-                >
-                  {chapter.summary}
-                </p>
+                />
+                {searchFilter && (
+                  <button
+                    onClick={() => setSearchFilter('')}
+                    style={{
+                      position: 'absolute',
+                      right: '0.85rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--gold-radiance)',
+                      cursor: 'pointer',
+                      fontSize: '0.88rem',
+                    }}
+                    aria-label="Clear search"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
 
-              <div>
-                {/* Thematic Tags */}
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '0.4rem',
-                    marginBottom: '1.25rem',
-                  }}
-                >
-                  {chapter.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      style={{
-                        fontSize: '0.72rem',
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: '4px',
-                        background: 'rgba(212, 175, 55, 0.08)',
-                        border: '1px solid rgba(212, 175, 55, 0.15)',
-                        color: 'var(--gold-radiance, #F2D675)',
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Read More Action Button */}
+              {/* View Mode Toggle: Grid vs Compact List */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(20, 17, 11, 0.88)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  borderRadius: '10px',
+                  padding: '3px',
+                }}
+              >
                 <button
-                  onClick={() => setActiveModalChapter(chapter)}
+                  onClick={() => setViewMode('grid')}
                   style={{
-                    width: '100%',
-                    padding: '0.65rem 1rem',
-                    background: 'rgba(212, 175, 55, 0.1)',
-                    border: '1px solid rgba(212, 175, 55, 0.3)',
-                    borderRadius: '6px',
-                    color: 'var(--gold-radiance, #F2D675)',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
+                    padding: '0.45rem 0.85rem',
+                    background: viewMode === 'grid' ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.15) 100%)' : 'transparent',
+                    border: viewMode === 'grid' ? '1px solid rgba(242, 214, 117, 0.4)' : '1px solid transparent',
+                    borderRadius: '7px',
+                    color: viewMode === 'grid' ? 'var(--gold-radiance)' : '#b8ae96',
                     cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    fontWeight: viewMode === 'grid' ? 700 : 500,
                     transition: 'all 0.2s ease',
-                    textAlign: 'center',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.22)';
-                    e.currentTarget.style.borderColor = '#D4AF37';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
-                  }}
+                  title="Grid View"
                 >
-                  READ MORE →
+                  ⊞ Grid
+                </button>
+                <button
+                  onClick={() => setViewMode('compact')}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    background: viewMode === 'compact' ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.15) 100%)' : 'transparent',
+                    border: viewMode === 'compact' ? '1px solid rgba(242, 214, 117, 0.4)' : '1px solid transparent',
+                    borderRadius: '7px',
+                    color: viewMode === 'compact' ? 'var(--gold-radiance)' : '#b8ae96',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    fontWeight: viewMode === 'compact' ? 700 : 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                  title="Compact Index View"
+                >
+                  ☰ List
                 </button>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+
+          {/* Quick Thematic Tag Filter Chips */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              marginBottom: '2rem',
+            }}
+          >
+            <span style={{ fontSize: '0.78rem', color: '#b8ae96', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Thematic Filter:
+            </span>
+            <button
+              onClick={() => setSelectedTag('all')}
+              style={{
+                fontSize: '0.78rem',
+                padding: '0.35rem 0.85rem',
+                borderRadius: '9999px',
+                border: selectedTag === 'all' ? '1px solid var(--gold-sacred)' : '1px solid rgba(212, 175, 55, 0.2)',
+                background: selectedTag === 'all' ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.15) 100%)' : 'rgba(255, 255, 255, 0.03)',
+                color: selectedTag === 'all' ? 'var(--gold-radiance)' : '#b8ae96',
+                cursor: 'pointer',
+                fontWeight: selectedTag === 'all' ? 700 : 500,
+                boxShadow: selectedTag === 'all' ? '0 2px 10px rgba(212, 175, 55, 0.25)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              All ({currentBook.chapters.length})
+            </button>
+            {allBookTags.map((tag) => {
+              const isTagActive = selectedTag === tag;
+              return (
+                <button
+                  key={tag}
+                  onClick={() => setSelectedTag(isTagActive ? 'all' : tag)}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '9999px',
+                    border: isTagActive ? '1px solid var(--gold-sacred)' : '1px solid rgba(212, 175, 55, 0.16)',
+                    background: isTagActive ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.15) 100%)' : 'rgba(255, 255, 255, 0.02)',
+                    color: isTagActive ? 'var(--gold-radiance)' : '#b8ae96',
+                    cursor: 'pointer',
+                    fontWeight: isTagActive ? 700 : 500,
+                    boxShadow: isTagActive ? '0 2px 10px rgba(212, 175, 55, 0.25)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ===================================================================
+              6A. CHAPTER GRID VIEW
+              =================================================================== */}
+          {viewMode === 'grid' && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                gap: '1.5rem',
+              }}
+            >
+              {filteredChapters.map((chapter) => {
+                const isCompleted = bookCompletedList.includes(chapter.id);
+                return (
+                  <div
+                    key={chapter.id}
+                    className="temple-card temple-card-interactive"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      borderColor: isCompleted
+                        ? 'rgba(94, 234, 212, 0.45)'
+                        : 'rgba(212, 175, 55, 0.22)',
+                      boxShadow: isCompleted
+                        ? '0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 20px rgba(94, 234, 212, 0.15)'
+                        : undefined,
+                    }}
+                    onClick={() => handleOpenChapter(chapter)}
+                  >
+                    <div>
+                      {/* Top Card Badge: Chapter Number & Read Indicator */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '0.85rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                            color: '#b8ae96',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Chapter {chapter.number} of {currentBook.chapters.length}
+                        </span>
+
+                        {isCompleted && (
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '9999px',
+                              background: 'rgba(94, 234, 212, 0.16)',
+                              border: '1px solid rgba(94, 234, 212, 0.45)',
+                              color: '#5eead4',
+                              fontWeight: 700,
+                            }}
+                          >
+                            ✓ Studied
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Sanskrit Devanagari Title */}
+                      <h3
+                        style={{
+                          fontFamily: 'var(--font-serif)',
+                          fontSize: '1.45rem',
+                          color: 'var(--gold-radiance)',
+                          margin: '0.2rem 0 0.4rem',
+                          lineHeight: 1.3,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {chapter.sanskritTitle}
+                      </h3>
+
+                      {/* Transliteration */}
+                      <div
+                        style={{
+                          fontSize: '0.85rem',
+                          fontStyle: 'italic',
+                          color: '#b8ae96',
+                          marginBottom: '0.65rem',
+                        }}
+                      >
+                        {chapter.transliteration}
+                      </div>
+
+                      {/* English Meaning Title */}
+                      <h4
+                        style={{
+                          fontSize: '1.05rem',
+                          color: '#EDE8D5',
+                          margin: '0 0 0.85rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {chapter.englishTitle}
+                      </h4>
+
+                      {/* Summary */}
+                      <p
+                        style={{
+                          fontSize: '0.9rem',
+                          lineHeight: 1.6,
+                          color: 'rgba(237, 232, 213, 0.82)',
+                          marginBottom: '1.5rem',
+                        }}
+                      >
+                        {chapter.summary}
+                      </p>
+                    </div>
+
+                    <div>
+                      {/* Thematic Tags */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '0.45rem',
+                          marginBottom: '1.5rem',
+                        }}
+                      >
+                        {chapter.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            style={{
+                              fontSize: '0.74rem',
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '6px',
+                              background: 'rgba(212, 175, 55, 0.08)',
+                              border: '1px solid rgba(212, 175, 55, 0.22)',
+                              color: 'var(--gold-radiance)',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Primary Action Button: Read Shloka & Lesson */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenChapter(chapter);
+                        }}
+                        className="btn-outline-sacred card-action-link"
+                        style={{
+                          width: '100%',
+                          padding: '0.7rem 1.25rem',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <span>READ SHLOKA &amp; LESSON</span>
+                        <span className="action-arrow">→</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ===================================================================
+              6B. CHAPTER COMPACT LIST VIEW
+              =================================================================== */}
+          {viewMode === 'compact' && (
+            <div
+              style={{
+                background: 'rgba(20, 17, 11, 0.8)',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                borderRadius: '10px',
+                overflow: 'hidden',
+              }}
+            >
+              {filteredChapters.map((chapter, idx) => {
+                const isCompleted = bookCompletedList.includes(chapter.id);
+                return (
+                  <div
+                    key={chapter.id}
+                    onClick={() => handleOpenChapter(chapter)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '1rem 1.5rem',
+                      borderBottom:
+                        idx === filteredChapters.length - 1 ? 'none' : '1px solid rgba(212, 175, 55, 0.12)',
+                      background: isCompleted ? 'rgba(94, 234, 212, 0.03)' : 'transparent',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(212, 175, 55, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isCompleted ? 'rgba(94, 234, 212, 0.03)' : 'transparent';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <span
+                        style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          color: isCompleted ? '#5eead4' : 'var(--gold-radiance)',
+                          minWidth: '2.5rem',
+                        }}
+                      >
+                        Ch {chapter.number}
+                      </span>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem' }}>
+                          <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, color: '#EDE8D5' }}>
+                            {chapter.sanskritTitle}
+                          </span>
+                          <span style={{ fontSize: '0.82rem', color: '#b8ae96', fontStyle: 'italic' }}>
+                            ({chapter.transliteration})
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.88rem', color: 'var(--gold-radiance)' }}>
+                          {chapter.englishTitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                        {chapter.tags.slice(0, 2).map((t) => (
+                          <span
+                            key={t}
+                            style={{
+                              fontSize: '0.72rem',
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '4px',
+                              background: 'rgba(212, 175, 55, 0.08)',
+                              color: '#b8ae96',
+                            }}
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+
+                      <span
+                        style={{
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          color: 'var(--gold-radiance)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                        }}
+                      >
+                        Read ↗
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </main>
 
       {/* ===================================================================
-          5. CHAPTER DETAIL OVERLAY MODAL (Matching Image 3)
+          7. CHAPTER DETAIL READER OVERLAY MODAL (PROPER STICKY HEADER FORMAT)
           =================================================================== */}
       {activeModalChapter && (
         <div
           role="dialog"
           aria-modal="true"
+          aria-label={`Chapter ${activeModalChapter.number}: ${activeModalChapter.englishTitle}`}
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(0, 0, 0, 0.88)',
+            backdropFilter: 'blur(12px)',
             zIndex: 1000,
             display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center',
-            padding: '1.5rem',
+            alignItems: 'flex-start',
+            padding: '1rem',
             overflowY: 'auto',
           }}
           onClick={(e) => {
@@ -1605,330 +2350,630 @@ export default function AncientKnowledgePage() {
           <div
             style={{
               background: '#120F0A',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              borderRadius: '12px',
-              maxWidth: '820px',
+              border: '1px solid rgba(212, 175, 55, 0.4)',
+              borderRadius: '16px',
+              maxWidth: '920px',
               width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.8)',
-              padding: '2.5rem',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.9)',
               position: 'relative',
+              margin: '2rem auto',
+              overflow: 'hidden',
             }}
           >
-            {/* Top Modal Header Bar: Close & Chapter Indicator */}
-            <div
+            {/* ---------------------------------------------------------------
+                STICKY PROPER HEADER FORMAT (As requested: Neat, Clean, Functional)
+                --------------------------------------------------------------- */}
+            <header
               style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 30,
+                background: 'rgba(18, 15, 10, 0.96)',
+                backdropFilter: 'blur(16px)',
+                borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
+                padding: '0.9rem 1.5rem',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1.5rem',
-                borderBottom: '1px solid rgba(212, 175, 55, 0.15)',
-                paddingBottom: '1rem',
+                flexDirection: 'column',
+                gap: '0.5rem',
               }}
             >
-              <button
-                onClick={() => setActiveModalChapter(null)}
+              {/* Top Row: Scripture Breadcrumb & Quick Controls */}
+              <div
                 style={{
-                  background: 'transparent',
-                  border: '1px solid rgba(212, 175, 55, 0.3)',
-                  color: 'var(--gold-radiance, #F2D675)',
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '6px',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.3rem',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  flexWrap: 'wrap',
                 }}
               >
-                ✕ Close
-              </button>
-
-              <span
-                style={{
-                  fontSize: '0.78rem',
-                  letterSpacing: '0.08em',
-                  color: '#9A9078',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Chapter {activeModalChapter.number} of {currentBook.chapters.length}
-              </span>
-            </div>
-
-            {/* Chapter Heading Banner */}
-            <div style={{ marginBottom: '2rem' }}>
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--gold-sacred, #D4AF37)',
-                  fontWeight: 600,
-                  marginBottom: '0.3rem',
-                }}
-              >
-                CHAPTER {activeModalChapter.number} OF {currentBook.chapters.length} · {currentBook.title.toUpperCase()}
-              </div>
-
-              <h2
-                style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: 'clamp(1.75rem, 3vw, 2.4rem)',
-                  color: 'var(--gold-radiance, #F2D675)',
-                  margin: '0 0 0.25rem',
-                }}
-              >
-                {activeModalChapter.sanskritTitle}
-              </h2>
-
-              <div
-                style={{
-                  fontSize: '0.95rem',
-                  fontStyle: 'italic',
-                  color: '#9A9078',
-                  marginBottom: '0.65rem',
-                }}
-              >
-                {activeModalChapter.transliteration}
-              </div>
-
-              <div
-                style={{
-                  fontSize: '1.25rem',
-                  color: '#EDE8D5',
-                  fontWeight: 600,
-                  letterSpacing: '0.03em',
-                  textTransform: 'uppercase',
-                  marginBottom: '1rem',
-                }}
-              >
-                {activeModalChapter.englishTitle}
-              </div>
-
-              {/* Tags */}
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                {activeModalChapter.tags.map((t) => (
-                  <span
-                    key={t}
-                    style={{
-                      fontSize: '0.72rem',
-                      padding: '0.2rem 0.6rem',
-                      borderRadius: '4px',
-                      background: 'rgba(212, 175, 55, 0.08)',
-                      border: '1px solid rgba(212, 175, 55, 0.2)',
-                      color: 'var(--gold-radiance, #F2D675)',
-                    }}
-                  >
-                    {t}
+                {/* Left: Breadcrumb */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}>
+                  <span style={{ color: '#b8ae96' }}>📜 {currentBook.title}</span>
+                  <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>›</span>
+                  <span style={{ color: 'var(--gold-radiance)', fontWeight: 600 }}>
+                    Chapter {activeModalChapter.number} of {currentBook.chapters.length}
                   </span>
-                ))}
-              </div>
-            </div>
+                  {bookCompletedList.includes(activeModalChapter.id) && (
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: '9999px',
+                        background: 'rgba(94, 234, 212, 0.15)',
+                        border: '1px solid rgba(94, 234, 212, 0.4)',
+                        color: '#5eead4',
+                        fontWeight: 600,
+                      }}
+                    >
+                      ✓ Completed
+                    </span>
+                  )}
+                </div>
 
-            {/* Section 1: Key Shloka (Sanskrit) */}
-            <div style={{ marginBottom: '2rem' }}>
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: '#9A9078',
-                  fontWeight: 600,
-                  marginBottom: '0.65rem',
-                }}
-              >
-                KEY SHLOKA (SANSKRIT)
-              </div>
-
-              <div
-                style={{
-                  background: 'rgba(26, 22, 14, 0.8)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                }}
-              >
-                {activeModalChapter.keyShloka.speaker && (
+                {/* Right: Actions (Font Scaler, Audio, Bookmark, Copy, Close) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {/* Font Size Scaler */}
                   <div
                     style={{
-                      fontFamily: 'var(--font-serif)',
-                      color: '#9A9078',
-                      fontSize: '0.95rem',
-                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(212, 175, 55, 0.2)',
+                      borderRadius: '6px',
                     }}
                   >
-                    {activeModalChapter.keyShloka.speaker}
+                    <button
+                      onClick={() => setFontSizeScale((prev) => Math.max(0.85, prev - 0.1))}
+                      style={{
+                        padding: '0.3rem 0.6rem',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#b8ae96',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                      }}
+                      title="Smaller Text"
+                    >
+                      A-
+                    </button>
+                    <button
+                      onClick={() => setFontSizeScale((prev) => Math.min(1.3, prev + 0.1))}
+                      style={{
+                        padding: '0.3rem 0.6rem',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#b8ae96',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        borderLeft: '1px solid rgba(212, 175, 55, 0.15)',
+                      }}
+                      title="Larger Text"
+                    >
+                      A+
+                    </button>
                   </div>
-                )}
+
+                  {/* Audio Recite Shloka Toggle */}
+                  <button
+                    onClick={() => handleToggleRecitation(activeModalChapter)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '6px',
+                      background: isReciting ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      color: isReciting ? 'var(--gold-radiance)' : '#b8ae96',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                    title="Audio recitation of Sanskrit shloka"
+                  >
+                    <span>{isReciting ? '⏹' : '🔊'}</span>
+                    <span>{isReciting ? 'Stop' : 'Recite'}</span>
+                  </button>
+
+                  {/* Bookmark / Mark Complete */}
+                  <button
+                    onClick={() => handleToggleCompleted(activeModalChapter.id)}
+                    style={{
+                      padding: '0.35rem 0.7rem',
+                      borderRadius: '6px',
+                      background: bookCompletedList.includes(activeModalChapter.id)
+                        ? 'rgba(94, 234, 212, 0.18)'
+                        : 'rgba(255, 255, 255, 0.04)',
+                      border: bookCompletedList.includes(activeModalChapter.id)
+                        ? '1px solid rgba(94, 234, 212, 0.45)'
+                        : '1px solid rgba(212, 175, 55, 0.3)',
+                      color: bookCompletedList.includes(activeModalChapter.id) ? '#5eead4' : '#EDE8D5',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                    title="Toggle completion status"
+                  >
+                    {bookCompletedList.includes(activeModalChapter.id) ? '✓ Completed' : 'Mark as Read'}
+                  </button>
+
+                  {/* Copy Shloka Action */}
+                  <button
+                    onClick={() => handleCopyShloka(activeModalChapter)}
+                    style={{
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '6px',
+                      background: copiedFeedback ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      color: copiedFeedback ? 'var(--gold-radiance)' : '#b8ae96',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                    }}
+                    title="Copy shloka and translation to clipboard"
+                  >
+                    {copiedFeedback ? '✓ Copied!' : '📋 Copy'}
+                  </button>
+
+                  {/* Modal Close Button */}
+                  <button
+                    onClick={() => setActiveModalChapter(null)}
+                    style={{
+                      padding: '0.35rem 0.8rem',
+                      borderRadius: '6px',
+                      background: 'rgba(212, 175, 55, 0.12)',
+                      border: '1px solid rgba(212, 175, 55, 0.4)',
+                      color: 'var(--gold-radiance)',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}
+                    title="Close (Press Escape)"
+                  >
+                    <span>✕ Close</span>
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        opacity: 0.7,
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        borderRadius: '3px',
+                        padding: '0 0.25rem',
+                      }}
+                    >
+                      Esc
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom Header Bar: Chapter Stepper Navigation */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderTop: '1px solid rgba(212, 175, 55, 0.12)',
+                  paddingTop: '0.45rem',
+                  gap: '0.5rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <button
+                  onClick={handlePrevChapter}
+                  disabled={currentChapterIdx <= 0}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    background: 'transparent',
+                    border: 'none',
+                    color: currentChapterIdx <= 0 ? 'rgba(154, 144, 120, 0.35)' : 'var(--gold-radiance)',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: currentChapterIdx <= 0 ? 'not-allowed' : 'pointer',
+                    padding: '0.25rem 0.5rem',
+                  }}
+                >
+                  <span>◀ Prev Chapter</span>
+                  <span style={{ fontSize: '0.7rem', color: '#b8ae96' }}>[←]</span>
+                </button>
+
+                {/* Chapter Quick Jump Selector */}
+                <select
+                  value={activeModalChapter.id}
+                  onChange={(e) => {
+                    const ch = currentBook.chapters.find((c) => c.id === e.target.value);
+                    if (ch) handleOpenChapter(ch);
+                  }}
+                  style={{
+                    background: 'rgba(26, 22, 14, 0.95)',
+                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    color: '#EDE8D5',
+                    fontSize: '0.82rem',
+                    borderRadius: '6px',
+                    padding: '0.3rem 0.65rem',
+                    outline: 'none',
+                    maxWidth: '380px',
+                  }}
+                >
+                  {currentBook.chapters.map((c) => (
+                    <option key={c.id} value={c.id} style={{ background: '#120F0A', color: '#EDE8D5' }}>
+                      Chapter {c.number}: {c.englishTitle}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={handleNextChapter}
+                  disabled={currentChapterIdx >= currentBook.chapters.length - 1}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    background: 'transparent',
+                    border: 'none',
+                    color:
+                      currentChapterIdx >= currentBook.chapters.length - 1
+                        ? 'rgba(154, 144, 120, 0.35)'
+                        : 'var(--gold-radiance)',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: currentChapterIdx >= currentBook.chapters.length - 1 ? 'not-allowed' : 'pointer',
+                    padding: '0.25rem 0.5rem',
+                  }}
+                >
+                  <span>Next Chapter ▶</span>
+                  <span style={{ fontSize: '0.7rem', color: '#b8ae96' }}>[→]</span>
+                </button>
+              </div>
+            </header>
+
+            {/* ---------------------------------------------------------------
+                MODAL SCROLLABLE CONTENT BODY
+                --------------------------------------------------------------- */}
+            <div
+              style={{
+                padding: '2rem 2.25rem 3rem',
+                fontSize: `${fontSizeScale}rem`,
+              }}
+            >
+              {/* Chapter Main Title presentation */}
+              <div style={{ marginBottom: '2rem' }}>
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: 'var(--gold-sacred)',
+                    fontWeight: 700,
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  CHAPTER {activeModalChapter.number} OF {currentBook.chapters.length} · {currentBook.title.toUpperCase()}
+                </div>
+
+                <h2
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: 'clamp(1.8rem, 3.2vw, 2.6rem)',
+                    color: 'var(--gold-radiance)',
+                    margin: '0 0 0.3rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {activeModalChapter.sanskritTitle}
+                </h2>
 
                 <div
                   style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.35rem',
-                    lineHeight: 1.6,
-                    color: 'var(--gold-radiance, #F2D675)',
-                    whiteSpace: 'pre-line',
+                    fontSize: '1rem',
+                    fontStyle: 'italic',
+                    color: '#b8ae96',
                     marginBottom: '0.75rem',
                   }}
                 >
-                  {activeModalChapter.keyShloka.sanskrit}
+                  {activeModalChapter.transliteration}
                 </div>
 
                 <div
                   style={{
-                    fontFamily: 'monospace',
-                    fontSize: '0.88rem',
-                    fontStyle: 'italic',
-                    color: 'rgba(237, 232, 213, 0.7)',
-                    whiteSpace: 'pre-line',
+                    fontSize: '1.25rem',
+                    color: '#EDE8D5',
+                    fontWeight: 600,
+                    letterSpacing: '0.02em',
+                    textTransform: 'uppercase',
                     marginBottom: '1rem',
                   }}
                 >
-                  {activeModalChapter.keyShloka.transliteration}
+                  {activeModalChapter.englishTitle}
+                </div>
+
+                {/* Thematic Tags in Modal */}
+                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                  {activeModalChapter.tags.map((t) => (
+                    <span
+                      key={t}
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '4px',
+                        background: 'rgba(212, 175, 55, 0.08)',
+                        border: '1px solid rgba(212, 175, 55, 0.22)',
+                        color: 'var(--gold-radiance)',
+                      }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 1: Key Shloka Sanskrit Card */}
+              <div style={{ marginBottom: '2.25rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.75rem',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '0.78rem',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: '#b8ae96',
+                      fontWeight: 700,
+                    }}
+                  >
+                    KEY SHLOKA (SANSKRIT & TRANSLITERATION)
+                  </span>
+                  <button
+                    onClick={() => handleCopyShloka(activeModalChapter)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--gold-radiance)',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Copy Shloka
+                  </button>
                 </div>
 
                 <div
                   style={{
-                    fontSize: '0.95rem',
-                    lineHeight: 1.6,
-                    color: '#EDE8D5',
-                    borderTop: '1px solid rgba(212, 175, 55, 0.12)',
-                    paddingTop: '0.75rem',
+                    background: 'rgba(26, 22, 14, 0.85)',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
+                    borderRadius: '10px',
+                    padding: '1.75rem',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
                   }}
                 >
-                  &ldquo;{activeModalChapter.keyShloka.translation}&rdquo;
-                </div>
+                  {activeModalChapter.keyShloka.speaker && (
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-serif)',
+                        color: '#b8ae96',
+                        fontSize: '1rem',
+                        marginBottom: '0.65rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {activeModalChapter.keyShloka.speaker}
+                    </div>
+                  )}
 
-                {activeModalChapter.keyShloka.wordBreakdown && (
-                  <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {activeModalChapter.keyShloka.wordBreakdown.map((w, i) => (
-                      <span
-                        key={i}
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-serif)',
+                      fontSize: '1.45rem',
+                      lineHeight: 1.65,
+                      color: 'var(--gold-radiance)',
+                      whiteSpace: 'pre-line',
+                      marginBottom: '0.9rem',
+                    }}
+                  >
+                    {activeModalChapter.keyShloka.sanskrit}
+                  </div>
+
+                  <div
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.92rem',
+                      fontStyle: 'italic',
+                      color: '#d4ccb8',
+                      whiteSpace: 'pre-line',
+                      marginBottom: '1.25rem',
+                    }}
+                  >
+                    {activeModalChapter.keyShloka.transliteration}
+                  </div>
+
+                  {/* Verbatim English Translation */}
+                  <div
+                    style={{
+                      fontSize: '1.02rem',
+                      lineHeight: 1.65,
+                      color: '#EDE8D5',
+                      borderTop: '1px solid rgba(212, 175, 55, 0.15)',
+                      paddingTop: '1rem',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    &ldquo;{activeModalChapter.keyShloka.translation}&rdquo;
+                  </div>
+
+                  {/* Sandhi Word Breakdown Chips */}
+                  {activeModalChapter.keyShloka.wordBreakdown && (
+                    <div
+                      style={{
+                        marginTop: '1.25rem',
+                        paddingTop: '1rem',
+                        borderTop: '1px solid rgba(212, 175, 55, 0.12)',
+                      }}
+                    >
+                      <div
                         style={{
-                          fontSize: '0.75rem',
-                          background: 'rgba(13, 11, 8, 0.7)',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(212, 175, 55, 0.15)',
+                          fontSize: '0.72rem',
+                          color: '#b8ae96',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          marginBottom: '0.5rem',
                         }}
                       >
-                        <strong style={{ color: '#F2D675' }}>{w.sanskrit}</strong>: {w.meaning}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                        Word-by-Word Sandhi Meaning:
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                        {activeModalChapter.keyShloka.wordBreakdown.map((w, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              fontSize: '0.8rem',
+                              background: 'rgba(13, 11, 8, 0.8)',
+                              padding: '0.3rem 0.6rem',
+                              borderRadius: '4px',
+                              border: '1px solid rgba(212, 175, 55, 0.2)',
+                            }}
+                          >
+                            <strong style={{ color: 'var(--gold-radiance)' }}>{w.sanskrit}</strong>: {w.meaning}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Section 2: Core Lesson (Golden Callout Box) */}
-            <div style={{ marginBottom: '2rem' }}>
+              {/* Section 2: Core Lesson (Illuminated Golden Box) */}
+              <div style={{ marginBottom: '2.25rem' }}>
+                <div
+                  style={{
+                    fontSize: '0.78rem',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: '#b8ae96',
+                    fontWeight: 700,
+                    marginBottom: '0.65rem',
+                  }}
+                >
+                  CORE SUTRA LESSON
+                </div>
+
+                <div
+                  style={{
+                    background: 'rgba(212, 175, 55, 0.08)',
+                    border: '1px solid rgba(212, 175, 55, 0.35)',
+                    borderLeft: '5px solid #D4AF37',
+                    borderRadius: '8px',
+                    padding: '1.4rem 1.6rem',
+                    fontSize: '1.1rem',
+                    fontStyle: 'italic',
+                    lineHeight: 1.65,
+                    color: 'var(--gold-radiance)',
+                  }}
+                >
+                  {activeModalChapter.coreLesson}
+                </div>
+              </div>
+
+              {/* Section 3: Modern Relevance / Connection */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <div
+                  style={{
+                    fontSize: '0.78rem',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: '#b8ae96',
+                    fontWeight: 700,
+                    marginBottom: '0.65rem',
+                  }}
+                >
+                  CONTEMPORARY PSYCHOLOGICAL & LEADERSHIP CONNECTION
+                </div>
+
+                <p
+                  style={{
+                    fontSize: '1rem',
+                    lineHeight: 1.7,
+                    color: 'rgba(237, 232, 213, 0.9)',
+                    margin: 0,
+                  }}
+                >
+                  {activeModalChapter.modernConnection}
+                </p>
+              </div>
+
+              {/* Section 4: Modal Bottom Action Bridge */}
               <div
                 style={{
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: '#9A9078',
-                  fontWeight: 600,
-                  marginBottom: '0.65rem',
-                }}
-              >
-                CORE LESSON
-              </div>
-
-              <div
-                style={{
-                  background: 'rgba(212, 175, 55, 0.08)',
-                  border: '1px solid rgba(212, 175, 55, 0.35)',
-                  borderLeft: '4px solid #D4AF37',
-                  borderRadius: '6px',
-                  padding: '1.25rem 1.5rem',
-                  fontSize: '1.05rem',
-                  fontStyle: 'italic',
-                  lineHeight: 1.6,
-                  color: 'var(--gold-radiance, #F2D675)',
-                }}
-              >
-                {activeModalChapter.coreLesson}
-              </div>
-            </div>
-
-            {/* Section 3: Modern Connection */}
-            <div style={{ marginBottom: '2.5rem' }}>
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: '#9A9078',
-                  fontWeight: 600,
-                  marginBottom: '0.65rem',
-                }}
-              >
-                MODERN CONNECTION
-              </div>
-
-              <p
-                style={{
-                  fontSize: '0.95rem',
-                  lineHeight: 1.65,
-                  color: 'rgba(237, 232, 213, 0.85)',
-                  margin: 0,
-                }}
-              >
-                {activeModalChapter.modernConnection}
-              </p>
-            </div>
-
-            {/* Modal Bottom Action Bridges */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '1rem',
-                borderTop: '1px solid rgba(212, 175, 55, 0.15)',
-                paddingTop: '1.5rem',
-              }}
-            >
-              <a
-                href={activeModalChapter.onlineReadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '6px',
-                  background: 'transparent',
-                  border: '1px solid rgba(94, 234, 212, 0.4)',
-                  color: '#5eead4',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '0.4rem',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  borderTop: '1px solid rgba(212, 175, 55, 0.18)',
+                  paddingTop: '1.75rem',
                 }}
               >
-                📖 Read Full Chapter Online ↗
-              </a>
+                <a
+                  href={activeModalChapter.onlineReadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '0.7rem 1.3rem',
+                    borderRadius: '6px',
+                    background: 'transparent',
+                    border: '1px solid rgba(94, 234, 212, 0.45)',
+                    color: '#5eead4',
+                    fontSize: '0.88rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  📖 Read Full Chapter Online ↗
+                </a>
 
-              <Link
-                href="/wisdom"
-                style={{
-                  padding: '0.65rem 1.5rem',
-                  borderRadius: '6px',
-                  background: 'linear-gradient(135deg, #D4AF37 0%, #8B6914 100%)',
-                  color: '#0D0B08',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.04em',
-                  textDecoration: 'none',
-                }}
-              >
-                💬 Ask Sage About This Shloka
-              </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <Link
+                    href={`/wisdom?query=${encodeURIComponent(
+                      `${currentBook.title} Chapter ${activeModalChapter.number}: ${activeModalChapter.englishTitle} - ${activeModalChapter.coreLesson}`
+                    )}`}
+                    className="btn-sacred"
+                    style={{
+                      padding: '0.7rem 1.4rem',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    <span>💬</span>
+                    <span>Ask Sage About This Shloka</span>
+                  </Link>
+
+                  <Link
+                    href="/quizzes"
+                    className="btn-outline-sacred"
+                    style={{
+                      padding: '0.7rem 1.2rem',
+                      fontSize: '0.88rem',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    🎯 Take Quiz
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>

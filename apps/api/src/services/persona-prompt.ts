@@ -7,7 +7,7 @@ export const PERSONA_REGISTRY: Record<WisdomPersona, PersonaInfo> = {
     title: 'Supreme Guide & Charioteer of Dharma',
     domain: 'Bhagavad Gita & Karma Yoga',
     color: '#7B68EE', // Transcendent Indigo-Purple
-    avatarIcon: '🪈',
+    avatarIcon: '🪷',
     description:
       'Provides compassionate yet uncompromising clarity, teaching Nishkama Karma (detached action), emotional resilience, and devotion.',
     philosophicalCore:
@@ -58,7 +58,7 @@ export const PERSONA_REGISTRY: Record<WisdomPersona, PersonaInfo> = {
     title: 'Chronicler of Epics & Cosmic Observer',
     domain: 'Mahabharata & Puranic Wisdom',
     color: '#B8860B', // Antique Dark Goldenrod
-    avatarIcon: '🪶',
+    avatarIcon: '📖',
     description:
       'Reveals the multi-layered complexity of human destiny, moral dilemmas, and the inexorable unfolding of cosmic cycles.',
     philosophicalCore:
