@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useAuth } from '../../hooks/useAuth';
 
 // =========================================================================
 // DATA STRUCTURES
@@ -1064,17 +1065,21 @@ const ANCIENT_BOOKS: AncientBook[] = [
 // =========================================================================
 
 export default function AncientKnowledgePage() {
+  const { user, isAuthenticated } = useAuth();
+  const [authPromptOpen, setAuthPromptOpen] = useState<boolean>(false);
+
   const [selectedBookId, setSelectedBookId] = useState<string>('gita');
   const [activeModalChapter, setActiveModalChapter] = useState<ChapterDetail | null>(null);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [readingStatusFilter, setReadingStatusFilter] = useState<'all' | 'read' | 'remaining'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [fontSizeScale, setFontSizeScale] = useState<number>(1);
   const [copiedFeedback, setCopiedFeedback] = useState<boolean>(false);
   const [isReciting, setIsReciting] = useState<boolean>(false);
   const [isDronePlaying, setIsDronePlaying] = useState<boolean>(false);
 
-  // Persistence: Last read chapter per book & Completed chapters per book
+  // Persistence: Scoped strictly per authenticated seeker
   const [lastReadChapters, setLastReadChapters] = useState<Record<string, string>>({});
   const [completedChapters, setCompletedChapters] = useState<Record<string, string[]>>({});
 
@@ -1085,17 +1090,26 @@ export default function AncientKnowledgePage() {
   const currentBook =
     ANCIENT_BOOKS.find((b) => b.id === selectedBookId) || ANCIENT_BOOKS[0];
 
-  // Load persistence from localStorage on mount
+  // Load persistence scoped strictly to the authenticated seeker (or clear for guest)
   useEffect(() => {
-    try {
-      const storedLast = localStorage.getItem('aigurukul_last_read_chapters');
-      if (storedLast) setLastReadChapters(JSON.parse(storedLast));
-      const storedComp = localStorage.getItem('aigurukul_completed_chapters');
-      if (storedComp) setCompletedChapters(JSON.parse(storedComp));
-    } catch {
-      // Ignore storage errors in restricted contexts
+    if (user?.id) {
+      try {
+        const storedLast = localStorage.getItem(`aigurukul_last_read_chapters_${user.id}`);
+        if (storedLast) setLastReadChapters(JSON.parse(storedLast));
+        else setLastReadChapters({});
+
+        const storedComp = localStorage.getItem(`aigurukul_completed_chapters_${user.id}`);
+        if (storedComp) setCompletedChapters(JSON.parse(storedComp));
+        else setCompletedChapters({});
+      } catch {
+        // Ignore storage errors in restricted contexts
+      }
+    } else {
+      // Guest seeker: clear individual history state so other people's progress is not displayed
+      setLastReadChapters({});
+      setCompletedChapters({});
     }
-  }, []);
+  }, [user?.id]);
 
   // Sync modal scroll lock
   useEffect(() => {
@@ -1113,21 +1127,23 @@ export default function AncientKnowledgePage() {
     };
   }, [activeModalChapter]);
 
-  // Handle open chapter modal & update last read
+  // Handle open chapter modal & update last read (scoped to seeker)
   const handleOpenChapter = useCallback(
     (chapter: ChapterDetail) => {
       setActiveModalChapter(chapter);
-      setLastReadChapters((prev) => {
-        const next = { ...prev, [currentBook.id]: chapter.id };
-        try {
-          localStorage.setItem('aigurukul_last_read_chapters', JSON.stringify(next));
-        } catch {
-          // ignore
-        }
-        return next;
-      });
+      if (user?.id) {
+        setLastReadChapters((prev) => {
+          const next = { ...prev, [currentBook.id]: chapter.id };
+          try {
+            localStorage.setItem(`aigurukul_last_read_chapters_${user.id}`, JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+          return next;
+        });
+      }
     },
-    [currentBook.id]
+    [currentBook.id, user?.id]
   );
 
   // Navigation within modal
@@ -1166,8 +1182,13 @@ export default function AncientKnowledgePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeModalChapter, handlePrevChapter, handleNextChapter]);
 
-  // Mark chapter as read/completed
+  // Mark chapter as read/completed (scoped strictly to authenticated seeker)
   const handleToggleCompleted = (chapterId: string) => {
+    if (!isAuthenticated || !user?.id) {
+      setAuthPromptOpen(true);
+      return;
+    }
+
     setCompletedChapters((prev) => {
       const bookList = prev[currentBook.id] || [];
       const updated = bookList.includes(chapterId)
@@ -1175,7 +1196,7 @@ export default function AncientKnowledgePage() {
         : [...bookList, chapterId];
       const next = { ...prev, [currentBook.id]: updated };
       try {
-        localStorage.setItem('aigurukul_completed_chapters', JSON.stringify(next));
+        localStorage.setItem(`aigurukul_completed_chapters_${user.id}`, JSON.stringify(next));
       } catch {
         // ignore
       }
@@ -1242,16 +1263,20 @@ export default function AncientKnowledgePage() {
     }
   };
 
-  // Last read chapter computation
-  const lastReadChapterId = lastReadChapters[currentBook.id];
-  const continueChapter =
-    currentBook.chapters.find((c) => c.id === lastReadChapterId) ||
-    currentBook.chapters[1] ||
-    currentBook.chapters[0];
-
+  // Current book completion tracking & reading history
+  const totalChapters = currentBook.chapters.length;
   const bookCompletedList = completedChapters[currentBook.id] || [];
   const completedCount = bookCompletedList.length;
-  const progressPercent = Math.round((completedCount / currentBook.chapters.length) * 100);
+  const remainingCount = Math.max(0, totalChapters - completedCount);
+  const progressPercent = Math.round((completedCount / totalChapters) * 100);
+
+  // Last read chapter computation
+  const lastReadChapterId = lastReadChapters[currentBook.id];
+  const firstUnreadChapter = currentBook.chapters.find((c) => !bookCompletedList.includes(c.id));
+  const continueChapter =
+    currentBook.chapters.find((c) => c.id === lastReadChapterId) ||
+    firstUnreadChapter ||
+    currentBook.chapters[0];
 
   // Thematic tags collection for filter chips
   const allBookTags = Array.from(
@@ -1259,6 +1284,10 @@ export default function AncientKnowledgePage() {
   ).slice(0, 8);
 
   const filteredChapters = currentBook.chapters.filter((ch) => {
+    const isCompleted = bookCompletedList.includes(ch.id);
+    if (readingStatusFilter === 'read' && !isCompleted) return false;
+    if (readingStatusFilter === 'remaining' && isCompleted) return false;
+
     const matchesSearch =
       !searchFilter.trim() ||
       ch.sanskritTitle.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -1317,24 +1346,45 @@ export default function AncientKnowledgePage() {
 
           {/* Seeker Progress Badge & Quick Links */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                fontSize: '0.78rem',
-                color: '#EDE8D5',
-                background: 'rgba(212, 175, 55, 0.08)',
-                padding: '0.25rem 0.65rem',
-                borderRadius: '9999px',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
-              }}
-            >
-              <span>☸</span>
-              <span>
-                {completedCount} of {currentBook.chapters.length} Chapters Studied ({progressPercent}%)
-              </span>
-            </div>
+            {isAuthenticated ? (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.78rem',
+                  color: '#EDE8D5',
+                  background: 'rgba(212, 175, 55, 0.08)',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '9999px',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                }}
+              >
+                <span>☸</span>
+                <span>
+                  {completedCount} of {currentBook.chapters.length} Chapters Studied ({progressPercent}%)
+                </span>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.78rem',
+                  color: 'var(--gold-radiance)',
+                  background: 'rgba(212, 175, 55, 0.08)',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '9999px',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  textDecoration: 'none',
+                }}
+              >
+                <span>🔒</span>
+                <span>Sign In to Track Progress</span>
+              </Link>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
               <Link
@@ -1411,6 +1461,7 @@ export default function AncientKnowledgePage() {
                   setSelectedBookId(book.id);
                   setSearchFilter('');
                   setSelectedTag('all');
+                  setReadingStatusFilter('all');
                 }}
                 style={{
                   display: 'inline-flex',
@@ -1448,18 +1499,37 @@ export default function AncientKnowledgePage() {
               >
                 <span style={{ fontSize: '1.25rem' }}>{book.icon}</span>
                 <span style={{ textTransform: 'uppercase' }}>{book.title}</span>
-                <span
-                  style={{
-                    fontSize: '0.72rem',
-                    padding: '0.15rem 0.5rem',
-                    borderRadius: '9999px',
-                    background: isSelected ? 'rgba(212, 175, 55, 0.35)' : 'rgba(255, 255, 255, 0.08)',
-                    color: isSelected ? '#ffffff' : '#b8ae96',
-                    fontWeight: 700,
-                  }}
-                >
-                  {book.chapters.length} ch
-                </span>
+                {(() => {
+                  const bCompleted = (completedChapters[book.id] || []).length;
+                  return isAuthenticated && bCompleted > 0 ? (
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '9999px',
+                        background: 'rgba(94, 234, 212, 0.22)',
+                        border: '1px solid rgba(94, 234, 212, 0.45)',
+                        color: '#5eead4',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ✓ {bCompleted}/{book.chapters.length} Read
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '9999px',
+                        background: isSelected ? 'rgba(212, 175, 55, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                        color: isSelected ? '#ffffff' : '#b8ae96',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {book.chapters.length} ch
+                    </span>
+                  );
+                })()}
               </button>
             );
           })}
@@ -1572,9 +1642,27 @@ export default function AncientKnowledgePage() {
             <span className="sacred-pill sacred-pill-purple">
               🏛️ {currentBook.tradition}
             </span>
-            <span className="sacred-pill sacred-pill-teal">
-              ⏱️ ~45 min deep study
-            </span>
+            {isAuthenticated ? (
+              <span
+                className="sacred-pill"
+                style={{
+                  background: completedCount > 0 ? 'rgba(94, 234, 212, 0.15)' : 'rgba(212, 175, 55, 0.12)',
+                  borderColor: completedCount > 0 ? 'rgba(94, 234, 212, 0.45)' : 'rgba(212, 175, 55, 0.28)',
+                  color: completedCount > 0 ? '#5eead4' : 'var(--gold-radiance)',
+                  fontWeight: 700,
+                }}
+              >
+                📜 {completedCount} of {totalChapters} Read · {remainingCount} Remaining
+              </span>
+            ) : (
+              <Link
+                href="/login"
+                className="sacred-pill sacred-pill-gold"
+                style={{ textDecoration: 'none' }}
+              >
+                🔒 Sign in to track reading history
+              </Link>
+            )}
           </div>
 
           {/* Scripture Overview Summary */}
@@ -1731,137 +1819,303 @@ export default function AncientKnowledgePage() {
             boxShadow: '0 6px 24px rgba(0, 0, 0, 0.5)',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              marginBottom: '1rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>🔖</span>
-              <div>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: 'var(--gold-sacred)',
-                    fontWeight: 700,
-                  }}
-                >
-                  Continue Reading / Resume Sadhana
-                </span>
-                <h3
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.25rem',
-                    color: 'var(--gold-radiance)',
-                    margin: '0.15rem 0 0',
-                  }}
-                >
-                  Chapter {continueChapter.number}: {continueChapter.englishTitle} ({continueChapter.sanskritTitle})
-                </h3>
-              </div>
-            </div>
-
-            {/* Progress status */}
-            <div style={{ minWidth: '220px' }}>
+          {isAuthenticated ? (
+            <>
+              {/* Authenticated Seeker's Personal Reading History */}
               <div
                 style={{
                   display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
-                  fontSize: '0.78rem',
-                  color: '#b8ae96',
-                  marginBottom: '0.35rem',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  marginBottom: '1rem',
                 }}
               >
-                <span>Scripture Progress</span>
-                <span style={{ color: 'var(--gold-radiance)', fontWeight: 600 }}>{progressPercent}% Complete</span>
-              </div>
-              <div
-                style={{
-                  width: '100%',
-                  height: '6px',
-                  background: 'rgba(0, 0, 0, 0.6)',
-                  borderRadius: '9999px',
-                  overflow: 'hidden',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                }}
-              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>🔖</span>
+                  <div>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: 'var(--gold-sacred)',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Personal Sadhana · Seeker {user?.displayName || user?.email?.split('@')[0]}
+                    </span>
+                    <h3
+                      style={{
+                        fontFamily: 'var(--font-serif)',
+                        fontSize: '1.25rem',
+                        color: 'var(--gold-radiance)',
+                        margin: '0.15rem 0 0',
+                      }}
+                    >
+                      Chapter {continueChapter.number}: {continueChapter.englishTitle} ({continueChapter.sanskritTitle})
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Reading History & Scripture Progress for This User */}
                 <div
                   style={{
-                    width: `${Math.max(5, progressPercent)}%`,
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #D4AF37 0%, #F2D675 100%)',
-                    borderRadius: '9999px',
-                    transition: 'width 0.4s ease',
+                    minWidth: '280px',
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
+                    borderRadius: '10px',
+                    padding: '0.85rem 1.1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
                   }}
-                />
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: '0.8rem',
+                      color: '#b8ae96',
+                    }}
+                  >
+                    <span style={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gold-sacred)', fontSize: '0.74rem' }}>
+                      Your Reading History
+                    </span>
+                    <span style={{ color: 'var(--gold-radiance)', fontWeight: 700, fontSize: '0.88rem' }}>
+                      {progressPercent}% Complete
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '7px',
+                      background: 'rgba(0, 0, 0, 0.6)',
+                      borderRadius: '9999px',
+                      overflow: 'hidden',
+                      border: '1px solid rgba(212, 175, 55, 0.25)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${Math.max(completedCount > 0 ? 6 : 0, progressPercent)}%`,
+                        height: '100%',
+                        background:
+                          completedCount === totalChapters
+                            ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)'
+                            : 'linear-gradient(90deg, #D4AF37 0%, #F2D675 100%)',
+                        borderRadius: '9999px',
+                        transition: 'width 0.4s ease',
+                      }}
+                    />
+                  </div>
+
+                  {/* Explicit Read vs Remaining Badges */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.76rem',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '6px',
+                        background: completedCount > 0 ? 'rgba(94, 234, 212, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                        border: completedCount > 0 ? '1px solid rgba(94, 234, 212, 0.45)' : '1px solid rgba(255, 255, 255, 0.12)',
+                        color: completedCount > 0 ? '#5eead4' : '#b8ae96',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span>✓</span>
+                      <span><strong>{completedCount}</strong> of {totalChapters} Read</span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.76rem',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '6px',
+                        background: remainingCount === 0 ? 'rgba(94, 234, 212, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                        border: remainingCount === 0 ? '1px solid rgba(94, 234, 212, 0.45)' : '1px solid rgba(245, 158, 11, 0.35)',
+                        color: remainingCount === 0 ? '#5eead4' : '#fcd34d',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span>⏳</span>
+                      <span>
+                        {remainingCount === 0 ? (
+                          <strong>All Finished!</strong>
+                        ) : (
+                          <><strong>{remainingCount}</strong> Remaining</>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <p
-            style={{
-              fontSize: '0.92rem',
-              lineHeight: 1.6,
-              color: 'rgba(237, 232, 213, 0.85)',
-              margin: '0 0 1.25rem',
-              fontStyle: 'italic',
-            }}
-          >
-            &ldquo;{continueChapter.coreLesson}&rdquo;
-          </p>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => handleOpenChapter(continueChapter)}
-              className="btn-sacred"
-              style={{
-                padding: '0.55rem 1.3rem',
-                fontSize: '0.88rem',
-                gap: '0.4rem',
-              }}
-            >
-              <span>▶ Resume Chapter {continueChapter.number}</span>
-            </button>
-
-            <button
-              onClick={() => handleToggleCompleted(continueChapter.id)}
-              className="btn-outline-sacred"
-              style={{
-                padding: '0.55rem 1.15rem',
-                fontSize: '0.85rem',
-                gap: '0.4rem',
-              }}
-            >
-              <span>{bookCompletedList.includes(continueChapter.id) ? '✓ Completed' : 'Mark as Finished'}</span>
-            </button>
-
-            {currentBook.chapters.length > 1 && (
-              <button
-                onClick={() => {
-                  const nextIdx = (continueChapter.number % currentBook.chapters.length);
-                  handleOpenChapter(currentBook.chapters[nextIdx]);
-                }}
+              <p
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#b8ae96',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  padding: '0.55rem 0.75rem',
-                  textDecoration: 'underline',
+                  fontSize: '0.92rem',
+                  lineHeight: 1.6,
+                  color: 'rgba(237, 232, 213, 0.85)',
+                  margin: '0 0 1.25rem',
+                  fontStyle: 'italic',
                 }}
               >
-                Jump to Next Chapter →
-              </button>
-            )}
-          </div>
+                &ldquo;{continueChapter.coreLesson}&rdquo;
+              </p>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => handleOpenChapter(continueChapter)}
+                  className="btn-sacred"
+                  style={{
+                    padding: '0.55rem 1.3rem',
+                    fontSize: '0.88rem',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <span>▶ Resume Chapter {continueChapter.number}</span>
+                </button>
+
+                <button
+                  onClick={() => handleToggleCompleted(continueChapter.id)}
+                  className="btn-outline-sacred"
+                  style={{
+                    padding: '0.55rem 1.15rem',
+                    fontSize: '0.85rem',
+                    gap: '0.4rem',
+                    borderColor: bookCompletedList.includes(continueChapter.id) ? '#5eead4' : undefined,
+                    color: bookCompletedList.includes(continueChapter.id) ? '#5eead4' : undefined,
+                    background: bookCompletedList.includes(continueChapter.id) ? 'rgba(94, 234, 212, 0.12)' : undefined,
+                  }}
+                >
+                  <span>
+                    {bookCompletedList.includes(continueChapter.id)
+                      ? `✓ Chapter ${continueChapter.number} Finished`
+                      : `Mark Chapter ${continueChapter.number} as Finished`}
+                  </span>
+                </button>
+
+                {currentBook.chapters.length > 1 && (
+                  <button
+                    onClick={() => {
+                      const nextIdx = (continueChapter.number % currentBook.chapters.length);
+                      handleOpenChapter(currentBook.chapters[nextIdx]);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#b8ae96',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      padding: '0.55rem 0.75rem',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Jump to Next Chapter →
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Unauthenticated / Guest View */
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1.5rem',
+              }}
+            >
+              <div style={{ maxWidth: '640px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>🪔</span>
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      color: 'var(--gold-sacred)',
+                      fontWeight: 700,
+                    }}
+                  >
+                    Personal Sadhana Tracker · Seeker Sanctum
+                  </span>
+                </div>
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: '1.35rem',
+                    color: 'var(--gold-radiance)',
+                    margin: '0.2rem 0 0.5rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  Log In to Track Your Personal Reading History
+                </h3>
+                <p
+                  style={{
+                    fontSize: '0.92rem',
+                    lineHeight: 1.6,
+                    color: 'rgba(237, 232, 213, 0.85)',
+                    margin: 0,
+                  }}
+                >
+                  Each seeker’s spiritual journey is unique. Sign in to your AI Gurukul account to record read chapters, track remaining study, earn Vedic sadhana XP, and resume exactly where you left off across all devices.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <Link
+                  href="/login"
+                  className="btn-sacred"
+                  style={{
+                    padding: '0.65rem 1.4rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    boxShadow: '0 4px 16px rgba(212, 175, 55, 0.35)',
+                  }}
+                >
+                  <span>🔑</span>
+                  <span>Log In to Save History</span>
+                </Link>
+
+                <button
+                  onClick={() => handleOpenChapter(currentBook.chapters[0])}
+                  className="btn-outline-sacred"
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    fontSize: '0.9rem',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <span>▶ Preview Chapter 1</span>
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ===================================================================
@@ -1899,9 +2153,37 @@ export default function AncientKnowledgePage() {
               >
                 Chapter Exploration &amp; Sutras
               </h2>
-              <span style={{ fontSize: '0.85rem', color: '#b8ae96', marginTop: '0.25rem', display: 'inline-block' }}>
-                Showing {filteredChapters.length} of {currentBook.chapters.length} Chapters · Click any card to read verbatim shloka &amp; modern relevance
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#b8ae96' }}>
+                  Showing {filteredChapters.length} of {totalChapters} Chapters
+                </span>
+                {isAuthenticated ? (
+                  <>
+                    <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>•</span>
+                    <span style={{ fontSize: '0.82rem', color: '#5eead4', fontWeight: 700 }}>
+                      ✓ {completedCount} Read
+                    </span>
+                    <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>•</span>
+                    <span style={{ fontSize: '0.82rem', color: '#fcd34d', fontWeight: 700 }}>
+                      ⏳ {remainingCount} Remaining
+                    </span>
+                    <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>•</span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--gold-radiance)', fontWeight: 600 }}>
+                      {progressPercent}% Complete
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>•</span>
+                    <Link
+                      href="/login"
+                      style={{ fontSize: '0.82rem', color: 'var(--gold-radiance)', textDecoration: 'underline' }}
+                    >
+                      Log in to track read chapters
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Search Input & View Mode Toggles */}
@@ -1989,6 +2271,103 @@ export default function AncientKnowledgePage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Reading History Quick Filter Chips */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              flexWrap: 'wrap',
+              marginBottom: '1rem',
+              padding: '0.7rem 1rem',
+              background: 'rgba(25, 21, 14, 0.65)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+              borderRadius: '10px',
+            }}
+          >
+            <span style={{ fontSize: '0.78rem', color: 'var(--gold-sacred)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Reading History:
+            </span>
+
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => setReadingStatusFilter('all')}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '9999px',
+                    border: readingStatusFilter === 'all' ? '1px solid var(--gold-sacred)' : '1px solid rgba(212, 175, 55, 0.2)',
+                    background: readingStatusFilter === 'all' ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.35) 0%, rgba(212, 175, 55, 0.15) 100%)' : 'rgba(255, 255, 255, 0.03)',
+                    color: readingStatusFilter === 'all' ? 'var(--gold-radiance)' : '#b8ae96',
+                    cursor: 'pointer',
+                    fontWeight: readingStatusFilter === 'all' ? 700 : 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  All Chapters ({totalChapters})
+                </button>
+
+                <button
+                  onClick={() => setReadingStatusFilter('read')}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '9999px',
+                    border: readingStatusFilter === 'read' ? '1px solid #5eead4' : '1px solid rgba(94, 234, 212, 0.3)',
+                    background: readingStatusFilter === 'read' ? 'rgba(94, 234, 212, 0.25)' : 'rgba(94, 234, 212, 0.06)',
+                    color: '#5eead4',
+                    cursor: 'pointer',
+                    fontWeight: readingStatusFilter === 'read' ? 700 : 500,
+                    boxShadow: readingStatusFilter === 'read' ? '0 0 12px rgba(94, 234, 212, 0.3)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  ✓ Read / Finished ({completedCount})
+                </button>
+
+                <button
+                  onClick={() => setReadingStatusFilter('remaining')}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '9999px',
+                    border: readingStatusFilter === 'remaining' ? '1px solid #fcd34d' : '1px solid rgba(245, 158, 11, 0.3)',
+                    background: readingStatusFilter === 'remaining' ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.06)',
+                    color: '#fcd34d',
+                    cursor: 'pointer',
+                    fontWeight: readingStatusFilter === 'remaining' ? 700 : 500,
+                    boxShadow: readingStatusFilter === 'remaining' ? '0 0 12px rgba(245, 158, 11, 0.3)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  ⏳ Remaining ({remainingCount})
+                </button>
+              </>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <span style={{ fontSize: '0.8rem', color: '#b8ae96' }}>
+                  Viewing all {totalChapters} chapters as guest.
+                </span>
+                <Link
+                  href="/login"
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--gold-radiance)',
+                    textDecoration: 'none',
+                    padding: '0.2rem 0.65rem',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(212, 175, 55, 0.35)',
+                    background: 'rgba(212, 175, 55, 0.1)',
+                    fontWeight: 600,
+                  }}
+                >
+                  🔑 Sign In to Save &amp; Filter
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Quick Thematic Tag Filter Chips */}
@@ -2095,23 +2474,47 @@ export default function AncientKnowledgePage() {
                             fontWeight: 700,
                           }}
                         >
-                          Chapter {chapter.number} of {currentBook.chapters.length}
+                          Chapter {chapter.number} of {totalChapters}
                         </span>
 
-                        {isCompleted && (
-                          <span
-                            style={{
-                              fontSize: '0.72rem',
-                              padding: '0.2rem 0.6rem',
-                              borderRadius: '9999px',
-                              background: 'rgba(94, 234, 212, 0.16)',
-                              border: '1px solid rgba(94, 234, 212, 0.45)',
-                              color: '#5eead4',
-                              fontWeight: 700,
-                            }}
-                          >
-                            ✓ Studied
-                          </span>
+                        {isAuthenticated && (
+                          isCompleted ? (
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '9999px',
+                                background: 'rgba(94, 234, 212, 0.16)',
+                                border: '1px solid rgba(94, 234, 212, 0.45)',
+                                color: '#5eead4',
+                                fontWeight: 700,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                              }}
+                            >
+                              <span>✓</span>
+                              <span>Read</span>
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '9999px',
+                                background: 'rgba(245, 158, 11, 0.1)',
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                color: '#fcd34d',
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                              }}
+                            >
+                              <span>⏳</span>
+                              <span>Remaining</span>
+                            </span>
+                          )
                         )}
                       </div>
 
@@ -2194,25 +2597,53 @@ export default function AncientKnowledgePage() {
                         ))}
                       </div>
 
-                      {/* Primary Action Button: Read Shloka & Lesson */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenChapter(chapter);
-                        }}
-                        className="btn-outline-sacred card-action-link"
-                        style={{
-                          width: '100%',
-                          padding: '0.7rem 1.25rem',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.04em',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <span>READ SHLOKA &amp; LESSON</span>
-                        <span className="action-arrow">→</span>
-                      </button>
+                      {/* Actions: Read Shloka & Fast Toggle Status */}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenChapter(chapter);
+                          }}
+                          className="btn-outline-sacred card-action-link"
+                          style={{
+                            flex: 1,
+                            padding: '0.7rem 1rem',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.04em',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <span>READ SHLOKA</span>
+                          <span className="action-arrow">→</span>
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleCompleted(chapter.id);
+                          }}
+                          style={{
+                            padding: '0.7rem 0.85rem',
+                            borderRadius: '6px',
+                            border: isAuthenticated && isCompleted
+                              ? '1px solid rgba(94, 234, 212, 0.5)'
+                              : '1px solid rgba(212, 175, 55, 0.3)',
+                            background: isAuthenticated && isCompleted
+                              ? 'rgba(94, 234, 212, 0.16)'
+                              : 'rgba(255, 255, 255, 0.04)',
+                            color: isAuthenticated && isCompleted ? '#5eead4' : '#b8ae96',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s ease',
+                          }}
+                          title={isAuthenticated ? (isCompleted ? 'Mark chapter as unread (remaining)' : 'Mark chapter as read') : 'Sign in to record read chapter'}
+                        >
+                          {isAuthenticated && isCompleted ? '✓ Read' : '○ Mark Read'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -2284,7 +2715,7 @@ export default function AncientKnowledgePage() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                         {chapter.tags.slice(0, 2).map((t) => (
                           <span
@@ -2301,6 +2732,56 @@ export default function AncientKnowledgePage() {
                           </span>
                         ))}
                       </div>
+
+                      {/* Status indicator badge */}
+                      {isCompleted ? (
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '9999px',
+                            background: 'rgba(94, 234, 212, 0.16)',
+                            border: '1px solid rgba(94, 234, 212, 0.45)',
+                            color: '#5eead4',
+                            fontWeight: 700,
+                          }}
+                        >
+                          ✓ Read
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '9999px',
+                            background: 'rgba(245, 158, 11, 0.1)',
+                            border: '1px solid rgba(245, 158, 11, 0.3)',
+                            color: '#fcd34d',
+                            fontWeight: 600,
+                          }}
+                        >
+                          ⏳ Remaining
+                        </span>
+                      )}
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleCompleted(chapter.id);
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: isCompleted ? '1px solid rgba(94, 234, 212, 0.4)' : '1px solid rgba(212, 175, 55, 0.25)',
+                          borderRadius: '5px',
+                          color: isCompleted ? '#5eead4' : '#b8ae96',
+                          fontSize: '0.76rem',
+                          padding: '0.25rem 0.55rem',
+                          cursor: 'pointer',
+                        }}
+                        title={isCompleted ? 'Mark as unread (remaining)' : 'Mark as read'}
+                      >
+                        {isCompleted ? 'Unmark' : 'Done'}
+                      </button>
 
                       <span
                         style={{
@@ -2387,27 +2868,43 @@ export default function AncientKnowledgePage() {
                   flexWrap: 'wrap',
                 }}
               >
-                {/* Left: Breadcrumb */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}>
+                {/* Left: Breadcrumb & Chapter Status */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', flexWrap: 'wrap' }}>
                   <span style={{ color: '#b8ae96' }}>📜 {currentBook.title}</span>
                   <span style={{ color: 'rgba(212, 175, 55, 0.4)' }}>›</span>
                   <span style={{ color: 'var(--gold-radiance)', fontWeight: 600 }}>
-                    Chapter {activeModalChapter.number} of {currentBook.chapters.length}
+                    Chapter {activeModalChapter.number} of {totalChapters}
                   </span>
-                  {bookCompletedList.includes(activeModalChapter.id) && (
-                    <span
-                      style={{
-                        fontSize: '0.7rem',
-                        padding: '0.15rem 0.45rem',
-                        borderRadius: '9999px',
-                        background: 'rgba(94, 234, 212, 0.15)',
-                        border: '1px solid rgba(94, 234, 212, 0.4)',
-                        color: '#5eead4',
-                        fontWeight: 600,
-                      }}
-                    >
-                      ✓ Completed
-                    </span>
+                  {isAuthenticated && (
+                    bookCompletedList.includes(activeModalChapter.id) ? (
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '9999px',
+                          background: 'rgba(94, 234, 212, 0.15)',
+                          border: '1px solid rgba(94, 234, 212, 0.4)',
+                          color: '#5eead4',
+                          fontWeight: 600,
+                        }}
+                      >
+                        ✓ Read ({completedCount} of {totalChapters} completed)
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '9999px',
+                          background: 'rgba(245, 158, 11, 0.12)',
+                          border: '1px solid rgba(245, 158, 11, 0.35)',
+                          color: '#fcd34d',
+                          fontWeight: 600,
+                        }}
+                      >
+                        ⏳ Remaining ({remainingCount} left to study)
+                      </span>
+                    )
                   )}
                 </div>
 
@@ -2482,20 +2979,20 @@ export default function AncientKnowledgePage() {
                     style={{
                       padding: '0.35rem 0.7rem',
                       borderRadius: '6px',
-                      background: bookCompletedList.includes(activeModalChapter.id)
+                      background: isAuthenticated && bookCompletedList.includes(activeModalChapter.id)
                         ? 'rgba(94, 234, 212, 0.18)'
                         : 'rgba(255, 255, 255, 0.04)',
-                      border: bookCompletedList.includes(activeModalChapter.id)
+                      border: isAuthenticated && bookCompletedList.includes(activeModalChapter.id)
                         ? '1px solid rgba(94, 234, 212, 0.45)'
                         : '1px solid rgba(212, 175, 55, 0.3)',
-                      color: bookCompletedList.includes(activeModalChapter.id) ? '#5eead4' : '#EDE8D5',
+                      color: isAuthenticated && bookCompletedList.includes(activeModalChapter.id) ? '#5eead4' : '#EDE8D5',
                       fontSize: '0.8rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
-                    title="Toggle completion status"
+                    title={isAuthenticated ? "Toggle completion status" : "Sign in to save progress"}
                   >
-                    {bookCompletedList.includes(activeModalChapter.id) ? '✓ Completed' : 'Mark as Read'}
+                    {isAuthenticated && bookCompletedList.includes(activeModalChapter.id) ? '✓ Completed' : 'Mark as Read'}
                   </button>
 
                   {/* Copy Shloka Action */}
@@ -2974,6 +3471,88 @@ export default function AncientKnowledgePage() {
                   </Link>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auth prompt modal when guest tries to mark reading history */}
+      {authPromptOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.82)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setAuthPromptOpen(false)}
+        >
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(33, 29, 18, 0.98) 0%, rgba(18, 15, 10, 0.98) 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.45)',
+              borderRadius: '16px',
+              padding: '2.25rem',
+              maxWidth: '460px',
+              width: '100%',
+              boxShadow: '0 12px 48px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.2)',
+              textAlign: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🪔</div>
+            <h3
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: '1.45rem',
+                color: 'var(--gold-radiance)',
+                margin: '0 0 0.5rem',
+                fontWeight: 700,
+              }}
+            >
+              Seeker Account Required
+            </h3>
+            <p
+              style={{
+                fontSize: '0.92rem',
+                lineHeight: 1.6,
+                color: 'rgba(237, 232, 213, 0.85)',
+                marginBottom: '1.75rem',
+              }}
+            >
+              Reading history and chapter completion belong specifically to your personal seeker profile so your progress is never lost or mixed with other learners. Please sign in to record your sadhana.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <Link
+                href="/login"
+                className="btn-sacred"
+                style={{
+                  padding: '0.65rem 1.4rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                Sign In Now
+              </Link>
+              <button
+                onClick={() => setAuthPromptOpen(false)}
+                className="btn-outline-sacred"
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  fontSize: '0.9rem',
+                }}
+              >
+                Continue as Guest
+              </button>
             </div>
           </div>
         </div>

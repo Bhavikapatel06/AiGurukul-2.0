@@ -251,17 +251,18 @@ export function GlobalNavbar() {
                 </div>
                 <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
                   <span
+                    title={user.displayName || user.email}
                     style={{
                       fontWeight: 600,
                       fontSize: '0.8rem',
                       color: 'var(--text-vellum)',
-                      maxWidth: '110px',
+                      maxWidth: '120px',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                     }}
                   >
-                    {user.displayName}
+                    {user.displayName || user.email?.split('@')[0] || 'Seeker'}
                   </span>
                   <span
                     style={{
@@ -272,7 +273,7 @@ export function GlobalNavbar() {
                       fontWeight: 600,
                     }}
                   >
-                    {user.role}
+                    {user.role || 'learner'}
                   </span>
                 </div>
               </div>
@@ -478,6 +479,107 @@ export function GlobalNavbar() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 fontWeight: 600,
+              }}
+            >
+              Seeker Identity
+            </div>
+
+            {user ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  background: 'rgba(212, 175, 55, 0.08)',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '50%',
+                      background: 'rgba(212, 175, 55, 0.2)',
+                      border: '1px solid var(--gold-sacred)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1rem',
+                    }}
+                  >
+                    🪷
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-vellum)' }}>
+                      {user.displayName || user.email?.split('@')[0] || 'Seeker'}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--gold-radiance)', textTransform: 'uppercase' }}>
+                      {user.role || 'learner'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="btn-outline-sacred"
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    fontSize: '0.82rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="btn-outline-sacred"
+                  style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    padding: '0.65rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                  }}
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="btn-sacred"
+                  style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    padding: '0.65rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                  }}
+                >
+                  Enroll
+                </Link>
+              </div>
+            )}
+
+            <div
+              style={{
+                fontSize: '0.75rem',
+                color: '#b8ae96',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                fontWeight: 600,
+                marginTop: '0.5rem',
               }}
             >
               Sanctum Shortcuts

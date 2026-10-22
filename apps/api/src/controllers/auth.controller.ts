@@ -23,7 +23,7 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: isProd,
-      sameSite: 'strict',
+      sameSite: isProd ? 'strict' : 'lax',
       path: '/',
       maxAge: maxAgeMs,
     };
@@ -44,10 +44,11 @@ export class AuthController {
   }
 
   private clearAuthCookies(res: Response): void {
+    const isProd = this.config.NODE_ENV === 'production';
     const clearOptions: CookieOptions = {
       httpOnly: true,
-      secure: this.config.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProd,
+      sameSite: isProd ? 'strict' : 'lax',
       path: '/',
     };
     res.clearCookie('access_token', clearOptions);

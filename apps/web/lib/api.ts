@@ -22,6 +22,17 @@ export async function apiClient<T>(
     ...(options.headers as Record<string, string>),
   };
 
+  if (typeof window !== 'undefined') {
+    try {
+      const token = localStorage.getItem('aigurukul_access_token');
+      if (token && !headers['Authorization'] && !headers['authorization']) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch {
+      // Ignore localStorage access errors
+    }
+  }
+
   try {
     const res = await fetch(url, {
       ...options,
