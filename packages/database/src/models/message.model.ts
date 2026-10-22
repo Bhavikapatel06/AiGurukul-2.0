@@ -110,7 +110,7 @@ MessageSchema.methods.toDTO = function (): MessageDTO {
     conversationId: this.conversationId ? this.conversationId.toString() : '',
     sender: this.sender,
     content: this.content,
-    citations: this.citations && this.citations.length > 0 ? this.citations : undefined,
+    citations: this.citations ? this.citations : [],
     tokenUsage: this.tokenUsage || undefined,
     feedback: this.feedback || undefined,
     createdAt: this.createdAt ? this.createdAt.toISOString() : new Date().toISOString(),

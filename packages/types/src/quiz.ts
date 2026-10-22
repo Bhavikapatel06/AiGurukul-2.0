@@ -6,6 +6,7 @@ export type QuizDomain =
   | 'mahabharata'
   | 'ramayana'
   | 'panchatantra'
+  | 'yoga'
   | 'general';
 
 export type QuizDifficulty = 'beginner' | 'intermediate' | 'advanced';
@@ -122,6 +123,7 @@ export interface GenerateDynamicQuizInput {
   difficulty?: QuizDifficulty;
   questionCount?: number;
   language?: 'en' | 'hi' | 'sa';
+  guru?: string;
 }
 
 export interface QuizFilterParams {

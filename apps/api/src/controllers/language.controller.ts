@@ -3,6 +3,7 @@ import { TranslationService } from '../services/translation.service.js';
 import { EtymologyService } from '../services/etymology.service.js';
 import {
   TranslateRequestSchema,
+  ImageOCRRequestSchema,
   EtymologyQuerySchema,
   ManuscriptQuerySchema,
 } from '@ai-gurukul/validation';
@@ -41,6 +42,26 @@ export class LanguageController {
     try {
       const parsed = TranslateRequestSchema.parse(req.body);
       const result = await this.translationService.translateText(parsed);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  extractOcr = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const parsed = ImageOCRRequestSchema.parse(req.body);
+      const result = await this.translationService.extractImageText(parsed);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  translateImage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const parsed = ImageOCRRequestSchema.parse(req.body);
+      const result = await this.translationService.translateImage(parsed);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);

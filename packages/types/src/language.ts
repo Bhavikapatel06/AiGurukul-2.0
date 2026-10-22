@@ -139,23 +139,46 @@ export interface ManuscriptDTO {
   translations: Record<string, ManuscriptTranslationDTO>;
 }
 
+export type TranslateSourceLanguage = SupportedLanguage | 'auto';
+
 export interface TranslateRequestDTO {
-  sourceLanguage: SupportedLanguage;
+  sourceLanguage: TranslateSourceLanguage;
   targetLanguage: SupportedLanguage;
   text: string;
   includeEtymology?: boolean;
 }
 
 export interface TranslationResultDTO {
-  sourceLanguage: SupportedLanguage;
+  sourceLanguage: SupportedLanguage | 'auto';
   targetLanguage: SupportedLanguage;
   sourceText: string;
   translatedText: string;
   transliteration?: string;
   confidence: number;
-  method: 'canonical_cache' | 'dictionary_lexicon' | 'ai_synthesizer';
+  method: 'canonical_cache' | 'dictionary_lexicon' | 'ai_synthesizer' | 'ocr_neural';
   breakdown?: ManuscriptWordDTO[];
   etymologyNotes?: string;
+  detectedSourceLanguage?: SupportedLanguage;
+}
+
+export interface ImageOCRRequestDTO {
+  imageBase64: string;
+  mimeType?: string;
+  sourceLanguage?: TranslateSourceLanguage;
+  targetLanguage?: SupportedLanguage;
+}
+
+export interface ImageOCRResultDTO {
+  extractedText: string;
+  detectedLanguage?: SupportedLanguage | string;
+  confidence: number;
+  isReadable: boolean;
+  warning?: string;
+  ocrProvider?: string;
+  translatedText?: string;
+  transliteration?: string;
+  etymologyNotes?: string;
+  translation?: TranslationResultDTO;
 }
 
 export interface EtymologyEntryDTO {

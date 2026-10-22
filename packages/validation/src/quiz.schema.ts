@@ -8,6 +8,7 @@ export const quizDomainSchema = z.enum([
   'mahabharata',
   'ramayana',
   'panchatantra',
+  'yoga',
   'general',
 ]);
 
@@ -57,6 +58,7 @@ export const generateDynamicQuizSchema = z.object({
   difficulty: quizDifficultySchema.default('intermediate'),
   questionCount: z.number().int().min(1).max(20).default(5),
   language: z.enum(['en', 'hi', 'sa']).default('en'),
+  guru: z.string().optional(),
 });
 
 export const quizFilterSchema = z.object({
