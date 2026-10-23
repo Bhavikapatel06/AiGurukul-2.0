@@ -201,7 +201,17 @@ export function createApp(options: CreateAppOptions): Express {
     logger.warn({ err }, 'RAG vector store initial hydration deferred');
   });
 
-  const aiProvider = options.aiProvider || AIProviderFactory.create(config.AI_PROVIDER);
+  const aiProvider =
+    options.aiProvider ||
+    AIProviderFactory.create(config.AI_PROVIDER, {
+      apiKey: config.GROQ_API_KEY || config.GEMINI_API_KEY || config.OPENAI_API_KEY,
+      model:
+        config.AI_PROVIDER === 'groq'
+          ? config.GROQ_MODEL
+          : config.AI_PROVIDER === 'gemini'
+            ? config.GEMINI_MODEL
+            : config.OPENAI_MODEL,
+    });
   const wisdomService =
     options.wisdomService ||
     new WisdomService(

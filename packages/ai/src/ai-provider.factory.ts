@@ -2,6 +2,14 @@ import { AIProvider } from './ai-provider.interface.js';
 import { LocalAIProvider } from './local-ai.provider.js';
 import { GeminiAIProvider } from './gemini-ai.provider.js';
 import { OpenAIProvider } from './openai-ai.provider.js';
+import dotenv from 'dotenv';
+import path from 'node:path';
+
+// Load env vars if running standalone
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 export interface AIProviderFactoryOptions {
   apiKey?: string;
@@ -22,7 +30,9 @@ export class AIProviderFactory {
 
     // Auto-detect API key presence if provider wasn't explicitly forced to local
     if (!requestedType || requestedType === 'local') {
-      if (options?.apiKey || process.env.GEMINI_API_KEY) {
+      if (options?.apiKey?.startsWith('gsk_') || process.env.GROQ_API_KEY) {
+        requestedType = 'groq';
+      } else if (options?.apiKey || process.env.GEMINI_API_KEY) {
         requestedType = 'gemini';
       } else if (process.env.OPENAI_API_KEY) {
         requestedType = 'openai';
@@ -32,6 +42,18 @@ export class AIProviderFactory {
     }
 
     switch (requestedType) {
+      case 'groq': {
+        const apiKey = options?.apiKey || process.env.GROQ_API_KEY;
+        if (!apiKey) {
+          console.warn('⚠️ [AIProviderFactory] GROQ_API_KEY not configured. Falling back to LocalAIProvider.');
+          return new LocalAIProvider();
+        }
+        return new OpenAIProvider(
+          apiKey,
+          options?.model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+          'https://api.groq.com/openai/v1'
+        );
+      }
       case 'gemini': {
         const apiKey = options?.apiKey || process.env.GEMINI_API_KEY;
         if (!apiKey) {

@@ -4,6 +4,8 @@ import path from 'node:path';
 
 // Load .env from workspace or standard location if present
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 const CommonEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -22,7 +24,7 @@ export const ApiEnvSchema = CommonEnvSchema.extend({
   COOKIE_SECRET: z.string().min(16).default('local_dev_cookie_secret_key_32chars!'),
 
   // Pluggable Provider Selection
-  AI_PROVIDER: z.enum(['local', 'openai', 'anthropic', 'gemini']).default('local'),
+  AI_PROVIDER: z.enum(['local', 'openai', 'anthropic', 'gemini', 'groq']).default('local'),
   EMBEDDING_PROVIDER: z.enum(['local', 'openai', 'cohere']).default('local'),
   VECTOR_STORE_PROVIDER: z.enum(['local', 'pinecone']).default('local'),
   STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
@@ -33,6 +35,8 @@ export const ApiEnvSchema = CommonEnvSchema.extend({
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
+  GROQ_API_KEY: z.string().optional(),
+  GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
   PINECONE_API_KEY: z.string().optional(),
   PINECONE_INDEX: z.string().optional(),
   LOCAL_STORAGE_DIR: z.string().default('.storage'),
