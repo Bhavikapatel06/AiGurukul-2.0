@@ -5,11 +5,13 @@ export class OpenAIProvider implements AIProvider {
   public readonly providerName = 'openai';
   private readonly apiKey: string;
   private readonly modelName: string;
+  private readonly baseURL: string;
   private readonly fallbackProvider: LocalAIProvider;
 
-  constructor(apiKey: string, modelName: string = 'gpt-4o-mini') {
+  constructor(apiKey: string, modelName: string = 'gpt-4o-mini', baseURL?: string) {
     this.apiKey = apiKey.trim();
     this.modelName = modelName.trim();
+    this.baseURL = (baseURL || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
     this.fallbackProvider = new LocalAIProvider();
   }
 
@@ -18,7 +20,7 @@ export class OpenAIProvider implements AIProvider {
     options?: AICompletionOptions
   ): Promise<string> {
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,7 +57,7 @@ export class OpenAIProvider implements AIProvider {
     options?: AICompletionOptions
   ): AsyncIterable<string> {
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
