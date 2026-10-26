@@ -262,6 +262,396 @@ export const CANONICAL_SEED_QUIZZES: CreateQuizDTO[] = [
       },
     ],
   },
+  {
+    title: 'Mahabharata: Dharma, Ethical Dilemmas & The Great Epic',
+    description:
+      'Explore the monumental epic of Vyasa, testing understanding of Dharma in crisis, Vidura Niti, Yaksha Prashna, and righteous duty.',
+    domain: 'mahabharata',
+    difficulty: 'intermediate',
+    tags: ['mahabharata', 'dharma', 'vyasa', 'vidura', 'yaksha-prashna'],
+    isActive: true,
+    isDynamic: false,
+    questions: [
+      {
+        questionText:
+          'In Mahabharata Shanti Parva 109.11, what is the etymological root and essential function of Dharma?',
+        options: [
+          'It is derived from "dharana" (to uphold and sustain), because it preserves and nurtures all living beings and human society',
+          'It represents arbitrary commands issued by victorious monarchs',
+          'It denotes complete withdrawal from all social engagement into seclusion',
+          'It refers exclusively to temple ceremonies and sacrificial fires',
+        ],
+        correctIndex: 0,
+        explanation:
+          'Vyasa explains: "Dharanad dharmam ity ahur dharmo dharayate prajah" — Dharma is that which upholds, preserves, and integrates creation.',
+        sourceRef: 'Mahabharata Shanti Parva 109.11',
+      },
+      {
+        questionText:
+          'According to Vidura Niti (Mahabharata 33.16), how do wise individuals (pandita-buddhaya) respond when acute adversity strikes?',
+        options: [
+          'They panic and blame fate for their plight',
+          'They do not become bewildered or paralyzed; they remain actively diligent, steadfast in duty, and anchored in truth',
+          'They immediately abandon their moral vows to secure temporary relief',
+          'They surrender to fatalism and cease all constructive effort',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Vidura teaches that true wisdom is tested in adversity: wise leaders do not succumb to confusion; they remain persevering, dutiful, and truthful.',
+        sourceRef: 'Mahabharata Vidura Niti 33.16',
+      },
+      {
+        questionText:
+          'In the Yaksha Prashna (Vana Parva 313.116), when asked what is the greatest wonder in the world, what does Yudhishthira answer?',
+        options: [
+          'The rising of the sun and the vastness of the oceans',
+          'That day after day mortals depart for the abode of death, yet those who remain believe they will live forever',
+          'The accumulation of inexhaustible wealth by kings',
+          'The ability of birds to navigate without maps',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Yudhishthira observes the ultimate human delusion: witnessing countless beings die daily, yet living as though one is immortal.',
+        sourceRef: 'Mahabharata Vana Parva 313.116',
+      },
+      {
+        questionText:
+          'Who was granted divine vision (Divya Drishti) by Sage Vyasa to narrate the battlefield events of Kurukshetra to King Dhritarashtra?',
+        options: ['Vidura', 'Sanjaya', 'Kripacharya', 'Dronacharya'],
+        correctIndex: 1,
+        explanation:
+          'Sanjaya was blessed with Divya Drishti by Vyasa to witness and report everything transpiring across the battlefield.',
+        sourceRef: 'Mahabharata Bhishma Parva',
+      },
+      {
+        questionText:
+          'According to Vidura Niti (33.40), what is the difference between Preyas and Shreyas?',
+        options: [
+          'Preyas is divine grace, while Shreyas is physical courage',
+          'Preyas is the immediately pleasant/gratifying, while Shreyas is the enduringly good and righteous',
+          'Preyas is sacrificial wealth, while Shreyas is royal punishment',
+          'Both denote identical hedonistic pursuits',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Preyas represents short-term sensory gratification, while Shreyas represents the enduringly virtuous and spiritually elevating path.',
+        sourceRef: 'Mahabharata Vidura Niti 33.40',
+      },
+    ],
+  },
+  {
+    title: 'Ramayana: Maryada Purushottama & Righteous Conduct',
+    description:
+      'Test your insight into Valmiki Ramayana, the exemplification of Maryada (righteous boundaries), filial duty, loyalty, and the triumph of truth.',
+    domain: 'ramayana',
+    difficulty: 'beginner',
+    tags: ['ramayana', 'rama', 'dharma', 'maryada', 'valmiki'],
+    isActive: true,
+    isDynamic: false,
+    questions: [
+      {
+        questionText:
+          'Why is Sri Rama revered as "Maryada Purushottama" throughout the ancient Indian literary tradition?',
+        options: [
+          'Because he conquered all kingdoms with unconditional imperial might',
+          'Because he represents the Supreme Ideal of righteous boundaries, upholding Dharma without compromising ethics even under extreme suffering',
+          'Because he lived strictly as a wandering ascetic throughout his entire life',
+          'Because he invented archery tactics unknown to other warrior clans',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Maryada Purushottama signifies the supreme human who embodies adherence to noble boundaries, duty (Kartavya), truth (Satya), and compassion.',
+        sourceRef: 'Valmiki Ramayana Ayodhya Kanda',
+      },
+      {
+        questionText:
+          'In Valmiki Ramayana, which devoted brother places Rama’s wooden sandals (Padukas) on the throne of Ayodhya, ruling only as his servant-regent?',
+        options: ['Lakshmana', 'Bharata', 'Shatrughna', 'Sugriva'],
+        correctIndex: 1,
+        explanation:
+          'Bharata refuses the crown of Ayodhya, placing Rama’s padukas on the throne at Nandigrama and administering the kingdom in Rama’s name.',
+        sourceRef: 'Valmiki Ramayana Ayodhya Kanda 115',
+      },
+      {
+        questionText:
+          'In the Kishkindha Kanda, what pledge does Sri Rama make to Sugriva at the sacred fire witnessed by Hanuman?',
+        options: [
+          'A pledge of mutual alliance, friendship, and protection in times of distress (Mitra-Dharma)',
+          'A contract for commercial trade between Ayodhya and Kishkindha',
+          'An oath to build temples across the Southern forests',
+          'A promise to crown Angada the supreme emperor of Bharata',
+        ],
+        correctIndex: 0,
+        explanation:
+          'Rama and Sugriva consummate an unbreakable bond of sacred friendship (Sakhya) before Agni, pledging mutual aid.',
+        sourceRef: 'Valmiki Ramayana Kishkindha Kanda 5',
+      },
+      {
+        questionText:
+          'When Vibhishana seeks asylum (Sharanagati) with Sri Rama before the Lanka war, what principle does Rama announce to his hesitant commanders?',
+        options: [
+          'To demand heavy ransom before permitting entry into the camp',
+          'That anyone who comes seeking protection with sincerity shall never be turned away, even if they are a former foe',
+          'To imprison Vibhishana until the conclusion of hostilities',
+          'To consult astrologers before offering refuge',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Rama declares: "Sakrdeva prapannaya tavasmiti ca yacate, abhayam sarvabhutebhyo dadamy etad vratam mama" — I grant fearlessness to anyone who surrenders unto Me.',
+        sourceRef: 'Valmiki Ramayana Yuddha Kanda 18.33',
+      },
+      {
+        questionText:
+          'Which noble bird sacrificed his life attempting to rescue Sita Devi from Ravana’s aerial chariot (Pushpaka Vimana)?',
+        options: ['Sampati', 'Jatayu', 'Garuda', 'Sugriva'],
+        correctIndex: 1,
+        explanation:
+          'The heroic king of vultures, Jatayu, valiantly fought Ravana to protect Sita and received sacred funeral rites directly from Sri Rama.',
+        sourceRef: 'Valmiki Ramayana Aranya Kanda 51',
+      },
+    ],
+  },
+  {
+    title: 'Panchatantra: Timeless Fables & Applied Intelligence',
+    description:
+      'Delve into Pandit Vishnu Sharma’s timeless pedagogical fables on friendship, strategy, discernment, and practical worldly wisdom (Niti).',
+    domain: 'panchatantra',
+    difficulty: 'beginner',
+    tags: ['panchatantra', 'fables', 'niti', 'wisdom', 'strategy'],
+    isActive: true,
+    isDynamic: false,
+    questions: [
+      {
+        questionText:
+          'Why did Acharya Vishnu Sharma compose the Panchatantra for King Amarasakti’s three wayward princes?',
+        options: [
+          'To teach complex Vedic ritual chants over twenty years',
+          'To educate them in practical statecraft, worldly discernment, and moral intelligence (Niti Shastra) in six months through fables',
+          'To document military drill formations for elephant warfare',
+          'To compose romantic poetry for royal court entertainments',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Vishnu Sharma pledged to transform the indifferent royal princes into wise statesmen within six months using captivating, interconnected animal fables.',
+        sourceRef: 'Panchatantra Kathamukha (Introduction)',
+      },
+      {
+        questionText:
+          'In the first Tantra, "Mitra-Bheda" (Loss of Friends), which cunning jackal minister sows suspicion between King Pingalaka (the Lion) and Sanjivaka (the Bull)?',
+        options: ['Damanaka', 'Karataka', 'Laghupatanaka', 'Hiranyaka'],
+        correctIndex: 0,
+        explanation:
+          'Damanaka, motivated by his own ambition, systematically poisons the mind of the lion against his closest companion, demonstrating how insidious gossip can destroy unity.',
+        sourceRef: 'Panchatantra Tantra 1 (Mitra-Bheda)',
+      },
+      {
+        questionText:
+          'In the famous fable of the Lion and the Clever Hare, how does the small hare defeat the tyrannical lion Bhasuraka?',
+        options: [
+          'By summoning an army of woodland creatures to attack at night',
+          'By using the lion’s own vanity and wrath, leading him to see his reflection in a deep well and jump in to fight his "rival"',
+          'By poisoning the lion’s drinking spring',
+          'By convincing the lion to turn vegetarian',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Panchatantra teaches "Buddhir yasya balam tasya" — true strength belongs to the one who possesses intelligence; a tiny hare outwits a ferocious lion through psychological cunning.',
+        sourceRef: 'Panchatantra Tantra 1, Tale 8',
+      },
+      {
+        questionText:
+          'In "Mitra-Labha" (Winning of Friends), which quartet of unlikely creatures exemplifying collaborative unity rescues one another from hunters?',
+        options: [
+          'A Lion, Tiger, Leopard, and Bear',
+          'A Crow (Laghupatanaka), Mouse (Hiranyaka), Turtle (Mantharaka), and Deer (Chitrangada)',
+          'An Elephant, Monkey, Snake, and Peacock',
+          'A Fox, Wolf, Jackal, and Badger',
+        ],
+        correctIndex: 1,
+        explanation:
+          'The enduring friendship among the Crow, Mouse, Turtle, and Deer proves that humble allies united in trust can overcome mortal perils that no single beast could survive alone.',
+        sourceRef: 'Panchatantra Tantra 2 (Mitra-Labha)',
+      },
+      {
+        questionText:
+          'What is the moral warning taught in the third Tantra, "Kakolukiyam" (Of Crows and Owls)?',
+        options: [
+          'Never build nests in banyan trees',
+          'Never extend hospitality to an untrusted adversary or allow an enemy into the heart of your fortress',
+          'Owls are physically superior to all flying birds during daytime',
+          'One should always choose night travel over morning travel',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Kakolukiyam warns rulers and individuals never to grant shelter or confidential intimacy to hereditary enemies pretending allegiance.',
+        sourceRef: 'Panchatantra Tantra 3 (Kakolukiyam)',
+      },
+    ],
+  },
+  {
+    title: 'Patanjali Yoga Sutras: Eight Limbs & Inner Stillness',
+    description:
+      'Deepen your understanding of Maharishi Patanjali’s classical Raja Yoga, the eight limbs (Ashtanga), Chitta-Vritti-Nirodha, and mental transformation.',
+    domain: 'yoga',
+    difficulty: 'intermediate',
+    tags: ['yoga', 'patanjali', 'meditation', 'ashtanga', 'mind-mastery'],
+    isActive: true,
+    isDynamic: false,
+    questions: [
+      {
+        questionText:
+          'In Yoga Sutra 1.2, what is the foundational classical definition of Yoga given by Maharishi Patanjali?',
+        options: [
+          'Yogas chitta-vritti-nirodhah — Yoga is the intentional stilling of the fluctuations and turbulence of the mind field',
+          'Yoga is solely the performance of acrobatic bodily postures',
+          'Yoga is withdrawal from all ethical and social obligations',
+          'Yoga is the mechanical counting of physical breaths',
+        ],
+        correctIndex: 0,
+        explanation:
+          'Yoga Sutra 1.2 establishes: "Yogas chitta-vritti-nirodhah" — Yoga is the mastery and calming of the modifications/whirlpools of consciousness.',
+        sourceRef: 'Patanjali Yoga Sutras 1.2',
+      },
+      {
+        questionText:
+          'What are the twin indispensable pillars prescribed in Yoga Sutra 1.12 to achieve the stilling of mental fluctuations?',
+        options: [
+          'Diet and sleep alone',
+          'Abhyasa (persistent, disciplined practice) and Vairagya (conscious dispassion and detachment)',
+          'Physical strength and debate',
+          'Reading commentaries and astrology',
+        ],
+        correctIndex: 1,
+        explanation:
+          'YS 1.12 states: "Abhyasa-vairagyabhyam tan-nirodhah" — the mind is quieted through unwavering, continuous practice alongside inner detachment.',
+        sourceRef: 'Patanjali Yoga Sutras 1.12',
+      },
+      {
+        questionText:
+          'According to Yoga Sutra 1.33 (Chitta Prasadana), what fourfold attitudes should one cultivate toward the happy, unhappy, virtuous, and non-virtuous respectively?',
+        options: [
+          'Maitri (friendship), Karuna (compassion), Mudita (gladness), and Upeksha (equanimity/neutrality)',
+          'Pride, sorrow, jealousy, and anger',
+          'Indifference, avoidance, competition, and blame',
+          'Silence, skepticism, fear, and submission',
+        ],
+        correctIndex: 0,
+        explanation:
+          'YS 1.33 teaches that peace of mind is restored by embodying friendship toward the glad, compassion for the suffering, joy for the virtuous, and neutral poise toward the flawed.',
+        sourceRef: 'Patanjali Yoga Sutras 1.33',
+      },
+      {
+        questionText:
+          'In Yoga Sutra 2.33, what psychological practice is recommended when harmful, destructive, or negative thoughts (Vitarkas) perturb the mind?',
+        options: [
+          'Suppressing all feelings until they erupt',
+          'Pratipaksha Bhavana — intentionally contemplating and holding in awareness the opposite uplifting perspective',
+          'Projecting anger onto others',
+          'Ceasing all intellectual study permanently',
+        ],
+        correctIndex: 1,
+        explanation:
+          'YS 2.33 teaches: "Vitarka-badhane pratipaksha-bhavanam" — when negative ideations disturb you, deliberately cultivate thoughts of the contrary positive nature.',
+        sourceRef: 'Patanjali Yoga Sutras 2.33',
+      },
+      {
+        questionText:
+          'What are the final three internal limbs of Ashtanga Yoga that together constitute "Samyama"?',
+        options: [
+          'Yama, Niyama, and Asana',
+          'Pranayama, Pratyahara, and Dharana',
+          'Dharana (concentration), Dhyana (meditation), and Samadhi (absorption)',
+          'Ahara, Nidra, and Brahmacharya',
+        ],
+        correctIndex: 2,
+        explanation:
+          'YS 3.4 identifies Dharana, Dhyana, and Samadhi practiced in unbroken succession on a single object of contemplation as Samyama.',
+        sourceRef: 'Patanjali Yoga Sutras 3.4',
+      },
+    ],
+  },
+  {
+    title: 'Universal Vedic Wisdom: Sanatana Principles, Purusharthas & Cosmic Order',
+    description:
+      'Evaluate your grasp of foundational Sanatana concepts: the four Purusharthas (Dharma, Artha, Kama, Moksha), Rta (cosmic harmony), and universal ethics.',
+    domain: 'general',
+    difficulty: 'beginner',
+    tags: ['vedic', 'purusharthas', 'dharma', 'rta', 'universal-wisdom'],
+    isActive: true,
+    isDynamic: false,
+    questions: [
+      {
+        questionText:
+          'What are the four legitimate aims and aspirations of human existence (Purusharthas) in Vedic philosophy?',
+        options: [
+          'Dharma (righteousness), Artha (material prosperity), Kama (wholesome enjoyment), and Moksha (spiritual liberation)',
+          'Power, Conquest, Luxury, and Fame',
+          'Childhood, Youth, Middle age, and Old age',
+          'Earth, Fire, Air, and Water',
+        ],
+        correctIndex: 0,
+        explanation:
+          'The four Purusharthas provide a holistic blueprint for human fulfillment: material and sensory pursuits guided by ethical Dharma, culminating in Moksha.',
+        sourceRef: 'Vedic Shastras (Manusmriti & Mahabharata)',
+      },
+      {
+        questionText:
+          'In the Rigveda, what is "Rta" (ऋत) and why is it fundamental to the universe?',
+        options: [
+          'A specific seasonal rain dance',
+          'The eternal cosmic, moral, and natural order that governs and harmonizes the cosmos, seasons, and moral actions',
+          'A military treaty between rival kingdoms',
+          'A rare mineral extracted from riverbeds',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Rta is the universal rhythm and cosmic-moral harmony that regulates the movement of celestial bodies, moral causality, and ethical life.',
+        sourceRef: 'Rigveda Mandala 4.23',
+      },
+      {
+        questionText:
+          'From which sacred text does the renowned universal declaration "Vasudhaiva Kutumbakam" (The entire world is one family) originate?',
+        options: [
+          'Maha Upanishad (Chapter 6)',
+          'A medieval royal proclamation',
+          'Modern diplomatic charters',
+          'A textbook on agricultural geometry',
+        ],
+        correctIndex: 0,
+        explanation:
+          'Maha Upanishad 6.71 proclaims: "Udaracharitanam tu vasudhaiva kutumbakam" — for those of noble and magnanimous heart, the entire cosmos is their one family.',
+        sourceRef: 'Maha Upanishad 6.71',
+      },
+      {
+        questionText:
+          'Which principle is proclaimed across the Shastras as the supreme moral virtue: "Ahimsa paramo dharmah"?',
+        options: [
+          'Non-harm / Non-violence is the highest Dharma',
+          'Conquest by weapons is supreme virtue',
+          'Accumulation of gold is the primary duty',
+          'Silence in courts is the only rule',
+        ],
+        correctIndex: 0,
+        explanation:
+          'The Mahabharata (Anushasana Parva 115.1) teaches "Ahimsa paramo dharmah" — reverence for life and freedom from malice toward all beings is the pinnacle of virtue.',
+        sourceRef: 'Mahabharata Anushasana Parva 115.1',
+      },
+      {
+        questionText:
+          'What are the four successive stages or Ashramas of life outlined in the classical Sanatana tradition?',
+        options: [
+          'Brahmacharya (student), Grihastha (householder), Vanaprastha (reflective retreat), and Sannyasa (renunciation)',
+          'Infancy, Adolescence, Empire, and Royalty',
+          'Farmer, Merchant, Artisan, and Scribe',
+          'Morning, Noon, Sunset, and Midnight',
+        ],
+        correctIndex: 0,
+        explanation:
+          'The Ashrama system structures life into progressive phases of learning (Brahmacharya), social responsibility (Grihastha), inward reflection (Vanaprastha), and transcendent liberation (Sannyasa).',
+        sourceRef: 'Jabala Upanishad & Manusmriti',
+      },
+    ],
+  },
 ];
 
 import { QuizModel } from '../models/quiz.model.js';

@@ -62,6 +62,7 @@ interface QuizAttemptResult {
 
 const DOMAIN_LABELS: Record<string, { label: string; icon: string; color: string }> = {
   all: { label: 'All Traditions', icon: '🪷', color: '#D4AF37' },
+  custom: { label: 'Your Quizzes', icon: '✨', color: '#ec4899' },
   gita: { label: 'Bhagavad Gita', icon: '🏹', color: '#7B68EE' },
   chanakya: { label: 'Chanakya Neeti', icon: '🏛️', color: '#C46B3A' },
   upanishads: { label: 'Upanishads', icon: '✨', color: '#4fd1c5' },
@@ -107,8 +108,12 @@ export default function QuizzesPage() {
     setLoading(true);
     setErrorMsg('');
     try {
-      let endpoint = '/quizzes?limit=50';
-      if (selectedDomain !== 'all') endpoint += `&domain=${selectedDomain}`;
+      let endpoint = '/quizzes?limit=100';
+      if (selectedDomain === 'custom') {
+        endpoint += '&domain=custom';
+      } else if (selectedDomain !== 'all') {
+        endpoint += `&domain=${selectedDomain}`;
+      }
       if (selectedDifficulty !== 'all') endpoint += `&difficulty=${selectedDifficulty}`;
       if (searchQuery.trim()) endpoint += `&search=${encodeURIComponent(searchQuery.trim())}`;
 
@@ -214,6 +219,7 @@ export default function QuizzesPage() {
 
       if (res.success && res.data) {
         setShowGenerateModal(false);
+        loadQuizzes();
         setActiveQuiz(res.data);
         setCurrentQuestionIdx(0);
         setSelectedAnswers({});
@@ -338,9 +344,9 @@ export default function QuizzesPage() {
             spiritual or pragmatic topic.
           </p>
 
-          {/* Quick Action Button */}
+          {/* Quick Action Buttons */}
           {!activeQuiz && !attemptResult && (
-            <div style={{ marginTop: '1.75rem' }}>
+            <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setShowGenerateModal(true)}
                 style={{
@@ -359,7 +365,26 @@ export default function QuizzesPage() {
                   transition: 'all 0.2s ease',
                 }}
               >
-                <span>⚡</span> Summon AI Sage Quiz
+                <span>✨</span> Create Quiz from Topic (Max 15 Qs)
+              </button>
+              <button
+                onClick={() => setSelectedDomain('custom')}
+                style={{
+                  background: selectedDomain === 'custom' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(20, 17, 11, 0.85)',
+                  color: selectedDomain === 'custom' ? '#f472b6' : 'var(--text-vellum)',
+                  border: selectedDomain === 'custom' ? '1px solid rgba(236, 72, 153, 0.6)' : '1px solid rgba(212, 175, 55, 0.25)',
+                  padding: '0.85rem 1.6rem',
+                  borderRadius: '30px',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <span>🪪</span> View Your Quizzes
               </button>
             </div>
           )}
@@ -1177,33 +1202,40 @@ export default function QuizzesPage() {
               <div
                 style={{
                   textAlign: 'center',
-                  padding: '4rem 0',
-                  background: 'var(--surface-stone)',
-                  borderRadius: '8px',
-                  border: '1px dashed rgba(212, 175, 55, 0.2)',
+                  padding: '4rem 1.5rem',
+                  background: selectedDomain === 'custom' ? 'rgba(236, 72, 153, 0.04)' : 'var(--surface-stone)',
+                  borderRadius: '12px',
+                  border: selectedDomain === 'custom' ? '1px dashed rgba(236, 72, 153, 0.35)' : '1px dashed rgba(212, 175, 55, 0.2)',
                 }}
               >
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📜</div>
+                <div style={{ fontSize: '2.8rem', marginBottom: '0.75rem' }}>
+                  {selectedDomain === 'custom' ? '✨' : '📜'}
+                </div>
                 <h3
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: '1.25rem',
+                    fontSize: '1.35rem',
                     marginBottom: '0.5rem',
+                    color: selectedDomain === 'custom' ? '#f472b6' : 'var(--text-vellum)',
                   }}
                 >
-                  No Quizzes Found for Current Filter
+                  {selectedDomain === 'custom'
+                    ? 'No Custom Quizzes Created Yet'
+                    : 'No Quizzes Found for Current Filter'}
                 </h3>
                 <p
-                  style={{ color: 'var(--text-dust)', fontSize: '0.9rem', marginBottom: '1.5rem' }}
+                  style={{ color: 'var(--text-dust)', fontSize: '0.92rem', marginBottom: '1.5rem', maxWidth: '520px', margin: '0 auto 1.5rem' }}
                 >
-                  Try adjusting the domain or generate an on-the-fly AI assessment.
+                  {selectedDomain === 'custom'
+                    ? 'Create an interactive quiz on any ancient wisdom topic with up to 15 questions generated instantly by the AI Sage!'
+                    : 'Try adjusting the domain or generate an on-the-fly AI assessment.'}
                 </p>
                 <button
                   onClick={() => setShowGenerateModal(true)}
                   className="gold-button"
-                  style={{ padding: '0.65rem 1.5rem', borderRadius: '20px' }}
+                  style={{ padding: '0.7rem 1.8rem', borderRadius: '25px', fontWeight: 700 }}
                 >
-                  ⚡ Synthesize AI Quiz Now
+                  ✨ Create Quiz from Topic Now
                 </button>
               </div>
             ) : (
@@ -1216,6 +1248,13 @@ export default function QuizzesPage() {
               >
                 {quizzes.map((quiz) => {
                   const domainMeta = DOMAIN_LABELS[quiz.domain] || DOMAIN_LABELS.general;
+                  const isUserCreated =
+                    quiz.isDynamic ||
+                    quiz.domain === 'custom' ||
+                    quiz.tags?.includes('user-created') ||
+                    quiz.tags?.includes('custom') ||
+                    quiz.tags?.includes('your-quiz');
+
                   return (
                     <div
                       key={quiz.id}
@@ -1224,8 +1263,10 @@ export default function QuizzesPage() {
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        borderTop: `3px solid ${domainMeta.color}`,
-                        boxShadow: `0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 20px ${domainMeta.color}15`,
+                        borderTop: isUserCreated ? '3px solid #ec4899' : `3px solid ${domainMeta.color}`,
+                        boxShadow: isUserCreated
+                          ? '0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 20px rgba(236, 72, 153, 0.2)'
+                          : `0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 20px ${domainMeta.color}15`,
                       }}
                       onClick={() => handleStartQuiz(quiz.id)}
                     >
@@ -1237,21 +1278,41 @@ export default function QuizzesPage() {
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             marginBottom: '1.25rem',
+                            flexWrap: 'wrap',
+                            gap: '0.4rem',
                           }}
                         >
-                          <span
-                            className="badge"
-                            style={{
-                              background: `${domainMeta.color}14`,
-                              color: domainMeta.color,
-                              borderColor: `${domainMeta.color}45`,
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                            }}
-                          >
-                            <span>{domainMeta.icon}</span>
-                            <span>{domainMeta.label}</span>
-                          </span>
+                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                            {isUserCreated && (
+                              <span
+                                className="badge"
+                                style={{
+                                  background: 'rgba(236, 72, 153, 0.15)',
+                                  color: '#f472b6',
+                                  borderColor: 'rgba(236, 72, 153, 0.45)',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  boxShadow: '0 0 10px rgba(236, 72, 153, 0.2)',
+                                }}
+                              >
+                                <span>✨</span>
+                                <span>Your Quiz</span>
+                              </span>
+                            )}
+                            <span
+                              className="badge"
+                              style={{
+                                background: `${domainMeta.color}14`,
+                                color: domainMeta.color,
+                                borderColor: `${domainMeta.color}45`,
+                                fontSize: '0.78rem',
+                                fontWeight: 700,
+                              }}
+                            >
+                              <span>{domainMeta.icon}</span>
+                              <span>{domainMeta.label}</span>
+                            </span>
+                          </div>
 
                           <span
                             style={{
@@ -1415,17 +1476,23 @@ export default function QuizzesPage() {
                   marginBottom: '1.5rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1.5rem' }}>⚡</span>
-                  <h3
-                    style={{
-                      fontFamily: 'var(--font-serif)',
-                      fontSize: '1.35rem',
-                      color: 'var(--gold-sacred)',
-                    }}
-                  >
-                    Summon AI Sage Quiz
-                  </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '1.6rem' }}>✨</span>
+                  <div>
+                    <h3
+                      style={{
+                        fontFamily: 'var(--font-serif)',
+                        fontSize: '1.35rem',
+                        color: 'var(--gold-sacred)',
+                        margin: 0,
+                      }}
+                    >
+                      Create Quiz from Topic
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: '#f472b6', fontWeight: 600 }}>
+                      Saves to "Your Quizzes" • Up to 15 Questions
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowGenerateModal(false)}
@@ -1441,12 +1508,83 @@ export default function QuizzesPage() {
                 </button>
               </div>
 
-              <p style={{ color: 'var(--text-dust)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Instruct the Vedic AI to generate a custom assessment tailored to your chosen
-                scriptural domain and topic.
+              <p style={{ color: 'var(--text-dust)', fontSize: '0.88rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                Enter any spiritual, philosophical, or practical topic. The AI Sage will synthesize an authentic
+                assessment grounded in Vedic principles that you can take immediately.
               </p>
 
               <form onSubmit={handleGenerateAIQuiz}>
+                {/* Specific Topic Input - Primary */}
+                <div style={{ marginBottom: '1.35rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.88rem',
+                      marginBottom: '0.5rem',
+                      color: 'var(--gold-radiance)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Enter Topic or Concept <span style={{ color: '#fc8181' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sthitaprajna, Tridoshas in Winter, Chanakya's Four Expedients, Karma Yoga..."
+                    value={genTopic}
+                    onChange={(e) => setGenTopic(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(13, 11, 8, 0.9)',
+                      border: '1px solid rgba(212, 175, 55, 0.45)',
+                      color: 'var(--text-vellum)',
+                      padding: '0.75rem 0.95rem',
+                      borderRadius: '8px',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      boxShadow: '0 0 12px rgba(212, 175, 55, 0.1)',
+                    }}
+                  />
+                </div>
+
+                {/* Domain Picker */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.85rem',
+                      marginBottom: '0.5rem',
+                      color: 'var(--text-vellum)',
+                    }}
+                  >
+                    Scriptural Category / Tradition
+                  </label>
+                  <select
+                    value={genDomain}
+                    onChange={(e) => setGenDomain(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(13, 11, 8, 0.8)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      color: 'var(--text-vellum)',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '6px',
+                      fontSize: '0.9rem',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="gita">🏹 Bhagavad Gita (Krishna Wisdom)</option>
+                    <option value="chanakya">🏛️ Chanakya Neeti & Arthashastra</option>
+                    <option value="upanishads">✨ Upanishads & Vedanta</option>
+                    <option value="ayurveda">🌿 Ayurveda & Tridosha</option>
+                    <option value="mahabharata">⚔️ Mahabharata (Dharma & War)</option>
+                    <option value="ramayana">🔆 Ramayana (Maryada Purushottama)</option>
+                    <option value="panchatantra">📖 Panchatantra (Applied Fables)</option>
+                    <option value="yoga">🧘 Patanjali Yoga & Mind Mastery</option>
+                    <option value="general">🕉️ Universal Vedic Philosophy</option>
+                  </select>
+                </div>
+
                 {/* Guru / Sage Selector */}
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label
@@ -1457,7 +1595,7 @@ export default function QuizzesPage() {
                       color: 'var(--text-vellum)',
                     }}
                   >
-                    Guru or Lineage (Optional)
+                    Sage / Counselor Voice (Optional)
                   </label>
                   <select
                     value={genGuru}
@@ -1488,74 +1626,6 @@ export default function QuizzesPage() {
                     <option value="vyasa">Sage Vyasa (Mahabharata & Dharma)</option>
                     <option value="patanjali">Sage Patanjali (Yoga Sutras & Mind Mastery)</option>
                   </select>
-                </div>
-
-                {/* Domain Picker */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.85rem',
-                      marginBottom: '0.5rem',
-                      color: 'var(--text-vellum)',
-                    }}
-                  >
-                    Wisdom Domain
-                  </label>
-                  <select
-                    value={genDomain}
-                    onChange={(e) => setGenDomain(e.target.value)}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(13, 11, 8, 0.8)',
-                      border: '1px solid rgba(212, 175, 55, 0.3)',
-                      color: 'var(--text-vellum)',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="gita">Bhagavad Gita (Krishna Wisdom)</option>
-                    <option value="chanakya">Chanakya Neeti & Arthashastra</option>
-                    <option value="upanishads">Upanishads & Vedanta</option>
-                    <option value="ayurveda">Ayurveda & Tridosha</option>
-                    <option value="mahabharata">Mahabharata (Dharma & War)</option>
-                    <option value="ramayana">Ramayana (Maryada Purushottama)</option>
-                    <option value="panchatantra">Panchatantra (Moral Fables)</option>
-                    <option value="yoga">Patanjali Yoga & Mind Mastery</option>
-                    <option value="general">Universal Vedic Philosophy</option>
-                  </select>
-                </div>
-
-                {/* Specific Topic */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.85rem',
-                      marginBottom: '0.5rem',
-                      color: 'var(--text-vellum)',
-                    }}
-                  >
-                    Specific Topic or Focus (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Sthitaprajna, Agni in Winter, The 4 Expedients..."
-                    value={genTopic}
-                    onChange={(e) => setGenTopic(e.target.value)}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(13, 11, 8, 0.8)',
-                      border: '1px solid rgba(212, 175, 55, 0.3)',
-                      color: 'var(--text-vellum)',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  />
                 </div>
 
                 {/* Difficulty & Count */}
@@ -1607,35 +1677,36 @@ export default function QuizzesPage() {
                         color: 'var(--text-vellum)',
                       }}
                     >
-                      Question Count: <strong style={{ color: 'var(--gold-radiance)' }}>{genCount}</strong>
+                      Question Count (Max 15): <strong style={{ color: 'var(--gold-radiance)' }}>{genCount}</strong>
                     </label>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem' }}>
-                      {[3, 5, 8, 10].map((num) => (
+                    <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
+                      {[3, 5, 8, 10, 15].map((num) => (
                         <button
                           key={num}
                           type="button"
                           onClick={() => setGenCount(num)}
                           style={{
                             flex: 1,
-                            padding: '0.35rem 0.5rem',
+                            minWidth: '38px',
+                            padding: '0.35rem 0.35rem',
                             borderRadius: '6px',
                             border: `1px solid ${genCount === num ? 'var(--gold-sacred)' : 'rgba(212, 175, 55, 0.25)'}`,
                             background: genCount === num ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(184, 134, 11, 0.2) 100%)' : 'rgba(0,0,0,0.4)',
                             color: genCount === num ? 'var(--gold-radiance)' : 'var(--text-dust)',
                             fontWeight: genCount === num ? 700 : 500,
-                            fontSize: '0.85rem',
+                            fontSize: '0.82rem',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
                         >
-                          {num} Questions
+                          {num} Qs
                         </button>
                       ))}
                     </div>
                     <input
                       type="range"
-                      min="3"
-                      max="10"
+                      min="1"
+                      max="15"
                       value={genCount}
                       onChange={(e) => setGenCount(Number(e.target.value))}
                       style={{
@@ -1666,11 +1737,16 @@ export default function QuizzesPage() {
 
                   <button
                     type="submit"
-                    disabled={isGenerating}
+                    disabled={isGenerating || !genTopic.trim()}
                     className="gold-button"
-                    style={{ padding: '0.65rem 1.75rem', borderRadius: '20px' }}
+                    style={{
+                      padding: '0.65rem 1.75rem',
+                      borderRadius: '20px',
+                      opacity: !genTopic.trim() ? 0.6 : 1,
+                      cursor: !genTopic.trim() ? 'not-allowed' : 'pointer',
+                    }}
                   >
-                    {isGenerating ? 'Synthesizing...' : '⚡ Generate & Start'}
+                    {isGenerating ? `Synthesizing ${genCount} Questions...` : `✨ Generate & Start Quiz (${genCount} Qs)`}
                   </button>
                 </div>
               </form>

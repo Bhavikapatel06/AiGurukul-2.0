@@ -10,6 +10,7 @@ export const quizDomainSchema = z.enum([
   'panchatantra',
   'yoga',
   'general',
+  'custom',
 ]);
 
 export const quizDifficultySchema = z.enum(['beginner', 'intermediate', 'advanced']);
