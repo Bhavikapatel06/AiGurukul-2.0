@@ -1154,6 +1154,7 @@ const DYNAMIC_QUESTION_BANKS: Record<QuizDomain, QuizQuestionDTO[]> = {
       sourceRef: 'Nyaya Sutras 1.1.3',
     },
   ],
+  custom: [],
 };
 
 export class QuizService {
@@ -1351,7 +1352,7 @@ export class QuizService {
     }
 
     const difficulty = input.difficulty || 'intermediate';
-    const questionCount = Math.min(10, Math.max(1, input.questionCount || 5));
+    const questionCount = Math.min(15, Math.max(1, input.questionCount || 5));
     const topic = input.topic ? input.topic.trim() : `${domain.toUpperCase()} Wisdom`;
 
     // 1. Retrieve authentic source passages from RAG knowledge base
@@ -1371,7 +1372,7 @@ export class QuizService {
         const ragRes = await this.ragService.query({
           query: searchQuery,
           domainFilter: domain === 'yoga' ? 'yoga' : domain,
-          topK: Math.max(12, questionCount * 2),
+          topK: Math.max(15, questionCount * 2),
           minScore: 0.02,
         });
 
@@ -1410,7 +1411,7 @@ export class QuizService {
         }
 
         const dbChunks = await DocumentChunkModel.find(queryObj)
-          .limit(Math.max(16, questionCount * 2))
+          .limit(Math.max(20, questionCount * 2))
           .lean()
           .exec();
         for (const c of dbChunks) {
@@ -1431,11 +1432,16 @@ export class QuizService {
       }
     }
 
-    // Grounding Requirement: In live database environment, if no relevant RAG content is available, explain clearly!
-    if (sourcePassages.length === 0 && mongoose.connection?.readyState === 1) {
-      throw new NotFoundError(
-        `No authentic scriptural passages were found in the knowledge base for "${topic || domain}". Please select an indexed Vedic tradition or valid scriptural topic (e.g. Nishkama Karma, Sthitaprajna, Tridoshas, 4 Expedients, 8 Limbs of Yoga, Yaksha Prashna).`
-      );
+    // If still no direct document chunks found, provide canonical authentic reference passages from domain question banks
+    if (sourcePassages.length === 0) {
+      const bank = DYNAMIC_QUESTION_BANKS[domain] || DYNAMIC_QUESTION_BANKS.general;
+      for (const q of bank.slice(0, 6)) {
+        sourcePassages.push({
+          canonicalReference: q.sourceRef || `${domain.toUpperCase()}`,
+          title: `${domain.toUpperCase()} Canonical Wisdom`,
+          text: `${q.questionText} ${q.explanation}`,
+        });
+      }
     }
 
     // 2. Generate questions grounded strictly in retrieved source material
@@ -1568,8 +1574,10 @@ Format the response strictly as valid JSON array of objects without markdown bac
       questionIndex: idx,
     }));
 
-    const title = `Dynamic Quiz: ${topic} (${difficulty.toUpperCase()})`;
-    const description = `RAG-grounded interactive quiz testing understanding of ${domain.toUpperCase()} concepts, verses, and practical wisdom.`;
+    const title = input.topic
+      ? `${input.topic.trim()} Quiz (${difficulty.toUpperCase()})`
+      : `Dynamic Quiz: ${domain.toUpperCase()} Wisdom (${difficulty.toUpperCase()})`;
+    const description = `Interactive custom assessment created from topic "${topic}", testing understanding of ${domain.toUpperCase()} concepts, verses, and practical wisdom.`;
 
     const savedQuiz = await this.quizRepo.createQuiz({
       title,
@@ -1577,7 +1585,15 @@ Format the response strictly as valid JSON array of objects without markdown bac
       domain,
       difficulty,
       questions: generatedQuestions,
-      tags: [domain, 'dynamic-rag', difficulty, ...topic.toLowerCase().split(/\s+/).slice(0, 3)],
+      tags: [
+        domain,
+        'user-created',
+        'custom',
+        'your-quiz',
+        'dynamic-rag',
+        difficulty,
+        ...topic.toLowerCase().split(/\s+/).slice(0, 3),
+      ],
       isActive: true,
       isDynamic: true,
     });

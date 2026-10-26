@@ -37,6 +37,8 @@ export const ApiEnvSchema = CommonEnvSchema.extend({
   GEMINI_API_KEY: z.string().optional(),
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
+  GEMINI_MODEL: z.string().default('gemini-1.5-pro'),
+  OPENAI_MODEL: z.string().default('gpt-4o'),
   PINECONE_API_KEY: z.string().optional(),
   PINECONE_INDEX: z.string().optional(),
   LOCAL_STORAGE_DIR: z.string().default('.storage'),

@@ -7,7 +7,8 @@ export type QuizDomain =
   | 'ramayana'
   | 'panchatantra'
   | 'yoga'
-  | 'general';
+  | 'general'
+  | 'custom';
 
 export type QuizDifficulty = 'beginner' | 'intermediate' | 'advanced';
 

@@ -28,7 +28,15 @@ export class QuizRepository extends BaseRepository<IQuizDocument> {
     const filter: FilterQuery<IQuizDocument> = { isActive: true };
 
     if (params.domain) {
-      filter.domain = params.domain;
+      if (params.domain === 'custom') {
+        filter.$or = [
+          { domain: 'custom' },
+          { isDynamic: true },
+          { tags: { $in: ['user-created', 'custom', 'your-quiz'] } },
+        ];
+      } else {
+        filter.domain = params.domain;
+      }
     }
 
     if (params.difficulty) {
