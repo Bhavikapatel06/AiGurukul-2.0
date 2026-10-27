@@ -1490,7 +1490,7 @@ export default function QuizzesPage() {
                       Create Quiz from Topic
                     </h3>
                     <span style={{ fontSize: '0.78rem', color: '#f472b6', fontWeight: 600 }}>
-                      Saves to "Your Quizzes" • Up to 15 Questions
+                      Saves to &quot;Your Quizzes&quot; • Up to 15 Questions
                     </span>
                   </div>
                 </div>
