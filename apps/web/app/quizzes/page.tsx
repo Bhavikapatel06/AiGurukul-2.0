@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '../../lib/api';
 
@@ -87,6 +87,7 @@ export default function QuizzesPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [quizTimer, setQuizTimer] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const quizRunnerRef = useRef<HTMLDivElement | null>(null);
 
   // Results State
   const [attemptResult, setAttemptResult] = useState<QuizAttemptResult | null>(null);
@@ -158,6 +159,9 @@ export default function QuizzesPage() {
         setSelectedAnswers({});
         setQuizTimer(0);
         setAttemptResult(null);
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
       } else {
         setErrorMsg(res.error?.message || 'Unable to load quiz details');
       }
@@ -225,6 +229,9 @@ export default function QuizzesPage() {
         setSelectedAnswers({});
         setQuizTimer(0);
         setAttemptResult(null);
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
       } else {
         setErrorMsg(res.error?.message || 'Failed to synthesize AI quiz grounded in RAG data');
       }
@@ -257,6 +264,9 @@ export default function QuizzesPage() {
         setSelectedAnswers({});
         setQuizTimer(0);
         setAttemptResult(null);
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
       } else {
         setErrorMsg(res.error?.message || 'Failed to synthesize new quiz questions from knowledge base');
       }
@@ -275,120 +285,161 @@ export default function QuizzesPage() {
   };
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 4rem)', padding: '2.5rem 1rem 5rem' }}>
+    <div style={{ minHeight: 'calc(100vh - 4rem)', padding: activeQuiz && !attemptResult ? '0.65rem 1rem 2rem' : '2.5rem 1rem 5rem' }}>
       <div className="temple-container">
-        {/* Navigation Breadcrumb */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '2rem',
-            fontSize: '0.9rem',
-          }}
-        >
-          <Link href="/" style={{ color: 'var(--text-dust)', textDecoration: 'none' }}>
-            ← Sanctum
-          </Link>
-          <span style={{ color: 'rgba(212, 175, 55, 0.3)' }}>/</span>
-          <span style={{ color: '#f6ad55', fontWeight: 600 }}>
-            Vedic Quizzes &amp; Dynamic Assessments
-          </span>
-        </div>
-
-        {/* Banner Section */}
-        <section style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        {/* Compact Navigation when in Active Quiz Mode */}
+        {activeQuiz && !attemptResult && (
           <div
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.75rem',
+              justifyContent: 'space-between',
+              marginBottom: '0.6rem',
+              padding: '0.2rem 0.5rem',
+              fontSize: '0.82rem',
             }}
           >
-            <span style={{ fontSize: '1.25rem' }}>🎯</span>
-            <span
+            <button
+              onClick={() => {
+                if (confirm('Exit assessment and return to quiz catalog?')) {
+                  setActiveQuiz(null);
+                }
+              }}
               style={{
-                fontSize: '0.85rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                color: 'var(--gold-sacred)',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--gold-radiance)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.82rem',
                 fontWeight: 600,
               }}
             >
-              वैदिक परीक्षा • Vedic Discernment Engine
+              ← Exit Assessment to Catalog
+            </button>
+            <span style={{ color: 'var(--text-dust)', fontSize: '0.78rem' }}>
+              Active Vedic Assessment
             </span>
           </div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '2.5rem',
-              fontWeight: 700,
-              marginBottom: '1rem',
-              lineHeight: 1.2,
-            }}
-            className="gold-gradient-text"
-          >
-            Vedic Quizzes & Dynamic Assessments
-          </h1>
-          <p
-            style={{
-              color: 'var(--text-dust)',
-              maxWidth: '700px',
-              margin: '0 auto',
-              fontSize: '1.05rem',
-            }}
-          >
-            Deepen your experiential understanding of ancient wisdom. Challenge yourself with
-            curated scriptural tests or summon an AI Sage to synthesize interactive quizzes on any
-            spiritual or pragmatic topic.
-          </p>
+        )}
 
-          {/* Quick Action Buttons */}
-          {!activeQuiz && !attemptResult && (
-            <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setShowGenerateModal(true)}
-                style={{
-                  background: 'linear-gradient(135deg, #D4AF37 0%, #8B6914 100%)',
-                  color: '#0D0B08',
-                  border: 'none',
-                  padding: '0.85rem 2rem',
-                  borderRadius: '30px',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 20px rgba(212, 175, 55, 0.35)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <span>✨</span> Create Quiz from Topic (Max 15 Qs)
-              </button>
-              <button
-                onClick={() => setSelectedDomain('custom')}
-                style={{
-                  background: selectedDomain === 'custom' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(20, 17, 11, 0.85)',
-                  color: selectedDomain === 'custom' ? '#f472b6' : 'var(--text-vellum)',
-                  border: selectedDomain === 'custom' ? '1px solid rgba(236, 72, 153, 0.6)' : '1px solid rgba(212, 175, 55, 0.25)',
-                  padding: '0.85rem 1.6rem',
-                  borderRadius: '30px',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <span>🪪</span> View Your Quizzes
-              </button>
+        {/* Navigation Breadcrumb & Banner - Only when NOT in active quiz mode */}
+        {!activeQuiz && !attemptResult && (
+          <>
+            {/* Navigation Breadcrumb */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                marginBottom: '2rem',
+                fontSize: '0.9rem',
+              }}
+            >
+              <Link href="/" style={{ color: 'var(--text-dust)', textDecoration: 'none' }}>
+                ← Sanctum
+              </Link>
+              <span style={{ color: 'rgba(212, 175, 55, 0.3)' }}>/</span>
+              <span style={{ color: '#f6ad55', fontWeight: 600 }}>
+                Vedic Quizzes &amp; Dynamic Assessments
+              </span>
             </div>
-          )}
-        </section>
+
+            {/* Banner Section */}
+            <section style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                <span style={{ fontSize: '1.25rem' }}>🎯</span>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.15em',
+                    color: 'var(--gold-sacred)',
+                    fontWeight: 600,
+                  }}
+                >
+                  वैदिक परीक्षा • Vedic Discernment Engine
+                </span>
+              </div>
+              <h1
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '2.5rem',
+                  fontWeight: 700,
+                  marginBottom: '1rem',
+                  lineHeight: 1.2,
+                }}
+                className="gold-gradient-text"
+              >
+                Vedic Quizzes & Dynamic Assessments
+              </h1>
+              <p
+                style={{
+                  color: 'var(--text-dust)',
+                  maxWidth: '700px',
+                  margin: '0 auto',
+                  fontSize: '1.05rem',
+                }}
+              >
+                Deepen your experiential understanding of ancient wisdom. Challenge yourself with
+                curated scriptural tests or summon an AI Sage to synthesize interactive quizzes on any
+                spiritual or pragmatic topic.
+              </p>
+
+              {/* Quick Action Buttons */}
+              <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setShowGenerateModal(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #8B6914 100%)',
+                    color: '#0D0B08',
+                    border: 'none',
+                    padding: '0.85rem 2rem',
+                    borderRadius: '30px',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 20px rgba(212, 175, 55, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span>✨</span> Create Quiz from Topic (Max 15 Qs)
+                </button>
+                <button
+                  onClick={() => setSelectedDomain('custom')}
+                  style={{
+                    background: selectedDomain === 'custom' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(20, 17, 11, 0.85)',
+                    color: selectedDomain === 'custom' ? '#f472b6' : 'var(--text-vellum)',
+                    border: selectedDomain === 'custom' ? '1px solid rgba(236, 72, 153, 0.6)' : '1px solid rgba(212, 175, 55, 0.25)',
+                    padding: '0.85rem 1.6rem',
+                    borderRadius: '30px',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span>🪪</span> View Your Quizzes
+                </button>
+              </div>
+            </section>
+          </>
+        )}
 
         {errorMsg && (
           <div
@@ -813,80 +864,91 @@ export default function QuizzesPage() {
         )}
 
         {/* =========================================================================
-            STATE 2: ACTIVE QUIZ IN PROGRESS
+            STATE 2: ACTIVE QUIZ IN PROGRESS (Compact & Fit on Screen)
         ========================================================================== */}
         {activeQuiz && !attemptResult && (
           <div
+            ref={quizRunnerRef}
             className="temple-card"
             style={{
-              maxWidth: '800px',
+              maxWidth: '850px',
               margin: '0 auto',
-              padding: '2.5rem',
+              padding: '1.15rem 1.5rem',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              scrollMarginTop: '85px',
             }}
           >
-            {/* Active Quiz Header */}
+            {/* Active Quiz Header - Compact */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderBottom: '1px solid rgba(212, 175, 55, 0.15)',
-                paddingBottom: '1rem',
-                marginBottom: '1.75rem',
+                paddingBottom: '0.65rem',
+                marginBottom: '0.85rem',
+                gap: '1rem',
               }}
             >
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    fontSize: '0.8rem',
+                    fontSize: '0.72rem',
                     textTransform: 'uppercase',
                     color: 'var(--gold-sacred)',
-                    letterSpacing: '0.08em',
+                    letterSpacing: '0.06em',
+                    fontWeight: 700,
+                    background: 'rgba(212, 175, 55, 0.1)',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(212, 175, 55, 0.2)',
                   }}
                 >
                   {DOMAIN_LABELS[activeQuiz.domain]?.label || activeQuiz.domain.toUpperCase()} •{' '}
                   {activeQuiz.difficulty.toUpperCase()}
                 </span>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem' }}>
+                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.15rem', margin: 0 }}>
                   {activeQuiz.title}
                 </h2>
               </div>
               <div
                 style={{
-                  background: 'rgba(13, 11, 8, 0.8)',
-                  border: '1px solid rgba(212, 175, 55, 0.25)',
-                  padding: '0.4rem 0.85rem',
+                  background: 'rgba(13, 11, 8, 0.9)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  padding: '0.25rem 0.75rem',
                   borderRadius: '20px',
-                  fontSize: '0.9rem',
+                  fontSize: '0.85rem',
                   color: 'var(--gold-radiance)',
                   fontWeight: 600,
+                  flexShrink: 0,
                 }}
               >
                 ⏱️ {formatTime(quizTimer)}
               </div>
             </div>
 
-            {/* Progress Bar */}
-            <div style={{ marginBottom: '2rem' }}>
+            {/* Progress Bar - Compact */}
+            <div style={{ marginBottom: '0.85rem' }}>
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.85rem',
+                  fontSize: '0.78rem',
                   color: 'var(--text-dust)',
-                  marginBottom: '0.5rem',
+                  marginBottom: '0.35rem',
                 }}
               >
                 <span>
-                  Question {currentQuestionIdx + 1} of {activeQuiz.totalQuestions}
+                  Question <strong style={{ color: 'var(--gold-radiance)' }}>{currentQuestionIdx + 1}</strong> of {activeQuiz.totalQuestions}
                 </span>
                 <span>
-                  {Math.round(((currentQuestionIdx + 1) / activeQuiz.totalQuestions) * 100)}%
+                  {Math.round(((currentQuestionIdx + 1) / activeQuiz.totalQuestions) * 100)}% Complete
                 </span>
               </div>
               <div
                 style={{
-                  height: '6px',
+                  height: '5px',
                   background: 'rgba(255, 255, 255, 0.08)',
                   borderRadius: '3px',
                   overflow: 'hidden',
@@ -903,7 +965,7 @@ export default function QuizzesPage() {
               </div>
             </div>
 
-            {/* Current Question */}
+            {/* Current Question & Options */}
             {activeQuiz.questions[currentQuestionIdx] && (
               <div>
                 {activeQuiz.questions[currentQuestionIdx].sourceRef && (
@@ -912,10 +974,10 @@ export default function QuizzesPage() {
                       display: 'inline-block',
                       background: 'rgba(212, 175, 55, 0.1)',
                       color: 'var(--gold-sacred)',
-                      fontSize: '0.8rem',
-                      padding: '0.2rem 0.6rem',
-                      borderRadius: '12px',
-                      marginBottom: '0.75rem',
+                      fontSize: '0.75rem',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '10px',
+                      marginBottom: '0.5rem',
                     }}
                   >
                     📜 {activeQuiz.questions[currentQuestionIdx].sourceRef}
@@ -923,22 +985,23 @@ export default function QuizzesPage() {
                 )}
                 <h3
                   style={{
-                    fontSize: '1.2rem',
+                    fontSize: '1.05rem',
                     fontWeight: 600,
-                    marginBottom: '1.5rem',
-                    lineHeight: 1.5,
+                    marginBottom: '0.85rem',
+                    lineHeight: 1.4,
+                    color: 'var(--text-vellum)',
                   }}
                 >
                   {activeQuiz.questions[currentQuestionIdx].questionText}
                 </h3>
 
-                {/* Option Choices */}
+                {/* Option Choices - 2x2 Grid so they fit on screen without vertical scrolling */}
                 <div
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.85rem',
-                    marginBottom: '2.5rem',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: '0.55rem',
+                    marginBottom: '1rem',
                   }}
                 >
                   {activeQuiz.questions[currentQuestionIdx].options.map((opt, oIdx) => {
@@ -954,22 +1017,24 @@ export default function QuizzesPage() {
                         }}
                         style={{
                           background: isSelected
-                            ? 'rgba(212, 175, 55, 0.15)'
-                            : 'rgba(13, 11, 8, 0.6)',
-                          border: `1px solid ${isSelected ? 'var(--gold-sacred)' : 'rgba(212, 175, 55, 0.15)'}`,
-                          padding: '1rem 1.25rem',
+                            ? 'rgba(212, 175, 55, 0.18)'
+                            : 'rgba(13, 11, 8, 0.65)',
+                          border: `1px solid ${isSelected ? 'var(--gold-sacred)' : 'rgba(212, 175, 55, 0.2)'}`,
+                          padding: '0.65rem 0.85rem',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '1rem',
-                          transition: 'all 0.2s ease',
+                          gap: '0.65rem',
+                          transition: 'all 0.18s ease',
+                          minHeight: '48px',
+                          boxShadow: isSelected ? '0 0 12px rgba(212, 175, 55, 0.2)' : 'none',
                         }}
                       >
                         <div
                           style={{
-                            width: '20px',
-                            height: '20px',
+                            width: '18px',
+                            height: '18px',
                             borderRadius: '50%',
                             border: `2px solid ${isSelected ? 'var(--gold-sacred)' : 'var(--text-dust)'}`,
                             display: 'flex',
@@ -981,8 +1046,8 @@ export default function QuizzesPage() {
                           {isSelected && (
                             <div
                               style={{
-                                width: '10px',
-                                height: '10px',
+                                width: '8px',
+                                height: '8px',
                                 borderRadius: '50%',
                                 background: 'var(--gold-sacred)',
                               }}
@@ -991,8 +1056,10 @@ export default function QuizzesPage() {
                         </div>
                         <span
                           style={{
-                            fontSize: '0.95rem',
+                            fontSize: '0.88rem',
+                            lineHeight: 1.35,
                             color: isSelected ? 'var(--gold-radiance)' : 'var(--text-vellum)',
+                            fontWeight: isSelected ? 600 : 400,
                           }}
                         >
                           {opt}
@@ -1004,7 +1071,13 @@ export default function QuizzesPage() {
 
                 {/* Navigation Buttons */}
                 <div
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: '0.5rem',
+                    borderTop: '1px solid rgba(212, 175, 55, 0.12)',
+                  }}
                 >
                   <button
                     disabled={currentQuestionIdx === 0}
@@ -1013,15 +1086,16 @@ export default function QuizzesPage() {
                       background: 'transparent',
                       border: '1px solid rgba(212, 175, 55, 0.25)',
                       color: currentQuestionIdx === 0 ? 'var(--text-dust)' : 'var(--text-vellum)',
-                      padding: '0.65rem 1.25rem',
+                      padding: '0.5rem 1.1rem',
                       borderRadius: '20px',
+                      fontSize: '0.85rem',
                       cursor: currentQuestionIdx === 0 ? 'not-allowed' : 'pointer',
                     }}
                   >
                     ← Previous
                   </button>
 
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                     <button
                       onClick={() => {
                         if (confirm('Cancel assessment and return to catalog?')) {
@@ -1033,8 +1107,8 @@ export default function QuizzesPage() {
                         border: 'none',
                         color: 'var(--text-dust)',
                         cursor: 'pointer',
-                        padding: '0.65rem 1rem',
-                        fontSize: '0.9rem',
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.85rem',
                       }}
                     >
                       Exit
@@ -1044,7 +1118,11 @@ export default function QuizzesPage() {
                       <button
                         onClick={() => setCurrentQuestionIdx((i) => i + 1)}
                         className="gold-button"
-                        style={{ padding: '0.65rem 1.5rem', borderRadius: '20px' }}
+                        style={{
+                          padding: '0.55rem 1.4rem',
+                          borderRadius: '20px',
+                          fontSize: '0.88rem',
+                        }}
                       >
                         Next Question →
                       </button>
@@ -1056,9 +1134,10 @@ export default function QuizzesPage() {
                           background: 'linear-gradient(135deg, #48bb78 0%, #2f855a 100%)',
                           border: 'none',
                           color: '#fff',
-                          padding: '0.65rem 1.75rem',
+                          padding: '0.55rem 1.5rem',
                           borderRadius: '20px',
                           fontWeight: 700,
+                          fontSize: '0.88rem',
                           cursor: isSubmitting ? 'wait' : 'pointer',
                           boxShadow: '0 4px 15px rgba(72, 187, 120, 0.3)',
                         }}
@@ -1455,7 +1534,7 @@ export default function QuizzesPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '1rem',
+              padding: '0.75rem',
             }}
           >
             <div
@@ -1463,7 +1542,9 @@ export default function QuizzesPage() {
               style={{
                 maxWidth: '560px',
                 width: '100%',
-                padding: '2.25rem',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                padding: '1.25rem 1.6rem',
                 border: '1px solid var(--gold-sacred)',
                 boxShadow: '0 8px 40px rgba(212, 175, 55, 0.25)',
               }}
@@ -1473,23 +1554,23 @@ export default function QuizzesPage() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '1.5rem',
+                  marginBottom: '0.65rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <span style={{ fontSize: '1.6rem' }}>✨</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.3rem' }}>✨</span>
                   <div>
                     <h3
                       style={{
                         fontFamily: 'var(--font-serif)',
-                        fontSize: '1.35rem',
+                        fontSize: '1.2rem',
                         color: 'var(--gold-sacred)',
                         margin: 0,
                       }}
                     >
                       Create Quiz from Topic
                     </h3>
-                    <span style={{ fontSize: '0.78rem', color: '#f472b6', fontWeight: 600 }}>
+                    <span style={{ fontSize: '0.72rem', color: '#f472b6', fontWeight: 600 }}>
                       Saves to &quot;Your Quizzes&quot; • Up to 15 Questions
                     </span>
                   </div>
@@ -1500,27 +1581,28 @@ export default function QuizzesPage() {
                     background: 'transparent',
                     border: 'none',
                     color: 'var(--text-dust)',
-                    fontSize: '1.5rem',
+                    fontSize: '1.3rem',
                     cursor: 'pointer',
+                    padding: '0.2rem',
                   }}
                 >
                   ✕
                 </button>
               </div>
 
-              <p style={{ color: 'var(--text-dust)', fontSize: '0.88rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+              <p style={{ color: 'var(--text-dust)', fontSize: '0.8rem', marginBottom: '0.75rem', lineHeight: 1.4 }}>
                 Enter any spiritual, philosophical, or practical topic. The AI Sage will synthesize an authentic
                 assessment grounded in Vedic principles that you can take immediately.
               </p>
 
               <form onSubmit={handleGenerateAIQuiz}>
                 {/* Specific Topic Input - Primary */}
-                <div style={{ marginBottom: '1.35rem' }}>
+                <div style={{ marginBottom: '0.75rem' }}>
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '0.88rem',
-                      marginBottom: '0.5rem',
+                      fontSize: '0.8rem',
+                      marginBottom: '0.3rem',
                       color: 'var(--gold-radiance)',
                       fontWeight: 600,
                     }}
@@ -1530,7 +1612,7 @@ export default function QuizzesPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Sthitaprajna, Tridoshas in Winter, Chanakya's Four Expedients, Karma Yoga..."
+                    placeholder="e.g. Sthitaprajna, Tridoshas in Winter, Chanakya's Four Expedients..."
                     value={genTopic}
                     onChange={(e) => setGenTopic(e.target.value)}
                     style={{
@@ -1538,94 +1620,102 @@ export default function QuizzesPage() {
                       background: 'rgba(13, 11, 8, 0.9)',
                       border: '1px solid rgba(212, 175, 55, 0.45)',
                       color: 'var(--text-vellum)',
-                      padding: '0.75rem 0.95rem',
+                      padding: '0.55rem 0.85rem',
                       borderRadius: '8px',
-                      fontSize: '0.95rem',
+                      fontSize: '0.88rem',
                       outline: 'none',
-                      boxShadow: '0 0 12px rgba(212, 175, 55, 0.1)',
+                      boxShadow: '0 0 10px rgba(212, 175, 55, 0.1)',
                     }}
                   />
                 </div>
 
-                {/* Domain Picker */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.85rem',
-                      marginBottom: '0.5rem',
-                      color: 'var(--text-vellum)',
-                    }}
-                  >
-                    Scriptural Category / Tradition
-                  </label>
-                  <select
-                    value={genDomain}
-                    onChange={(e) => setGenDomain(e.target.value)}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(13, 11, 8, 0.8)',
-                      border: '1px solid rgba(212, 175, 55, 0.3)',
-                      color: 'var(--text-vellum)',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="gita">🏹 Bhagavad Gita (Krishna Wisdom)</option>
-                    <option value="chanakya">🏛️ Chanakya Neeti & Arthashastra</option>
-                    <option value="upanishads">✨ Upanishads & Vedanta</option>
-                    <option value="ayurveda">🌿 Ayurveda & Tridosha</option>
-                    <option value="mahabharata">⚔️ Mahabharata (Dharma & War)</option>
-                    <option value="ramayana">🔆 Ramayana (Maryada Purushottama)</option>
-                    <option value="panchatantra">📖 Panchatantra (Applied Fables)</option>
-                    <option value="yoga">🧘 Patanjali Yoga & Mind Mastery</option>
-                    <option value="general">🕉️ Universal Vedic Philosophy</option>
-                  </select>
-                </div>
+                {/* 2-Column Grid: Domain Picker & Guru Picker side-by-side to save vertical space */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '0.65rem',
+                    marginBottom: '0.75rem',
+                  }}
+                >
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.78rem',
+                        marginBottom: '0.3rem',
+                        color: 'var(--text-vellum)',
+                      }}
+                    >
+                      Category / Tradition
+                    </label>
+                    <select
+                      value={genDomain}
+                      onChange={(e) => setGenDomain(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(13, 11, 8, 0.8)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        color: 'var(--text-vellum)',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '6px',
+                        fontSize: '0.82rem',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="gita">🏹 Bhagavad Gita</option>
+                      <option value="chanakya">🏛️ Chanakya Neeti</option>
+                      <option value="upanishads">✨ Upanishads</option>
+                      <option value="ayurveda">🌿 Ayurveda</option>
+                      <option value="mahabharata">⚔️ Mahabharata</option>
+                      <option value="ramayana">🔆 Ramayana</option>
+                      <option value="panchatantra">📖 Panchatantra</option>
+                      <option value="yoga">🧘 Yoga Sutras</option>
+                      <option value="general">🕉️ Universal Vedic</option>
+                    </select>
+                  </div>
 
-                {/* Guru / Sage Selector */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.85rem',
-                      marginBottom: '0.5rem',
-                      color: 'var(--text-vellum)',
-                    }}
-                  >
-                    Sage / Counselor Voice (Optional)
-                  </label>
-                  <select
-                    value={genGuru}
-                    onChange={(e) => {
-                      const guru = e.target.value;
-                      setGenGuru(guru);
-                      if (guru === 'krishna') setGenDomain('gita');
-                      else if (guru === 'chanakya') setGenDomain('chanakya');
-                      else if (guru === 'charaka') setGenDomain('ayurveda');
-                      else if (guru === 'vyasa') setGenDomain('mahabharata');
-                      else if (guru === 'patanjali') setGenDomain('yoga');
-                    }}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(13, 11, 8, 0.8)',
-                      border: '1px solid rgba(212, 175, 55, 0.3)',
-                      color: 'var(--text-vellum)',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="">All Gurus / Canonical Sources</option>
-                    <option value="krishna">Lord Krishna (Bhagavad Gita & Life Guidance)</option>
-                    <option value="chanakya">Chanakya Pandit (Arthashastra & Neeti)</option>
-                    <option value="charaka">Vaidya Charaka (Charaka Samhita & Ayurveda)</option>
-                    <option value="vyasa">Sage Vyasa (Mahabharata & Dharma)</option>
-                    <option value="patanjali">Sage Patanjali (Yoga Sutras & Mind Mastery)</option>
-                  </select>
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.78rem',
+                        marginBottom: '0.3rem',
+                        color: 'var(--text-vellum)',
+                      }}
+                    >
+                      Sage Voice (Optional)
+                    </label>
+                    <select
+                      value={genGuru}
+                      onChange={(e) => {
+                        const guru = e.target.value;
+                        setGenGuru(guru);
+                        if (guru === 'krishna') setGenDomain('gita');
+                        else if (guru === 'chanakya') setGenDomain('chanakya');
+                        else if (guru === 'charaka') setGenDomain('ayurveda');
+                        else if (guru === 'vyasa') setGenDomain('mahabharata');
+                        else if (guru === 'patanjali') setGenDomain('yoga');
+                      }}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(13, 11, 8, 0.8)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        color: 'var(--text-vellum)',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '6px',
+                        fontSize: '0.82rem',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="">All Gurus</option>
+                      <option value="krishna">Lord Krishna</option>
+                      <option value="chanakya">Chanakya</option>
+                      <option value="charaka">Vaidya Charaka</option>
+                      <option value="vyasa">Sage Vyasa</option>
+                      <option value="patanjali">Sage Patanjali</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Difficulty & Count */}
@@ -1633,16 +1723,16 @@ export default function QuizzesPage() {
                   style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
-                    gap: '1rem',
-                    marginBottom: '2rem',
+                    gap: '0.65rem',
+                    marginBottom: '1rem',
                   }}
                 >
                   <div>
                     <label
                       style={{
                         display: 'block',
-                        fontSize: '0.85rem',
-                        marginBottom: '0.5rem',
+                        fontSize: '0.78rem',
+                        marginBottom: '0.3rem',
                         color: 'var(--text-vellum)',
                       }}
                     >
@@ -1656,9 +1746,9 @@ export default function QuizzesPage() {
                         background: 'rgba(13, 11, 8, 0.8)',
                         border: '1px solid rgba(212, 175, 55, 0.3)',
                         color: 'var(--text-vellum)',
-                        padding: '0.65rem 0.85rem',
+                        padding: '0.5rem 0.65rem',
                         borderRadius: '6px',
-                        fontSize: '0.9rem',
+                        fontSize: '0.82rem',
                         outline: 'none',
                       }}
                     >
@@ -1672,14 +1762,14 @@ export default function QuizzesPage() {
                     <label
                       style={{
                         display: 'block',
-                        fontSize: '0.85rem',
-                        marginBottom: '0.5rem',
+                        fontSize: '0.78rem',
+                        marginBottom: '0.3rem',
                         color: 'var(--text-vellum)',
                       }}
                     >
-                      Question Count (Max 15): <strong style={{ color: 'var(--gold-radiance)' }}>{genCount}</strong>
+                      Question Count: <strong style={{ color: 'var(--gold-radiance)' }}>{genCount}</strong>
                     </label>
-                    <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                       {[3, 5, 8, 10, 15].map((num) => (
                         <button
                           key={num}
@@ -1687,14 +1777,14 @@ export default function QuizzesPage() {
                           onClick={() => setGenCount(num)}
                           style={{
                             flex: 1,
-                            minWidth: '38px',
-                            padding: '0.35rem 0.35rem',
-                            borderRadius: '6px',
+                            minWidth: '32px',
+                            padding: '0.25rem 0.2rem',
+                            borderRadius: '5px',
                             border: `1px solid ${genCount === num ? 'var(--gold-sacred)' : 'rgba(212, 175, 55, 0.25)'}`,
                             background: genCount === num ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(184, 134, 11, 0.2) 100%)' : 'rgba(0,0,0,0.4)',
                             color: genCount === num ? 'var(--gold-radiance)' : 'var(--text-dust)',
                             fontWeight: genCount === num ? 700 : 500,
-                            fontSize: '0.82rem',
+                            fontSize: '0.76rem',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
@@ -1711,7 +1801,6 @@ export default function QuizzesPage() {
                       onChange={(e) => setGenCount(Number(e.target.value))}
                       style={{
                         width: '100%',
-                        marginTop: '0.4rem',
                         accentColor: 'var(--gold-sacred)',
                       }}
                     />
@@ -1719,7 +1808,7 @@ export default function QuizzesPage() {
                 </div>
 
                 {/* Modal Buttons */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', alignItems: 'center' }}>
                   <button
                     type="button"
                     onClick={() => setShowGenerateModal(false)}
@@ -1727,8 +1816,9 @@ export default function QuizzesPage() {
                       background: 'transparent',
                       border: '1px solid rgba(255, 255, 255, 0.2)',
                       color: 'var(--text-vellum)',
-                      padding: '0.65rem 1.25rem',
+                      padding: '0.5rem 1.1rem',
                       borderRadius: '20px',
+                      fontSize: '0.85rem',
                       cursor: 'pointer',
                     }}
                   >
@@ -1740,13 +1830,14 @@ export default function QuizzesPage() {
                     disabled={isGenerating || !genTopic.trim()}
                     className="gold-button"
                     style={{
-                      padding: '0.65rem 1.75rem',
+                      padding: '0.55rem 1.4rem',
                       borderRadius: '20px',
+                      fontSize: '0.88rem',
                       opacity: !genTopic.trim() ? 0.6 : 1,
                       cursor: !genTopic.trim() ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {isGenerating ? `Synthesizing ${genCount} Questions...` : `✨ Generate & Start Quiz (${genCount} Qs)`}
+                    {isGenerating ? `Synthesizing ${genCount} Qs...` : `✨ Generate & Start Quiz (${genCount} Qs)`}
                   </button>
                 </div>
               </form>

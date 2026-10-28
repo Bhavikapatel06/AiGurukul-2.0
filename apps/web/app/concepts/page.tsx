@@ -1422,18 +1422,15 @@ export default function AncientKnowledgePage() {
       </div>
 
       {/* ===================================================================
-          2. STANDARDIZED SCRIPTURE TABS (6 Canonical Books)
+          2. STANDARDIZED SCRIPTURE TABS (All 6 Canonical Books in Clean Formation)
           =================================================================== */}
       <nav
         aria-label="Scripture Selection"
         style={{
           borderBottom: '1px solid rgba(212, 175, 55, 0.22)',
-          background: 'rgba(15, 12, 8, 0.94)',
+          background: 'rgba(15, 12, 8, 0.96)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
-          scrollbarWidth: 'none',
           position: 'sticky',
           top: '4.25rem',
           zIndex: 90,
@@ -1442,11 +1439,14 @@ export default function AncientKnowledgePage() {
       >
         <div
           style={{
-            maxWidth: '1440px',
+            maxWidth: '1280px',
             margin: '0 auto',
+            padding: '0 0.75rem',
             display: 'flex',
-            padding: '0 1.25rem',
-            gap: '0.5rem',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'nowrap',
+            gap: '0.35rem',
           }}
           role="tablist"
         >
@@ -1463,26 +1463,30 @@ export default function AncientKnowledgePage() {
                   setSelectedTag('all');
                   setReadingStatusFilter('all');
                 }}
+                title={book.title}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.65rem',
-                  padding: '0.95rem 1.35rem',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  padding: '0.65rem 0.65rem',
                   background: isSelected
-                    ? 'linear-gradient(180deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%)'
+                    ? 'linear-gradient(180deg, rgba(212, 175, 55, 0.22) 0%, rgba(212, 175, 55, 0.05) 100%)'
                     : 'transparent',
                   border: 'none',
                   borderBottom: isSelected ? '3px solid var(--gold-radiance)' : '3px solid transparent',
+                  borderRadius: '6px 6px 0 0',
                   color: isSelected ? 'var(--gold-radiance)' : '#b8ae96',
                   fontFamily: 'var(--font-serif)',
-                  fontSize: '0.92rem',
+                  fontSize: '0.80rem',
                   fontWeight: isSelected ? 700 : 500,
-                  letterSpacing: '0.04em',
+                  letterSpacing: '0.015em',
                   cursor: 'pointer',
-                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-                  flexShrink: 0,
-                  minHeight: '50px',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                  minHeight: '46px',
                   boxShadow: isSelected ? 'inset 0 -1px 8px rgba(212, 175, 55, 0.25)' : 'none',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
@@ -1497,20 +1501,30 @@ export default function AncientKnowledgePage() {
                   }
                 }}
               >
-                <span style={{ fontSize: '1.25rem' }}>{book.icon}</span>
-                <span style={{ textTransform: 'uppercase' }}>{book.title}</span>
+                <span style={{ fontSize: '1rem', lineHeight: 1, flexShrink: 0 }}>{book.icon}</span>
+                <span
+                  style={{
+                    textTransform: 'uppercase',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {book.title}
+                </span>
                 {(() => {
                   const bCompleted = (completedChapters[book.id] || []).length;
                   return isAuthenticated && bCompleted > 0 ? (
                     <span
                       style={{
-                        fontSize: '0.72rem',
-                        padding: '0.15rem 0.5rem',
+                        fontSize: '0.65rem',
+                        padding: '0.1rem 0.38rem',
                         borderRadius: '9999px',
                         background: 'rgba(94, 234, 212, 0.22)',
                         border: '1px solid rgba(94, 234, 212, 0.45)',
                         color: '#5eead4',
                         fontWeight: 700,
+                        lineHeight: 1.2,
+                        flexShrink: 0,
                       }}
                     >
                       ✓ {bCompleted}/{book.chapters.length} Read
@@ -1518,12 +1532,14 @@ export default function AncientKnowledgePage() {
                   ) : (
                     <span
                       style={{
-                        fontSize: '0.72rem',
-                        padding: '0.15rem 0.5rem',
+                        fontSize: '0.65rem',
+                        padding: '0.1rem 0.38rem',
                         borderRadius: '9999px',
                         background: isSelected ? 'rgba(212, 175, 55, 0.35)' : 'rgba(255, 255, 255, 0.08)',
                         color: isSelected ? '#ffffff' : '#b8ae96',
                         fontWeight: 700,
+                        lineHeight: 1.2,
+                        flexShrink: 0,
                       }}
                     >
                       {book.chapters.length} ch
