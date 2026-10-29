@@ -13,7 +13,7 @@ const CommonEnvSchema = z.object({
 });
 
 export const ApiEnvSchema = CommonEnvSchema.extend({
-  PORT: z.coerce.number().default(5000),
+  PORT: z.coerce.number().default(10000),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   MONGODB_URI: z.string().default('mongodb://localhost:27017/aigurukul_dev'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
