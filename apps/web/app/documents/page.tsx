@@ -1,5 +1,7 @@
 'use client';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
@@ -123,7 +125,7 @@ export default function DocumentsRAGPage() {
   const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true);
-      const res = await fetch('http://localhost:5000/api/v1/rag/stats');
+      const res = await fetch(`${API_BASE}/rag/stats`);
       const data = await res.json();
       if (data.success) {
         setStats(data.data);
@@ -138,7 +140,7 @@ export default function DocumentsRAGPage() {
   const fetchDocuments = useCallback(async () => {
     try {
       setLoadingDocs(true);
-      const res = await fetch('http://localhost:5000/api/v1/documents?limit=50');
+      const res = await fetch(`${API_BASE}/documents?limit=50`);
       const data = await res.json();
       if (data.success) {
         setDocuments(data.data.documents);
@@ -173,7 +175,7 @@ export default function DocumentsRAGPage() {
       setIngestStatusMessage('Uploading to Object Storage & validating structure...');
       setIngestSuccess(null);
 
-      const res = await fetch('http://localhost:5000/api/v1/documents', {
+      const res = await fetch(`${API_BASE}/documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -212,7 +214,7 @@ export default function DocumentsRAGPage() {
   const handleInspectChunks = async (docId: string) => {
     try {
       setInspectLoading(true);
-      const res = await fetch(`http://localhost:5000/api/v1/documents/${docId}`);
+      const res = await fetch(`${API_BASE}/documents/${docId}`);
       const data = await res.json();
       if (data.success) {
         setInspectingDoc(data.data);
@@ -232,7 +234,7 @@ export default function DocumentsRAGPage() {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/documents/${docId}`, {
+      const res = await fetch(`${API_BASE}/documents/${docId}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -254,7 +256,7 @@ export default function DocumentsRAGPage() {
 
     try {
       setRagLoading(true);
-      const res = await fetch('http://localhost:5000/api/v1/rag/query', {
+      const res = await fetch(`${API_BASE}/rag/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

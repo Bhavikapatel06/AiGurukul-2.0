@@ -29,7 +29,7 @@ export class AIProviderFactory {
     ).toLowerCase();
 
     // Auto-detect API key presence if provider wasn't explicitly forced to local
-    if (!requestedType || requestedType === 'local') {
+    if (!requestedType || (!providerType && requestedType === 'local')) {
       if (options?.apiKey?.startsWith('gsk_') || process.env.GROQ_API_KEY) {
         requestedType = 'groq';
       } else if (options?.apiKey || process.env.GEMINI_API_KEY) {

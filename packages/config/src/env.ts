@@ -58,7 +58,9 @@ export type ApiConfig = z.infer<typeof ApiEnvSchema>;
 export type WorkerConfig = z.infer<typeof WorkerEnvSchema>;
 
 export function loadApiConfig(overrides?: Record<string, unknown>): ApiConfig {
-  const parsed = ApiEnvSchema.safeParse({ ...process.env, ...overrides });
+  const isTest = (overrides?.NODE_ENV || process.env.NODE_ENV) === 'test';
+  const baseEnv = isTest && !overrides?.AI_PROVIDER ? { ...process.env, AI_PROVIDER: 'local' } : process.env;
+  const parsed = ApiEnvSchema.safeParse({ ...baseEnv, ...overrides });
   if (!parsed.success) {
     console.error('❌ Invalid API Environment Configuration:');
     console.error(JSON.stringify(parsed.error.format(), null, 2));
