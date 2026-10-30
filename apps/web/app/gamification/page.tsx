@@ -798,6 +798,7 @@ export default function GamificationPage() {
   const [screen, setScreen] = useState<'categories' | 'saga-map' | 'puzzle-play' | 'boutique'>('categories');
   const [selectedCategory, setSelectedCategory] = useState<GameCategory>('ramayana');
   const [selectedLevelId, setSelectedLevelId] = useState<number>(1);
+  const [sagaViewMode, setSagaViewMode] = useState<'map' | 'grid'>('map');
 
   // Persistent Game State (Per Authenticated User)
   const [coins, setCoins] = useState<number>(150);
@@ -1671,7 +1672,7 @@ export default function GamificationPage() {
             <h1
               style={{
                 fontFamily: 'var(--font-serif, serif)',
-                fontSize: '2.5rem',
+                fontSize: 'clamp(1.75rem, 5vw, 2.5rem)',
                 color: '#D4AF37',
                 letterSpacing: '0.04em',
                 marginBottom: '0.5rem',
@@ -2362,7 +2363,7 @@ export default function GamificationPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               gap: '2.5rem',
               alignItems: 'start',
             }}

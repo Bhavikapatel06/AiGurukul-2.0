@@ -718,7 +718,7 @@ export default function DocumentsRAGPage() {
         {/* TAB 2: Ingestion Pipeline Studio */}
         {activeTab === 'ingest' && (
           <div
-            style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem' }}
+            className="documents-workspace-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem' }}
           >
             {/* Presets Sidebar */}
             <div className="temple-card" style={{ padding: '1.5rem' }}>
@@ -961,7 +961,7 @@ export default function DocumentsRAGPage() {
         {/* TAB 3: Grounded RAG Citation Playground */}
         {activeTab === 'playground' && (
           <div
-            style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem' }}
+            className="documents-workspace-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem' }}
           >
             {/* Query Options Sidebar */}
             <div className="temple-card" style={{ padding: '1.5rem', height: 'fit-content' }}>
