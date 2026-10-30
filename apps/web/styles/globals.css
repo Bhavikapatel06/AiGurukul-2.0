@@ -490,6 +490,22 @@ textarea, input[type="text"], input[type="search"], input[type="email"], input[t
   .navbar-user-pill {
     display: none !important;
   }
+
+  .temple-container {
+    height: auto !important;
+    min-height: calc(100vh - 4rem) !important;
+    padding: 0.85rem 0.75rem !important;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .hide-on-desktop {
+    display: none !important;
+  }
 }
 
 /* Screen width < 480px (Compact Mobile) */

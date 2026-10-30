@@ -1240,6 +1240,7 @@ export default function GamificationPage() {
       {/* GLOBAL GAME HEADER (Sticky) */}
       {/* ----------------------------------------------------------------- */}
       <header
+        className="game-sticky-header"
         style={{
           position: 'sticky',
           top: 0,
@@ -1247,7 +1248,7 @@ export default function GamificationPage() {
           background: 'rgba(13, 11, 8, 0.95)',
           backdropFilter: 'blur(12px)',
           borderBottom: '1px solid rgba(212, 175, 55, 0.35)',
-          padding: '0.85rem 1.5rem',
+          padding: '0.75rem 1.25rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1283,13 +1284,17 @@ export default function GamificationPage() {
           </button>
 
           <span
+            className="game-header-title"
             style={{
               fontFamily: 'var(--font-serif, serif)',
-              fontSize: '1.25rem',
+              fontSize: '1.15rem',
               fontWeight: 700,
               color: '#F2D675',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {screen === 'categories' && 'VEDIC CHRONICLES: SELECT YOUR REALM'}
@@ -1771,7 +1776,7 @@ export default function GamificationPage() {
       )}
 
       {/* ----------------------------------------------------------------- */}
-      {/* SCREEN 2: SAGA MAP (Matches User Image 1) */}
+      {/* SCREEN 2: SAGA MAP (Responsive S-Curve Path & Level Grid) */}
       {/* ----------------------------------------------------------------- */}
       {screen === 'saga-map' && (
         <main
@@ -1779,82 +1784,249 @@ export default function GamificationPage() {
             position: 'relative',
             width: '100%',
             minHeight: 'calc(100vh - 70px)',
-            overflow: 'hidden',
+            overflowY: 'auto',
+            overflowX: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             alignItems: 'center',
-            padding: '2rem 1rem',
+            padding: '1.5rem 1rem 3.5rem',
           }}
         >
           {/* Header indicator */}
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem', zIndex: 10 }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.25rem', zIndex: 10, width: '100%' }}>
             <span
               style={{
                 fontFamily: 'var(--font-serif, serif)',
-                fontSize: '1.8rem',
+                fontSize: 'clamp(1.25rem, 4vw, 1.8rem)',
                 color: '#D4AF37',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
+                display: 'block',
               }}
             >
               {activeCategoryData.icon} {activeCategoryData.name} SAGA MAP
             </span>
-            <p style={{ color: '#9A9078', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+            <p style={{ color: '#9A9078', fontSize: '0.85rem', marginTop: '0.2rem' }}>
               Seeker <strong>{activeUser.displayName || activeUser.email}</strong>: {completedLevels.filter((k) => k.startsWith(`${selectedCategory}-`)).length} of 20 Challenges Mastered
             </p>
+
+            {/* Mobile & Desktop View Mode Toggle */}
+            <div style={{ marginTop: '0.85rem', display: 'inline-flex', background: 'rgba(212, 175, 55, 0.12)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.3)', gap: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setSagaViewMode('map')}
+                style={{
+                  background: sagaViewMode === 'map' ? 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)' : 'transparent',
+                  color: sagaViewMode === 'map' ? '#0D0B08' : '#EDE8D5',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '5px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                🗺️ SAGA MAP
+              </button>
+              <button
+                type="button"
+                onClick={() => setSagaViewMode('grid')}
+                style={{
+                  background: sagaViewMode === 'grid' ? 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)' : 'transparent',
+                  color: sagaViewMode === 'grid' ? '#0D0B08' : '#EDE8D5',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '5px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                📜 LEVEL GRID
+              </button>
+            </div>
           </div>
 
-          {/* S-Curve Landscape Saga Map Container */}
-          <div
-            style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: '1150px',
-              height: '520px',
-              margin: '0 auto',
-            }}
-          >
-            {/* Winding Trail SVG */}
-            <svg
-              viewBox="0 0 1000 520"
-              preserveAspectRatio="xMidYMid meet"
+          {sagaViewMode === 'map' ? (
+            /* S-Curve Landscape Saga Map Container with Horizontal Scroll on Mobile */
+            <div
+              className="saga-map-scroll-wrapper"
               style={{
-                position: 'absolute',
-                inset: 0,
                 width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-                zIndex: 1,
+                maxWidth: '1150px',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                paddingBottom: '1.5rem',
               }}
             >
-              <path
-                d="M 50,300 C 150,80 350,80 500,260 C 650,450 850,450 950,260"
-                stroke="#D4AF37"
-                strokeWidth="4"
-                fill="none"
-                strokeDasharray="10 10"
-                opacity="0.38"
-              />
-            </svg>
+              <div style={{ textAlign: 'center', marginBottom: '0.5rem', color: '#9A9078', fontSize: '0.75rem' }} className="hide-on-desktop">
+                👉 Swipe horizontally to navigate 20 levels or switch to Level Grid
+              </div>
+              <div
+                style={{
+                  position: 'relative',
+                  width: '1000px',
+                  minWidth: '1000px',
+                  height: '520px',
+                  margin: '0 auto',
+                }}
+              >
+                {/* Winding Trail SVG */}
+                <svg
+                  viewBox="0 0 1000 520"
+                  preserveAspectRatio="xMidYMid meet"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                  }}
+                >
+                  <path
+                    d="M 50,300 C 150,80 350,80 500,260 C 650,450 850,450 950,260"
+                    stroke="#D4AF37"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeDasharray="10 10"
+                    opacity="0.38"
+                  />
+                </svg>
 
-            {/* 20 Circular Nodes placed along the curve */}
-            <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+                {/* 20 Circular Nodes placed along the curve */}
+                <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+                  {Array.from({ length: 20 }).map((_, i) => {
+                    const lvlNum = i + 1;
+                    const unlocked = unlockedLevels[selectedCategory] || 1;
+                    const isLocked = lvlNum > unlocked;
+                    const isCompleted = completedLevels.includes(`${selectedCategory}-${lvlNum}`);
+                    const isCurrent = lvlNum === unlocked;
+
+                    // Mathematical placement along S-curve
+                    const t = i / 19;
+                    const x = 50 + t * 900;
+                    const y = 270 + Math.sin(t * Math.PI * 2) * 165;
+
+                    const levelObj = (CATEGORY_LEVELS[selectedCategory] || [])[i];
+                    const charName = levelObj ? levelObj.name : `Level ${lvlNum}`;
+
+                    return (
+                      <div
+                        key={lvlNum}
+                        onClick={() => {
+                          if (!isLocked) startLevel(lvlNum);
+                          else showToast(`🔒 Complete Level ${lvlNum - 1} to unlock this quest!`);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          left: `${(x / 1000) * 100}%`,
+                          top: `${(y / 520) * 100}%`,
+                          transform: 'translate(-50%, -50%)',
+                          cursor: isLocked ? 'not-allowed' : 'pointer',
+                          textAlign: 'center',
+                          transition: 'all 0.25s ease',
+                          zIndex: isCurrent ? 5 : 2,
+                        }}
+                      >
+                        {/* Outer Circle */}
+                        <div
+                          style={{
+                            width: isCurrent ? '56px' : '48px',
+                            height: isCurrent ? '56px' : '48px',
+                            borderRadius: '50%',
+                            background: isCompleted
+                              ? '#D4AF37'
+                              : isCurrent
+                              ? '#1A160E'
+                              : 'rgba(25, 22, 15, 0.95)',
+                            border: isCurrent
+                              ? '3px solid #FFF'
+                              : isCompleted
+                              ? '2px solid #FFF'
+                              : '2px solid rgba(212, 175, 55, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto',
+                            boxShadow: isCurrent
+                              ? '0 0 24px rgba(242, 214, 117, 0.8), 0 0 45px rgba(212, 175, 55, 0.4)'
+                              : '0 4px 16px rgba(0,0,0,0.8)',
+                            opacity: isLocked ? 0.38 : 1,
+                            filter: isLocked ? 'grayscale(1)' : 'none',
+                            transition: 'transform 0.2s ease',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-serif, serif)',
+                              fontSize: isCurrent ? '1.25rem' : '1.05rem',
+                              fontWeight: 700,
+                              color: isCompleted ? '#0D0B08' : isCurrent ? '#F2D675' : '#9A9078',
+                            }}
+                          >
+                            {isCompleted ? '✓' : lvlNum}
+                          </span>
+                        </div>
+
+                        {/* Level Label */}
+                        <div
+                          style={{
+                            marginTop: '0.4rem',
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            color: isCurrent ? '#F2D675' : '#9A9078',
+                            background: 'rgba(0,0,0,0.7)',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            whiteSpace: 'nowrap',
+                            border: isCurrent ? '1px solid rgba(212,175,55,0.4)' : 'none',
+                          }}
+                        >
+                          LEVEL {lvlNum}
+                        </div>
+
+                        {/* Character Tag preview */}
+                        <div
+                          style={{
+                            fontSize: '0.65rem',
+                            color: '#C4B5FD',
+                            whiteSpace: 'nowrap',
+                            marginTop: '1px',
+                          }}
+                        >
+                          {charName}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Mobile-First Level Grid View */
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '960px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))',
+                gap: '1rem',
+                padding: '0.5rem 0.5rem 2rem',
+              }}
+            >
               {Array.from({ length: 20 }).map((_, i) => {
                 const lvlNum = i + 1;
                 const unlocked = unlockedLevels[selectedCategory] || 1;
                 const isLocked = lvlNum > unlocked;
                 const isCompleted = completedLevels.includes(`${selectedCategory}-${lvlNum}`);
                 const isCurrent = lvlNum === unlocked;
-
-                // Mathematical placement along S-curve
-                const t = i / 19;
-                const x = 50 + t * 900;
-                // Double harmonic for elegant S-curve matching the SVG
-                const y = 270 + Math.sin(t * Math.PI * 2) * 165;
-
                 const levelObj = (CATEGORY_LEVELS[selectedCategory] || [])[i];
                 const charName = levelObj ? levelObj.name : `Level ${lvlNum}`;
+                const charTitle = levelObj ? levelObj.title : '';
 
                 return (
                   <div
@@ -1864,89 +2036,59 @@ export default function GamificationPage() {
                       else showToast(`🔒 Complete Level ${lvlNum - 1} to unlock this quest!`);
                     }}
                     style={{
-                      position: 'absolute',
-                      left: `${(x / 1000) * 100}%`,
-                      top: `${(y / 520) * 100}%`,
-                      transform: 'translate(-50%, -50%)',
-                      cursor: isLocked ? 'not-allowed' : 'pointer',
+                      background: isCurrent
+                        ? 'linear-gradient(145deg, rgba(212, 175, 55, 0.22) 0%, rgba(25, 22, 15, 0.95) 100%)'
+                        : isCompleted
+                        ? 'rgba(212, 175, 55, 0.08)'
+                        : 'rgba(25, 22, 15, 0.75)',
+                      border: isCurrent
+                        ? '2px solid #F2D675'
+                        : isCompleted
+                        ? '1px solid #10B981'
+                        : '1px solid rgba(212, 175, 55, 0.2)',
+                      borderRadius: '12px',
+                      padding: '1rem 0.75rem',
                       textAlign: 'center',
-                      transition: 'all 0.25s ease',
-                      zIndex: isCurrent ? 5 : 2,
+                      cursor: isLocked ? 'not-allowed' : 'pointer',
+                      opacity: isLocked ? 0.45 : 1,
+                      filter: isLocked ? 'grayscale(0.8)' : 'none',
+                      transition: 'all 0.2s ease',
+                      boxShadow: isCurrent ? '0 0 16px rgba(212, 175, 55, 0.3)' : 'none',
                     }}
                   >
-                    {/* Outer Circle */}
                     <div
                       style={{
-                        width: isCurrent ? '56px' : '48px',
-                        height: isCurrent ? '56px' : '48px',
+                        width: '42px',
+                        height: '42px',
                         borderRadius: '50%',
-                        background: isCompleted
-                          ? '#D4AF37'
-                          : isCurrent
-                          ? '#1A160E'
-                          : 'rgba(25, 22, 15, 0.95)',
-                        border: isCurrent
-                          ? '3px solid #FFF'
-                          : isCompleted
-                          ? '2px solid #FFF'
-                          : '2px solid rgba(212, 175, 55, 0.3)',
+                        background: isCompleted ? '#10B981' : isCurrent ? '#D4AF37' : 'rgba(0,0,0,0.5)',
+                        color: isCompleted || isCurrent ? '#0D0B08' : '#9A9078',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        margin: '0 auto',
-                        boxShadow: isCurrent
-                          ? '0 0 24px rgba(242, 214, 117, 0.8), 0 0 45px rgba(212, 175, 55, 0.4)'
-                          : '0 4px 16px rgba(0,0,0,0.8)',
-                        opacity: isLocked ? 0.38 : 1,
-                        filter: isLocked ? 'grayscale(1)' : 'none',
-                        transition: 'transform 0.2s ease',
+                        fontWeight: 800,
+                        fontSize: '1rem',
+                        margin: '0 auto 0.5rem',
                       }}
                     >
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-serif, serif)',
-                          fontSize: isCurrent ? '1.25rem' : '1.05rem',
-                          fontWeight: 700,
-                          color: isCompleted ? '#0D0B08' : isCurrent ? '#F2D675' : '#9A9078',
-                        }}
-                      >
-                        {isCompleted ? '✓' : lvlNum}
-                      </span>
+                      {isCompleted ? '✓' : isLocked ? '🔒' : lvlNum}
                     </div>
-
-                    {/* Level Label */}
-                    <div
-                      style={{
-                        marginTop: '0.4rem',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        color: isCurrent ? '#F2D675' : '#9A9078',
-                        background: 'rgba(0,0,0,0.7)',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        whiteSpace: 'nowrap',
-                        border: isCurrent ? '1px solid rgba(212,175,55,0.4)' : 'none',
-                      }}
-                    >
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrent ? '#F2D675' : '#EDE8D5' }}>
                       LEVEL {lvlNum}
                     </div>
-
-                    {/* Character Tag preview */}
-                    <div
-                      style={{
-                        fontSize: '0.65rem',
-                        color: '#C4B5FD',
-                        whiteSpace: 'nowrap',
-                        marginTop: '1px',
-                      }}
-                    >
+                    <div style={{ fontSize: '0.72rem', color: '#C4B5FD', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {charName}
                     </div>
+                    {charTitle && (
+                      <div style={{ fontSize: '0.62rem', color: '#9A9078', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {charTitle}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
-          </div>
+          )}
         </main>
       )}
 
@@ -1961,6 +2103,8 @@ export default function GamificationPage() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
               marginBottom: '1.5rem',
               background: 'rgba(25, 22, 15, 0.85)',
               padding: '0.75rem 1.25rem',
@@ -2015,8 +2159,8 @@ export default function GamificationPage() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 110px)',
-                gridTemplateRows: 'repeat(3, 110px)',
+                gridTemplateColumns: 'repeat(3, min(100px, 28vw))',
+                gridTemplateRows: 'repeat(3, min(100px, 28vw))',
                 gap: '4px',
                 background: '#1A160E',
                 padding: '6px',
@@ -2036,8 +2180,9 @@ export default function GamificationPage() {
                       key={slotIdx}
                       onClick={() => handlePieceClick(slotIdx)}
                       style={{
-                        width: '110px',
-                        height: '110px',
+                        width: '100%',
+                        height: '100%',
+                        aspectRatio: '1 / 1',
                         background: '#0D0B08',
                         border: '2px dashed rgba(212, 175, 55, 0.3)',
                         borderRadius: '6px',
@@ -2058,8 +2203,9 @@ export default function GamificationPage() {
                     key={slotIdx}
                     onClick={() => handlePieceClick(slotIdx)}
                     style={{
-                      width: '110px',
-                      height: '110px',
+                      width: '100%',
+                      height: '100%',
+                      aspectRatio: '1 / 1',
                       backgroundColor: '#1E1911',
                       backgroundImage: `url('${activeLevelData.image}')`,
                       backgroundSize: '300% 300%',
