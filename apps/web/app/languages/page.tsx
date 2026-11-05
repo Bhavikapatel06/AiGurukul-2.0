@@ -310,7 +310,7 @@ const CANONICAL_ETYMOLOGIES: EtymologyEntryDTO[] = [
 
 export default function LanguagesPage() {
   const [activeLang, setActiveLang] = useState<SupportedLanguage>('sa');
-  const [activeTab, setActiveTab] = useState<'keyboard' | 'manuscripts' | 'translator' | 'etymology'>('keyboard');
+  const [activeTab, setActiveTab] = useState<'keyboard' | 'translator'>('keyboard');
 
   // Virtual Keyboard state
   const [keyboardScript, setKeyboardScript] = useState<'sa' | 'gu'>('sa');
@@ -712,7 +712,6 @@ export default function LanguagesPage() {
 
         {/* Header Banner */}
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🪶 📜 🕉️</div>
           <h1
             style={{
               fontFamily: 'var(--font-serif)',
@@ -786,40 +785,24 @@ export default function LanguagesPage() {
           </div>
         </div>
 
-        {/* Tab Controls */}
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
+        {/* Tab Controls: Single-word small heading names */}
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
           <button
             onClick={() => setActiveTab('keyboard')}
             style={{
               background: activeTab === 'keyboard' ? 'rgba(212, 175, 55, 0.2)' : 'transparent',
               border: activeTab === 'keyboard' ? '1px solid #D4AF37' : '1px solid transparent',
               color: activeTab === 'keyboard' ? '#F2D675' : '#9A9078',
-              padding: '0.65rem 1.4rem',
+              padding: '0.55rem 1.35rem',
               borderRadius: '8px',
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               fontWeight: 600,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
             }}
           >
-            ⌨️ Virtual Keyboards (Devanagari &amp; Gujarati)
-          </button>
-
-          <button
-            onClick={() => setActiveTab('manuscripts')}
-            style={{
-              background: activeTab === 'manuscripts' ? 'rgba(212, 175, 55, 0.2)' : 'transparent',
-              border: activeTab === 'manuscripts' ? '1px solid #D4AF37' : '1px solid transparent',
-              color: activeTab === 'manuscripts' ? '#F2D675' : '#9A9078',
-              padding: '0.65rem 1.4rem',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            📜 Manuscript Reader &amp; Verse Breakdown
+            Keyboard
           </button>
 
           <button
@@ -828,32 +811,16 @@ export default function LanguagesPage() {
               background: activeTab === 'translator' ? 'rgba(212, 175, 55, 0.2)' : 'transparent',
               border: activeTab === 'translator' ? '1px solid #D4AF37' : '1px solid transparent',
               color: activeTab === 'translator' ? '#F2D675' : '#9A9078',
-              padding: '0.65rem 1.4rem',
+              padding: '0.55rem 1.35rem',
               borderRadius: '8px',
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               fontWeight: 600,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
             }}
           >
-            🌐 Multilingual Translation Engine
-          </button>
-
-          <button
-            onClick={() => setActiveTab('etymology')}
-            style={{
-              background: activeTab === 'etymology' ? 'rgba(212, 175, 55, 0.2)' : 'transparent',
-              border: activeTab === 'etymology' ? '1px solid #D4AF37' : '1px solid transparent',
-              color: activeTab === 'etymology' ? '#F2D675' : '#9A9078',
-              padding: '0.65rem 1.4rem',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            🌱 Root-Word (Dhatu) &amp; Etymology
+            Translate
           </button>
         </div>
 
@@ -1107,133 +1074,7 @@ export default function LanguagesPage() {
           </div>
         )}
 
-        {/* TAB 2: MANUSCRIPT READER & VERSE BREAKDOWN */}
-        {activeTab === 'manuscripts' && (
-          <div>
-            {/* Manuscript Selector */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#9A9078', fontSize: '0.9rem' }}>Select Manuscript:</span>
-              {CANONICAL_MANUSCRIPTS.map((m) => (
-                <button
-                  key={m.slug}
-                  onClick={() => setSelectedManuscriptSlug(m.slug)}
-                  style={{
-                    background: selectedManuscriptSlug === m.slug ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255,255,255,0.04)',
-                    border: selectedManuscriptSlug === m.slug ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.1)',
-                    color: selectedManuscriptSlug === m.slug ? '#F2D675' : '#EDE8D5',
-                    padding: '0.45rem 1rem',
-                    borderRadius: '20px',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {m.title.split('–')[0]}
-                </button>
-              ))}
-            </div>
-
-            {/* Manuscript Folio Viewer */}
-            <div
-              className="temple-card"
-              style={{
-                background: 'linear-gradient(135deg, rgba(33, 29, 18, 0.95) 0%, rgba(20, 17, 12, 0.98) 100%)',
-                border: '1px solid rgba(212, 175, 55, 0.35)',
-                borderRadius: '12px',
-                padding: '2rem',
-                marginBottom: '2rem',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <div>
-                  <span style={{ color: '#D4AF37', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-                    {activeManuscript.canonicalSource} • {activeManuscript.verseReference}
-                  </span>
-                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', color: '#F2D675', margin: '0.2rem 0' }}>
-                    {activeManuscript.title}
-                  </h3>
-                  <div style={{ color: '#9A9078', fontSize: '0.85rem' }}>
-                    Rishi / Lineage: {activeManuscript.authorOrRishi} | Meter: {activeManuscript.poeticMeter}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {(['en', 'hi', 'gu'] as const).map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => setTranslationTargetLang(lang)}
-                      style={{
-                        padding: '0.35rem 0.75rem',
-                        background: translationTargetLang === lang ? '#D4AF37' : 'rgba(255,255,255,0.05)',
-                        color: translationTargetLang === lang ? '#0D0B08' : '#EDE8D5',
-                        border: '1px solid rgba(212,175,55,0.3)',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {lang.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Original Shastra Inscription & Transliteration */}
-              <div style={{ background: 'rgba(0,0,0,0.5)', padding: '1.5rem', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)', marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '1.6rem', color: '#F2D675', lineHeight: 1.8, whiteSpace: 'pre-line', fontFamily: 'var(--font-serif)', marginBottom: '0.75rem' }}>
-                  {activeManuscript.originalText}
-                </div>
-                <div style={{ fontSize: '1rem', color: '#9A9078', fontStyle: 'italic', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                  {activeManuscript.transliteration}
-                </div>
-              </div>
-
-              {/* Translation Commentary */}
-              <div style={{ background: 'rgba(212, 175, 55, 0.08)', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.25)', marginBottom: '1.75rem' }}>
-                <div style={{ color: '#EDE8D5', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '0.6rem' }}>
-                  &ldquo;{activeManuscript.translations[translationTargetLang]?.translation}&rdquo;
-                </div>
-                <div style={{ color: '#c4b5fd', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                  💡 {activeManuscript.translations[translationTargetLang]?.philosophicalCommentary}
-                </div>
-              </div>
-
-              {/* Word-by-Word Anatomical Breakdown */}
-              <div>
-                <h4 style={{ fontFamily: 'var(--font-serif)', color: '#D4AF37', fontSize: '1.15rem', marginBottom: '0.75rem' }}>
-                  Word-by-Word Grammatical &amp; Dhatu Breakdown (पदच्छेद):
-                </h4>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.3)', textAlign: 'left', color: '#9A9078' }}>
-                        <th style={{ padding: '0.6rem' }}>Word (पद)</th>
-                        <th style={{ padding: '0.6rem' }}>Transliteration</th>
-                        <th style={{ padding: '0.6rem' }}>Grammar / Case</th>
-                        <th style={{ padding: '0.6rem' }}>Meaning</th>
-                        <th style={{ padding: '0.6rem' }}>Root (धातु)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {activeManuscript.wordBreakdown.map((w, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <td style={{ padding: '0.6rem', color: '#F2D675', fontWeight: 700, fontSize: '0.95rem' }}>{w.word}</td>
-                          <td style={{ padding: '0.6rem', color: '#EDE8D5' }}>{w.transliteration}</td>
-                          <td style={{ padding: '0.6rem', color: '#9A9078' }}>{w.grammar}</td>
-                          <td style={{ padding: '0.6rem', color: '#EDE8D5' }}>{w.meaning}</td>
-                          <td style={{ padding: '0.6rem', color: '#38bdf8', fontWeight: 600 }}>{w.dhatuRoot || '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: MULTILINGUAL TRANSLATION & VISION OCR ENGINE */}
+        {/* TAB 2: TRANSLATE & SCRIPTURAL VERSE BREAKDOWN */}
         {activeTab === 'translator' && (
           <div>
             <div
@@ -1258,7 +1099,7 @@ export default function LanguagesPage() {
               >
                 <div>
                   <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', color: '#D4AF37', margin: 0 }}>
-                    Shastric Translation &amp; Manuscript Vision
+                    Shastric Translation &amp; Verse Breakdown
                   </h3>
                   <p style={{ color: '#9A9078', fontSize: '0.9rem', margin: '0.25rem 0 0 0' }}>
                     End-to-end translation for typed/pasted sacred literature and uploaded manuscript imagery.
@@ -1323,10 +1164,57 @@ export default function LanguagesPage() {
               </div>
 
               {/* =========================================================================
-                  SUB-MODE A: TEXT TRANSLATION
+                  SUB-MODE A: TEXT TRANSLATION WITH SACRED VERSE BREAKDOWN
               ========================================================================== */}
               {translateMode === 'text' && (
                 <div>
+                  {/* Sample Sacred Verses Quick-Picker */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem', alignItems: 'center' }}>
+                    <span style={{ color: '#D4AF37', fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Sample Sacred Verses:
+                    </span>
+                    {CANONICAL_MANUSCRIPTS.map((m) => {
+                      const isSelected = transInputText === m.originalText;
+                      return (
+                        <button
+                          key={m.slug}
+                          type="button"
+                          onClick={() => {
+                            setTransInputText(m.originalText);
+                            setTransSourceLang(m.originalLanguage as TranslateSourceLanguage);
+                            setSelectedManuscriptSlug(m.slug);
+                            const trans = m.translations[transTargetLang] || m.translations['en'] || Object.values(m.translations)[0];
+                            setTransResult({
+                              sourceLanguage: m.originalLanguage,
+                              targetLanguage: transTargetLang,
+                              sourceText: m.originalText,
+                              translatedText: trans?.translation || '',
+                              transliteration: m.transliteration,
+                              confidence: 0.99,
+                              method: 'canonical_cache',
+                              breakdown: m.wordBreakdown,
+                              etymologyNotes: trans?.philosophicalCommentary,
+                              detectedSourceLanguage: m.originalLanguage,
+                            });
+                            setTransError('');
+                          }}
+                          style={{
+                            background: isSelected ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                            border: isSelected ? '1px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.1)',
+                            color: isSelected ? '#F2D675' : '#EDE8D5',
+                            padding: '0.3rem 0.75rem',
+                            borderRadius: '16px',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {m.title.split('–')[0].trim()}
+                        </button>
+                      );
+                    })}
+                  </div>
                   {/* Language Selection Row */}
                   <div
                     style={{
@@ -1698,12 +1586,83 @@ export default function LanguagesPage() {
                             color: '#e2d9c8',
                             fontSize: '0.88rem',
                             lineHeight: 1.5,
+                            marginBottom: '1rem',
                           }}
                         >
                           <span style={{ color: '#F2D675', fontWeight: 600 }}>💡 Philosophical Commentary: </span>
                           {transResult.etymologyNotes}
                         </div>
                       )}
+
+                      {/* Word-by-Word Anatomical Breakdown (पदच्छेद) */}
+                      {(() => {
+                        const matchedM = CANONICAL_MANUSCRIPTS.find((m) => {
+                          const c1 = transInputText.replace(/[\s।॥,\.\?!'"]/g, '').toLowerCase();
+                          const c2 = m.originalText.replace(/[\s।॥,\.\?!'"]/g, '').toLowerCase();
+                          return c1.length > 5 && (c2.includes(c1) || c1.includes(c2.slice(0, 12)));
+                        });
+                        const breakdownList = transResult.breakdown && transResult.breakdown.length > 0
+                          ? transResult.breakdown
+                          : (matchedM ? matchedM.wordBreakdown : null);
+
+                        if (!breakdownList || breakdownList.length === 0) return null;
+
+                        return (
+                          <div
+                            style={{
+                              marginTop: '1.25rem',
+                              borderTop: '1px solid rgba(212, 175, 55, 0.25)',
+                              paddingTop: '1rem',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <h4
+                                style={{
+                                  fontFamily: 'var(--font-serif)',
+                                  color: '#D4AF37',
+                                  fontSize: '1.05rem',
+                                  margin: 0,
+                                }}
+                              >
+                                📜 Word-by-Word Grammatical &amp; Dhatu Breakdown (पदच्छेद):
+                              </h4>
+                              {matchedM && (
+                                <span style={{ color: '#9A9078', fontSize: '0.8rem' }}>
+                                  {matchedM.canonicalSource} • {matchedM.verseReference}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ overflowX: 'auto' }}>
+                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                <thead>
+                                  <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.3)', textAlign: 'left', color: '#9A9078' }}>
+                                    <th style={{ padding: '0.6rem' }}>Word (पद)</th>
+                                    <th style={{ padding: '0.6rem' }}>Transliteration</th>
+                                    <th style={{ padding: '0.6rem' }}>Grammar / Case</th>
+                                    <th style={{ padding: '0.6rem' }}>Meaning</th>
+                                    <th style={{ padding: '0.6rem' }}>Root (धातु)</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {breakdownList.map((w, idx) => (
+                                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                      <td style={{ padding: '0.6rem', color: '#F2D675', fontWeight: 700, fontSize: '0.95rem' }}>
+                                        {w.word}
+                                      </td>
+                                      <td style={{ padding: '0.6rem', color: '#EDE8D5' }}>{w.transliteration}</td>
+                                      <td style={{ padding: '0.6rem', color: '#9A9078' }}>{w.grammar}</td>
+                                      <td style={{ padding: '0.6rem', color: '#EDE8D5' }}>{w.meaning}</td>
+                                      <td style={{ padding: '0.6rem', color: '#38bdf8', fontWeight: 600 }}>
+                                        {w.dhatuRoot || '—'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -2198,146 +2157,83 @@ export default function LanguagesPage() {
                               color: '#e2d9c8',
                               fontSize: '0.85rem',
                               lineHeight: 1.45,
+                              marginBottom: '0.75rem',
                             }}
                           >
                             <span style={{ color: '#F2D675', fontWeight: 600 }}>💡 Context &amp; Commentary: </span>
                             {ocrResult.etymologyNotes}
                           </div>
                         )}
+
+                        {/* OCR Word-by-Word Anatomical Breakdown if matching verse */}
+                        {(() => {
+                          const matchedM = CANONICAL_MANUSCRIPTS.find((m) => {
+                            const c1 = (ocrResult.extractedText || '').replace(/[\s।॥,\.\?!'"]/g, '').toLowerCase();
+                            const c2 = m.originalText.replace(/[\s।॥,\.\?!'"]/g, '').toLowerCase();
+                            return c1.length > 5 && (c2.includes(c1) || c1.includes(c2.slice(0, 12)));
+                          });
+
+                          if (!matchedM) return null;
+
+                          return (
+                            <div
+                              style={{
+                                marginTop: '1rem',
+                                borderTop: '1px solid rgba(212, 175, 55, 0.25)',
+                                paddingTop: '0.85rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                <h4
+                                  style={{
+                                    fontFamily: 'var(--font-serif)',
+                                    color: '#D4AF37',
+                                    fontSize: '0.98rem',
+                                    margin: 0,
+                                  }}
+                                >
+                                  📜 Word-by-Word Breakdown (पदच्छेद):
+                                </h4>
+                                <span style={{ color: '#9A9078', fontSize: '0.75rem' }}>
+                                  {matchedM.canonicalSource} • {matchedM.verseReference}
+                                </span>
+                              </div>
+                              <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                                  <thead>
+                                    <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.3)', textAlign: 'left', color: '#9A9078' }}>
+                                      <th style={{ padding: '0.5rem' }}>Word (पद)</th>
+                                      <th style={{ padding: '0.5rem' }}>Transliteration</th>
+                                      <th style={{ padding: '0.5rem' }}>Grammar / Case</th>
+                                      <th style={{ padding: '0.5rem' }}>Meaning</th>
+                                      <th style={{ padding: '0.5rem' }}>Root (धातु)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {matchedM.wordBreakdown.map((w, idx) => (
+                                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <td style={{ padding: '0.5rem', color: '#F2D675', fontWeight: 700 }}>
+                                          {w.word}
+                                        </td>
+                                        <td style={{ padding: '0.5rem', color: '#EDE8D5' }}>{w.transliteration}</td>
+                                        <td style={{ padding: '0.5rem', color: '#9A9078' }}>{w.grammar}</td>
+                                        <td style={{ padding: '0.5rem', color: '#EDE8D5' }}>{w.meaning}</td>
+                                        <td style={{ padding: '0.5rem', color: '#38bdf8', fontWeight: 600 }}>
+                                          {w.dhatuRoot || '—'}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: ROOT-WORD (DHATU) & ETYMOLOGY */}
-        {activeTab === 'etymology' && (
-          <div>
-            <div className="etymology-workspace-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
-              {/* Left Column: Root List & Search */}
-              <div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <input
-                    type="text"
-                    value={etymologySearch}
-                    onChange={(e) => setEtymologySearch(e.target.value)}
-                    placeholder="Search Dhatu or meaning..."
-                    style={{
-                      width: '100%',
-                      background: 'rgba(0,0,0,0.5)',
-                      border: '1px solid rgba(212,175,55,0.3)',
-                      borderRadius: '6px',
-                      padding: '0.6rem 0.9rem',
-                      color: '#EDE8D5',
-                      fontSize: '0.9rem',
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '500px', overflowY: 'auto' }}>
-                  {filteredEtymologies.map((entry, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedEtymology(entry)}
-                      style={{
-                        textAlign: 'left',
-                        padding: '0.8rem 1rem',
-                        background: selectedEtymology.root === entry.root ? 'rgba(212, 175, 55, 0.25)' : 'rgba(33, 29, 18, 0.7)',
-                        border: selectedEtymology.root === entry.root ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'background 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, color: '#F2D675', fontSize: '1.05rem', marginBottom: '0.2rem' }}>
-                        {entry.root}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#9A9078' }}>
-                        {entry.rootMeaning}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Column: Deep Etymology Inspector */}
-              <div
-                className="temple-card"
-                style={{
-                  background: 'rgba(25, 22, 15, 0.95)',
-                  border: '1px solid rgba(212, 175, 55, 0.35)',
-                  borderRadius: '12px',
-                  padding: '2rem',
-                }}
-              >
-                <div style={{ borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
-                  <div style={{ color: '#D4AF37', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>
-                    {selectedEtymology.linguisticFamily}
-                  </div>
-                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', color: '#F2D675', margin: '0.25rem 0' }}>
-                    {selectedEtymology.root}
-                  </h3>
-                  <div style={{ fontSize: '1.05rem', color: '#EDE8D5' }}>
-                    Meaning: &ldquo;{selectedEtymology.rootMeaning}&rdquo;
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div>
-                    <h4 style={{ fontSize: '0.9rem', color: '#9A9078', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                      Grammatical Affixes (प्रत्यय / उपसर्ग):
-                    </h4>
-                    <div style={{ background: 'rgba(0,0,0,0.4)', padding: '0.75rem', borderRadius: '6px', color: '#38bdf8', fontSize: '0.92rem' }}>
-                      {selectedEtymology.grammaticalAffixes}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 style={{ fontSize: '0.9rem', color: '#9A9078', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                      Derived Shastric Vocabulary:
-                    </h4>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      {selectedEtymology.derivedWords.map((word, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            background: 'rgba(212, 175, 55, 0.15)',
-                            border: '1px solid rgba(212, 175, 55, 0.3)',
-                            color: '#F2D675',
-                            padding: '0.3rem 0.75rem',
-                            borderRadius: '15px',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {word}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 style={{ fontSize: '0.9rem', color: '#9A9078', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                      Canonical Shastra Citation:
-                    </h4>
-                    <div style={{ fontStyle: 'italic', color: '#EDE8D5', fontSize: '0.92rem', background: 'rgba(0,0,0,0.4)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid #D4AF37' }}>
-                      &ldquo;{selectedEtymology.canonicalCitation}&rdquo;
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 style={{ fontSize: '0.9rem', color: '#9A9078', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                      Philosophical Evolution:
-                    </h4>
-                    <p style={{ color: '#9A9078', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
-                      {selectedEtymology.philosophicalEvolution}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
