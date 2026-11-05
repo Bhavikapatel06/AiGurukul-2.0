@@ -15,49 +15,33 @@ export default function HomePage() {
       badge: 'SSE Streaming',
       badgeColor: '#7B68EE',
       icon: '💬',
-      desc: 'Engage in real-time streaming philosophical dialogues with 5 revered Vedic personas. Receive nuanced life guidance grounded in verbatim Sanskrit citations.',
+      desc: 'Real-time philosophical dialogues with 5 revered Vedic personas grounded in Sanskrit citations.',
       href: '/wisdom',
-      actionLabel: 'Enter Wisdom Sanctum',
-      features: [
-        'Real-time SSE token stream with smooth cursor',
-        'Verbatim Sanskrit shloka citation popups',
-        'Persistent seeker dialogue history & context',
-      ],
+      actionLabel: 'Enter Sanctum',
     },
     {
       id: 'ayurveda',
       category: 'health',
       title: 'Ayurveda & Dosha Matrix',
-      sanskrit: 'आयुर्वेद • द्रव्यगुण संहिता (Medicinal Plants)',
-      badge: 'Sacred Herbal Guide',
+      sanskrit: 'द्रव्यगुण • Dravyaguna',
+      badge: 'Herbal Guide',
       badgeColor: '#3A9B8C',
       icon: '🌿',
-      desc: 'Classical Dravyaguna Materia Medica of sacred Ayurvedic plants. Discover exact preparation methods, optimal circadian timings, dosha balancing actions, and proven healing benefits.',
+      desc: 'Classical Materia Medica of sacred plants, preparation methods, circadian timings, and dosha balance.',
       href: '/ayurveda',
-      actionLabel: 'Explore Ayurvedic Plants & Herbs',
-      features: [
-        '🌿 Classical Plants: Ashwagandha, Tulsi, Brahmi, Shatavari, Neem & Triphala',
-        '🥣 How to Use: Exact preparations (Churna, Kwatha, Taila) & Anupanas (Milk, Ghee, Honey)',
-        '⏰ Where & When to Use: Circadian times, seasonal cycles & targeted dosha imbalances',
-        '✨ Proven Benefits: Ojas vitality, immune defense, cognitive focus & digestive fire',
-      ],
+      actionLabel: 'Explore Herbs',
     },
     {
       id: 'graph',
       category: 'learning',
       title: 'Vedic Knowledge Graph',
       sanskrit: 'ज्ञानजाल • Jnana Jala',
-      badge: 'BFS Graph Traversal',
+      badge: 'BFS Traversal',
       badgeColor: '#D4AF37',
       icon: '🕸️',
-      desc: 'Interactive radial ontology spanning orthodox Darshanas, shastric texts, sages, and core doctrines connected by 56 semantic relationship edges.',
+      desc: 'Radial ontology spanning orthodox Darshanas, shastric texts, and sages connected by 56 semantic edges.',
       href: '/graph',
-      actionLabel: 'Traverse Ontology',
-      features: [
-        '32 Ontology Nodes & 56 Semantic edges',
-        'Multi-hop BFS shortest pathfinder algorithm',
-        'Interactive SVG canvas & Sanctum detail drawer',
-      ],
+      actionLabel: 'Traverse Graph',
     },
     {
       id: 'documents',
@@ -67,65 +51,45 @@ export default function HomePage() {
       badge: 'Hybrid Vector Search',
       badgeColor: '#A78BFA',
       icon: '📜',
-      desc: 'Enterprise document ingestion pipeline for classical texts. Chunks scriptures, extracts Sanskrit terms, and retrieves synthesized context with verbatim scriptural citations.',
+      desc: 'Classical text ingestion pipeline extracting Sanskrit terms and retrieving context with chapter grounding.',
       href: '/documents',
-      actionLabel: 'Open RAG Studio',
-      features: [
-        'Automated text chunking & embedding index',
-        'Multi-domain shastric classification filters',
-        'Synthesized context with chapter & verse grounding',
-      ],
+      actionLabel: 'Open Studio',
     },
     {
       id: 'quizzes',
       category: 'learning',
       title: 'Vedic Quizzes & Discernment',
       sanskrit: 'विवेक परीक्षा • Viveka Pariksha',
-      badge: 'AI Dynamic Synthesis',
+      badge: 'Dynamic AI',
       badgeColor: '#F59E0B',
       icon: '🎯',
-      desc: 'Deepen your scriptural discernment through curated multiple-choice exams with live timers, or summon an AI Sage to synthesize interactive quizzes on any Vedic topic.',
+      desc: 'Multiple-choice scripture assessments with live timers, or AI-synthesized quizzes on any topic.',
       href: '/quizzes',
-      actionLabel: 'Test Your Discernment',
-      features: [
-        'Curated scriptural assessments across Gita & Darshana',
-        'On-demand AI quiz synthesis for custom inquiries',
-        'Instant domain scoring analytics & explanations',
-      ],
+      actionLabel: 'Take Quiz',
     },
     {
       id: 'gamification',
       category: 'learning',
       title: 'Gamification, Quests & Bazaar',
-      sanskrit: 'साधना सिद्धि • Sadhana & Bazaar',
+      sanskrit: 'साधना सिद्धि • Sadhana',
       badge: '3x4 Jigsaw Engine',
       badgeColor: '#EAB308',
       icon: '🏆',
-      desc: 'Level up across 5 Seeker tiers from Jijñāsu to Ācārya. Complete sacred daily quests, earn Sacred Coins, acquire relics in the Vedic Bazaar, and solve the 3x4 Jigsaw puzzle.',
+      desc: '5 Seeker tiers from Jijñāsu to Ācārya, daily quests, Sacred Coins, relic bazaar, and 3x4 jigsaw puzzle.',
       href: '/gamification',
-      actionLabel: 'Enter Gamification Arena',
-      features: [
-        '5 Seeker Tiers: Seeker ➔ Learner ➔ Thinker ➔ Philosopher ➔ Acharya',
-        'Sacred Coins Economy & Vedic Relic Bazaar inventory',
-        'Interactive 3x4 Jigsaw puzzle with hint penalties & lore',
-      ],
+      actionLabel: 'Enter Arena',
     },
     {
       id: 'languages',
       category: 'wisdom',
       title: 'Languages & Translation Studio',
-      sanskrit: 'भाषा मञ्जरी • Bhasha & Translation',
+      sanskrit: 'भाषा मञ्जरी • Bhasha',
       badge: 'Virtual Keyboards',
       badgeColor: '#38BDF8',
       icon: '🪶',
-      desc: 'Cross-lingual classical translation across 6 sacred tongues. Type using Devanagari and Gujarati virtual keyboards with Shift & Matra combining, and explore Paninian Dhatu roots.',
+      desc: 'Cross-lingual translation across 6 sacred tongues with Devanagari & Gujarati virtual keyboards and Dhatu roots.',
       href: '/languages',
-      actionLabel: 'Launch Multilingual Studio',
-      features: [
-        '6 Supported Tongues: Sanskrit, Hindi, Gujarati, Tamil, Pali, English',
-        'On-screen Devanagari & Gujarati keyboards with automatic Matra combining',
-        'Word-by-word grammatical breakdown & Paninian Dhatu root inspector',
-      ],
+      actionLabel: 'Launch Studio',
     },
   ];
 
@@ -178,11 +142,11 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="temple-container" style={{ padding: '2.5rem 1.5rem 6rem', maxWidth: '1360px' }}>
+    <div className="temple-container" style={{ padding: '1.5rem 1rem 3.5rem', maxWidth: '1360px' }}>
       {/* =========================================================================
           1. HERO SECTION
           ========================================================================= */}
-      <section style={{ textAlign: 'center', marginBottom: '4.5rem', paddingTop: '1.5rem' }}>
+      <section style={{ textAlign: 'center', marginBottom: '2.5rem', paddingTop: '0.5rem' }}>
         {/* Sacred Badges Bar */}
         <div
           style={{
@@ -190,7 +154,7 @@ export default function HomePage() {
             justifyContent: 'center',
             alignItems: 'center',
             gap: '0.65rem',
-            marginBottom: '1.5rem',
+            marginBottom: '1.25rem',
             flexWrap: 'wrap',
           }}
         >
@@ -277,7 +241,7 @@ export default function HomePage() {
         <p
           style={{
             maxWidth: '720px',
-            margin: '0 auto 3.5rem',
+            margin: '0 auto 2rem',
             color: 'var(--text-vellum)',
             fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
             lineHeight: 1.6,
@@ -294,9 +258,9 @@ export default function HomePage() {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '1.75rem',
+            gap: '1.25rem',
             maxWidth: '1180px',
-            margin: '0 auto 4.5rem',
+            margin: '0 auto 2.5rem',
             textAlign: 'left',
           }}
         >
@@ -714,37 +678,37 @@ export default function HomePage() {
           ========================================================================= */}
       <section
         style={{
-          marginBottom: '5.5rem',
+          marginBottom: '2.5rem',
         }}
       >
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-            gap: '1.25rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: '0.75rem',
             textAlign: 'center',
           }}
         >
           <div
             className="temple-card temple-card-interactive"
             style={{
-              padding: '1.5rem 1rem',
+              padding: '0.85rem 0.65rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <div style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--gold-radiance)', lineHeight: 1.1 }}>
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--gold-radiance)', lineHeight: 1.15 }}>
               7 Pillars
             </div>
             <div
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-dust)',
-                marginTop: '0.4rem',
+                marginTop: '0.3rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.05em',
                 fontWeight: 600,
               }}
             >
@@ -755,50 +719,50 @@ export default function HomePage() {
           <div
             className="temple-card temple-card-interactive"
             style={{
-              padding: '1.5rem 1rem',
+              padding: '0.85rem 0.65rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <div style={{ fontSize: '2.1rem', fontWeight: 800, color: '#eab308', lineHeight: 1.1 }}>
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#eab308', lineHeight: 1.15 }}>
               5 Seeker Tiers
             </div>
             <div
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-dust)',
-                marginTop: '0.4rem',
+                marginTop: '0.3rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.05em',
                 fontWeight: 600,
               }}
             >
-              Jijñāsu ➔ Ācārya Levels
+              Jijñāsu ➔ Ācārya
             </div>
           </div>
 
           <div
             className="temple-card temple-card-interactive"
             style={{
-              padding: '1.5rem 1rem',
+              padding: '0.85rem 0.65rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <div style={{ fontSize: '2.1rem', fontWeight: 800, color: '#38bdf8', lineHeight: 1.1 }}>
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#38bdf8', lineHeight: 1.15 }}>
               6 Languages
             </div>
             <div
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-dust)',
-                marginTop: '0.4rem',
+                marginTop: '0.3rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.05em',
                 fontWeight: 600,
               }}
             >
@@ -809,23 +773,23 @@ export default function HomePage() {
           <div
             className="temple-card temple-card-interactive"
             style={{
-              padding: '1.5rem 1rem',
+              padding: '0.85rem 0.65rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <div style={{ fontSize: '2.1rem', fontWeight: 800, color: '#5eead4', lineHeight: 1.1 }}>
-              14+ Sacred Plants
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#5eead4', lineHeight: 1.15 }}>
+              14+ Plants
             </div>
             <div
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-dust)',
-                marginTop: '0.4rem',
+                marginTop: '0.3rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.05em',
                 fontWeight: 600,
               }}
             >
@@ -836,54 +800,54 @@ export default function HomePage() {
           <div
             className="temple-card temple-card-interactive"
             style={{
-              padding: '1.5rem 1rem',
+              padding: '0.85rem 0.65rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <div style={{ fontSize: '2.1rem', fontWeight: 800, color: '#c4b5fd', lineHeight: 1.1 }}>
-              32 Nodes · 56 Edges
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#c4b5fd', lineHeight: 1.15 }}>
+              32 Nodes
             </div>
             <div
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-dust)',
-                marginTop: '0.4rem',
+                marginTop: '0.3rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.05em',
                 fontWeight: 600,
               }}
             >
-              Ontology Knowledge Graph
+              Knowledge Graph
             </div>
           </div>
 
           <div
             className="temple-card temple-card-interactive"
             style={{
-              padding: '1.5rem 1rem',
+              padding: '0.85rem 0.65rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <div style={{ fontSize: '2.1rem', fontWeight: 800, color: '#a78bfa', lineHeight: 1.1 }}>
-              Dual JWT + RBAC
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#a78bfa', lineHeight: 1.15 }}>
+              5 Personas
             </div>
             <div
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-dust)',
-                marginTop: '0.4rem',
+                marginTop: '0.3rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.05em',
                 fontWeight: 600,
               }}
             >
-              HttpOnly Cookie Security
+              Vedic Wisdom Sages
             </div>
           </div>
         </div>
@@ -892,25 +856,25 @@ export default function HomePage() {
       {/* =========================================================================
           3. THE 7 SACRED PILLARS SECTION (With Filter Tabs)
           ========================================================================= */}
-      <section style={{ marginBottom: '6rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+      <section style={{ marginBottom: '3rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <span
             style={{
-              fontSize: '0.85rem',
+              fontSize: '0.78rem',
               textTransform: 'uppercase',
-              letterSpacing: '0.15em',
+              letterSpacing: '0.12em',
               color: 'var(--gold-sacred)',
               fontWeight: 700,
             }}
           >
-            सप्त स्तम्भाः • Core Shastric Capabilities
+            सप्त स्तम्भाः • Core Capabilities
           </span>
           <h2
             style={{
               fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(2rem, 4vw, 2.75rem)',
-              marginTop: '0.5rem',
-              marginBottom: '0.75rem',
+              fontSize: 'clamp(1.5rem, 3vw, 2.1rem)',
+              marginTop: '0.35rem',
+              marginBottom: '0.45rem',
             }}
             className="gold-gradient-text"
           >
@@ -919,17 +883,17 @@ export default function HomePage() {
           <p
             style={{
               color: 'var(--text-dust)',
-              maxWidth: '680px',
-              margin: '0 auto 2rem',
-              fontSize: '1.05rem',
+              maxWidth: '640px',
+              margin: '0 auto 1.25rem',
+              fontSize: '0.9rem',
+              lineHeight: 1.5,
             }}
           >
-            A modular, unified system combining scriptural authenticity with state-of-the-art
-            computational intelligence.
+            A modular, unified system combining scriptural authenticity with computational intelligence.
           </p>
 
           {/* Card Navigation Segmented Tabs */}
-          <div className="card-nav-tabs" role="tablist" aria-label="Pillar Categories">
+          <div className="card-nav-tabs" role="tablist" aria-label="Pillar Categories" style={{ justifyContent: 'center' }}>
             {(
               [
                 { id: 'all', label: 'All 7 Pillars', count: 7 },
@@ -946,9 +910,10 @@ export default function HomePage() {
                   className={`card-nav-tab ${isActive ? 'active' : ''}`}
                   role="tab"
                   aria-selected={isActive}
+                  style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
                 >
                   <span>{tab.label}</span>
-                  <span className="card-nav-badge">{tab.count}</span>
+                  <span className="card-nav-badge" style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem' }}>{tab.count}</span>
                 </button>
               );
             })}
@@ -958,21 +923,21 @@ export default function HomePage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-            gap: '2rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1rem',
           }}
         >
           {filteredPillars.map((pillar) => (
             <div
               key={pillar.title}
-              className="temple-card"
+              className="temple-card temple-card-interactive"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                borderTop: `3px solid ${pillar.badgeColor}`,
-                padding: '2.25rem 2rem',
-                boxShadow: `0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 20px ${pillar.badgeColor}15`,
+                borderTop: `2px solid ${pillar.badgeColor}`,
+                padding: '1.15rem 1.25rem',
+                boxShadow: `0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 16px ${pillar.badgeColor}12`,
               }}
             >
               <div>
@@ -981,7 +946,7 @@ export default function HomePage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '1.25rem',
+                    marginBottom: '0.65rem',
                   }}
                 >
                   <div
@@ -989,7 +954,13 @@ export default function HomePage() {
                     style={{
                       background: `${pillar.badgeColor}18`,
                       borderColor: `${pillar.badgeColor}45`,
-                      fontSize: '1.85rem',
+                      fontSize: '1.25rem',
+                      width: '38px',
+                      height: '38px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '10px',
                     }}
                   >
                     {pillar.icon}
@@ -1000,8 +971,9 @@ export default function HomePage() {
                       borderColor: `${pillar.badgeColor}55`,
                       color: pillar.badgeColor,
                       background: `${pillar.badgeColor}12`,
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      padding: '0.2rem 0.55rem',
                     }}
                   >
                     {pillar.badge}
@@ -1010,11 +982,11 @@ export default function HomePage() {
 
                 <div
                   style={{
-                    fontSize: '0.8rem',
-                    letterSpacing: '0.08em',
+                    fontSize: '0.74rem',
+                    letterSpacing: '0.06em',
                     color: 'var(--text-dust)',
                     textTransform: 'uppercase',
-                    marginBottom: '0.4rem',
+                    marginBottom: '0.25rem',
                     fontWeight: 600,
                   }}
                 >
@@ -1024,9 +996,9 @@ export default function HomePage() {
                 <h3
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: '1.45rem',
+                    fontSize: '1.15rem',
                     color: 'var(--text-vellum)',
-                    marginBottom: '0.85rem',
+                    marginBottom: '0.45rem',
                     lineHeight: 1.3,
                   }}
                 >
@@ -1036,123 +1008,13 @@ export default function HomePage() {
                 <p
                   style={{
                     color: 'var(--text-dust)',
-                    fontSize: '0.95rem',
-                    lineHeight: 1.6,
-                    marginBottom: '1.5rem',
+                    fontSize: '0.86rem',
+                    lineHeight: 1.5,
+                    margin: '0 0 1rem',
                   }}
                 >
                   {pillar.desc}
                 </p>
-
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '0 0 1.75rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.55rem',
-                  }}
-                >
-                  {pillar.features.map((feat, idx) => (
-                    <li
-                      key={idx}
-                      style={{
-                        fontSize: '0.86rem',
-                        color: 'var(--text-vellum)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: pillar.badgeColor,
-                          fontWeight: 700,
-                          fontSize: '1rem',
-                        }}
-                      >
-                        ✓
-                      </span>
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {pillar.id === 'ayurveda' && (
-                  <div
-                    style={{
-                      marginBottom: '1.25rem',
-                      padding: '0.85rem 1rem',
-                      borderRadius: '8px',
-                      background: 'rgba(58, 155, 140, 0.1)',
-                      border: '1px solid rgba(58, 155, 140, 0.28)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '0.5rem',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.08em',
-                          color: '#4fd1c5',
-                          fontWeight: 700,
-                        }}
-                      >
-                        🌿 Plant Materia Medica Highlights
-                      </span>
-                      <span style={{ fontSize: '0.7rem', color: '#4fd1c5', fontWeight: 600 }}>
-                        Direct Botanical Guide
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
-                      <span
-                        style={{
-                          fontSize: '0.76rem',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '4px',
-                          background: 'rgba(13, 11, 8, 0.65)',
-                          border: '1px solid rgba(79, 209, 197, 0.3)',
-                          color: 'var(--text-vellum)',
-                        }}
-                      >
-                        🌿 Ashwagandha: Night w/ Warm Milk (Stress &amp; Ojas)
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '0.76rem',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '4px',
-                          background: 'rgba(13, 11, 8, 0.65)',
-                          border: '1px solid rgba(79, 209, 197, 0.3)',
-                          color: 'var(--text-vellum)',
-                        }}
-                      >
-                        🍃 Tulsi: Morning Herbal Tea (Lungs &amp; Prana)
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '0.76rem',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '4px',
-                          background: 'rgba(13, 11, 8, 0.65)',
-                          border: '1px solid rgba(79, 209, 197, 0.3)',
-                          color: 'var(--text-vellum)',
-                        }}
-                      >
-                        🧠 Brahmi: Empty Stomach w/ Ghee (Memory &amp; Focus)
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div>
@@ -1162,11 +1024,13 @@ export default function HomePage() {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
+                    gap: '0.4rem',
                     width: '100%',
                     justifyContent: 'center',
-                    padding: '0.75rem 1.4rem',
-                    borderColor: `${pillar.badgeColor}65`,
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.84rem',
+                    borderRadius: '8px',
+                    borderColor: `${pillar.badgeColor}55`,
                     color: pillar.badgeColor,
                     background: `${pillar.badgeColor}08`,
                   }}
@@ -1183,13 +1047,13 @@ export default function HomePage() {
       {/* =========================================================================
           4. CANONICAL SAGES & PHILOSOPHERS
           ========================================================================= */}
-      <section style={{ marginBottom: '6rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+      <section style={{ marginBottom: '3rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <span
             style={{
-              fontSize: '0.85rem',
+              fontSize: '0.78rem',
               textTransform: 'uppercase',
-              letterSpacing: '0.15em',
+              letterSpacing: '0.12em',
               color: 'var(--gold-sacred)',
               fontWeight: 700,
             }}
@@ -1199,9 +1063,9 @@ export default function HomePage() {
           <h2
             style={{
               fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(2rem, 4vw, 2.75rem)',
-              marginTop: '0.5rem',
-              marginBottom: '0.75rem',
+              fontSize: 'clamp(1.5rem, 3vw, 2.1rem)',
+              marginTop: '0.35rem',
+              marginBottom: '0.45rem',
             }}
             className="gold-gradient-text"
           >
@@ -1210,9 +1074,10 @@ export default function HomePage() {
           <p
             style={{
               color: 'var(--text-dust)',
-              maxWidth: '680px',
+              maxWidth: '640px',
               margin: '0 auto',
-              fontSize: '1.05rem',
+              fontSize: '0.9rem',
+              lineHeight: 1.5,
             }}
           >
             Each persona embodies a distinct traditional Darshana, grounded strictly in foundational
@@ -1319,7 +1184,7 @@ export default function HomePage() {
         style={{
           background: 'linear-gradient(180deg, #18140D 0%, #100E0A 100%)',
           border: '1px solid rgba(212, 175, 55, 0.35)',
-          padding: '3rem 2rem',
+          padding: '2rem 1.5rem',
           borderRadius: '12px',
           textAlign: 'center',
         }}
@@ -1329,7 +1194,7 @@ export default function HomePage() {
           style={{
             borderColor: 'var(--gold-sacred)',
             color: 'var(--gold-radiance)',
-            marginBottom: '1rem',
+            marginBottom: '0.65rem',
           }}
         >
           Zero Hallucination Architecture
@@ -1337,8 +1202,8 @@ export default function HomePage() {
         <h2
           style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: '2.2rem',
-            marginBottom: '1rem',
+            fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+            marginBottom: '0.65rem',
           }}
           className="gold-gradient-text"
         >
@@ -1346,11 +1211,11 @@ export default function HomePage() {
         </h2>
         <p
           style={{
-            maxWidth: '750px',
-            margin: '0 auto 2.5rem',
+            maxWidth: '720px',
+            margin: '0 auto 1.5rem',
             color: 'var(--text-dust)',
-            fontSize: '1.05rem',
-            lineHeight: 1.65,
+            fontSize: '0.92rem',
+            lineHeight: 1.6,
           }}
         >
           Unlike generic large language models that invent synthetic advice, AI Gurukul 2.0 enforces
