@@ -319,6 +319,12 @@ export default function LanguagesPage() {
   const keyboardInputRef = useRef<HTMLTextAreaElement>(null);
   const translatorInputRef = useRef<HTMLTextAreaElement>(null);
 
+  // In-place Keyboard translation state
+  const [keyboardTargetLang, setKeyboardTargetLang] = useState<SupportedLanguage>('en');
+  const [keyboardTransResult, setKeyboardTransResult] = useState<TranslationResultDTO | null>(null);
+  const [keyboardTransLoading, setKeyboardTransLoading] = useState<boolean>(false);
+  const [keyboardTransError, setKeyboardTransError] = useState<string>('');
+
   // Manuscript Workbench state
   const [selectedManuscriptSlug, setSelectedManuscriptSlug] = useState<string>('gita-2-47');
   const [translationTargetLang, setTranslationTargetLang] = useState<'en' | 'hi' | 'gu'>('en');
@@ -574,6 +580,33 @@ export default function LanguagesPage() {
 
   function handleClear() {
     setTypedText('');
+    setKeyboardTransResult(null);
+    setKeyboardTransError('');
+  }
+
+  async function handleKeyboardTranslate() {
+    if (!typedText.trim()) return;
+    setKeyboardTransLoading(true);
+    setKeyboardTransError('');
+    try {
+      const res = await apiClient<TranslationResultDTO>('/languages/translate', {
+        method: 'POST',
+        body: JSON.stringify({
+          sourceLanguage: keyboardScript,
+          targetLanguage: keyboardTargetLang,
+          text: typedText.trim(),
+        }),
+      });
+      if (res.success && res.data) {
+        setKeyboardTransResult(res.data);
+      } else {
+        setKeyboardTransError(res.error?.message || 'Translation failed');
+      }
+    } catch {
+      setKeyboardTransError('Network error during translation');
+    } finally {
+      setKeyboardTransLoading(false);
+    }
   }
 
   function handleCopy() {
@@ -727,62 +760,6 @@ export default function LanguagesPage() {
           <p style={{ color: '#9A9078', maxWidth: '780px', margin: '0 auto', fontSize: '1.05rem', lineHeight: 1.6 }}>
             Access authentic sacred literature across Sanskrit, Hindi, Gujarati, Tamil, and Pali. Type with high-precision virtual keyboards, explore word-by-word anatomical verse breakdowns, and trace primordial Dhatu roots.
           </p>
-        </div>
-
-        {/* Language Selection Row */}
-        <div
-          className="temple-card"
-          style={{
-            background: 'rgba(25, 22, 15, 0.95)',
-            border: '1px solid rgba(212, 175, 55, 0.3)',
-            borderRadius: '12px',
-            padding: '1.25rem 1.5rem',
-            marginBottom: '2rem',
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '1rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>🌐</span>
-            <span style={{ fontFamily: 'var(--font-serif)', color: '#F2D675', fontWeight: 600 }}>Supported Traditions:</span>
-          </div>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
-            {(Object.keys(SUPPORTED_LANGUAGES_REGISTRY) as SupportedLanguage[]).map((code) => {
-              const info = SUPPORTED_LANGUAGES_REGISTRY[code];
-              const isSelected = activeLang === code;
-              return (
-                <button
-                  key={code}
-                  onClick={() => {
-                    setActiveLang(code);
-                    if (code === 'gu') setKeyboardScript('gu');
-                    else setKeyboardScript('sa');
-                  }}
-                  style={{
-                    background: isSelected ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255,255,255,0.04)',
-                    border: isSelected ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.1)',
-                    color: isSelected ? '#F2D675' : '#EDE8D5',
-                    padding: '0.4rem 0.9rem',
-                    borderRadius: '20px',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                  }}
-                >
-                  <span>{info.flag}</span>
-                  <span>{info.name}</span>
-                  <span style={{ opacity: 0.7, fontSize: '0.8rem' }}>({info.nativeName})</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* Tab Controls: Single-word small heading names */}
@@ -941,29 +918,145 @@ export default function LanguagesPage() {
                 }}
               />
 
-              <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                <button
-                  onClick={() => {
-                    setTransInputText(typedText);
-                    setTransSourceLang(keyboardScript);
-                    setTransTargetLang('en');
-                    setActiveTab('translator');
-                  }}
-                  disabled={!typedText}
+              {/* In-Place Keyboard Translation Controls */}
+              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.85rem', color: '#9A9078', fontWeight: 600 }}>Translate to:</label>
+                  <select
+                    value={keyboardTargetLang}
+                    onChange={(e) => setKeyboardTargetLang(e.target.value as SupportedLanguage)}
+                    style={{
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid rgba(212,175,55,0.3)',
+                      color: '#F2D675',
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '6px',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="en">English</option>
+                    <option value="hi">Hindi (हिन्दी)</option>
+                    <option value="gu">Gujarati (ગુજરાતી)</option>
+                    <option value="sa">Sanskrit (संस्कृतम्)</option>
+                    <option value="ta">Tamil (தமிழ்)</option>
+                    <option value="pli">Pali (पाळિ)</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={handleClear}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      background: 'transparent',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#9A9078',
+                      borderRadius: '6px',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={handleKeyboardTranslate}
+                    disabled={keyboardTransLoading || !typedText.trim()}
+                    style={{
+                      padding: '0.45rem 1.25rem',
+                      background:
+                        keyboardTransLoading || !typedText.trim()
+                          ? 'rgba(212, 175, 55, 0.3)'
+                          : 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
+                      color: '#0D0B08',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontWeight: 700,
+                      cursor: keyboardTransLoading || !typedText.trim() ? 'not-allowed' : 'pointer',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      boxShadow: '0 2px 10px rgba(212, 175, 55, 0.25)',
+                    }}
+                  >
+                    {keyboardTransLoading ? 'Translating...' : 'Translate Inscribed Text ➔'}
+                  </button>
+                </div>
+              </div>
+
+              {/* In-Place Keyboard Translation Error */}
+              {keyboardTransError && (
+                <div
                   style={{
-                    padding: '0.45rem 1rem',
-                    background: typedText ? 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)' : 'rgba(255,255,255,0.05)',
-                    color: typedText ? '#0D0B08' : '#9A9078',
-                    border: 'none',
+                    marginTop: '1rem',
+                    background: 'rgba(229, 62, 62, 0.15)',
+                    border: '1px solid rgba(229, 62, 62, 0.4)',
+                    color: '#fc8181',
+                    padding: '0.75rem 1rem',
                     borderRadius: '6px',
-                    fontWeight: 700,
-                    cursor: typedText ? 'pointer' : 'not-allowed',
-                    fontSize: '0.85rem',
+                    fontSize: '0.88rem',
                   }}
                 >
-                  Translate This Text ➔
-                </button>
-              </div>
+                  ⚠️ {keyboardTransError}
+                </div>
+              )}
+
+              {/* In-Place Keyboard Translation Result */}
+              {keyboardTransResult && (
+                <div
+                  style={{
+                    marginTop: '1.25rem',
+                    background: 'rgba(212, 175, 55, 0.08)',
+                    border: '1px solid rgba(212, 175, 55, 0.35)',
+                    borderRadius: '8px',
+                    padding: '1.25rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.8rem' }}>
+                      <span style={{ color: '#F2D675', fontWeight: 700 }}>
+                        Translation ({keyboardTargetLang.toUpperCase()}):
+                      </span>
+                      <span style={{ background: 'rgba(255,255,255,0.05)', color: '#9A9078', padding: '1px 6px', borderRadius: '10px' }}>
+                        {keyboardTransResult.method.toUpperCase()}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(keyboardTransResult.translatedText, 'kb-trans')}
+                      style={{
+                        background: copiedKey === 'kb-trans' ? 'rgba(72, 187, 120, 0.2)' : 'rgba(212, 175, 55, 0.15)',
+                        border: `1px solid ${copiedKey === 'kb-trans' ? '#48bb78' : 'rgba(212, 175, 55, 0.3)'}`,
+                        color: copiedKey === 'kb-trans' ? '#68d391' : '#F2D675',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '4px',
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {copiedKey === 'kb-trans' ? '✓ Copied!' : '📋 Copy Translation'}
+                    </button>
+                  </div>
+
+                  <div style={{ fontSize: '1.15rem', color: '#EDE8D5', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                    {keyboardTransResult.translatedText}
+                  </div>
+
+                  {keyboardTransResult.transliteration && (
+                    <div style={{ marginTop: '0.65rem', color: '#c4b5fd', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                      <span style={{ color: '#9A9078', fontStyle: 'normal', fontWeight: 600 }}>IAST: </span>
+                      {keyboardTransResult.transliteration}
+                    </div>
+                  )}
+
+                  {keyboardTransResult.etymologyNotes && (
+                    <div style={{ marginTop: '0.75rem', background: 'rgba(196, 107, 58, 0.1)', borderLeft: '3px solid #C46B3A', padding: '0.6rem 0.85rem', borderRadius: '0 4px 4px 0', color: '#e2d9c8', fontSize: '0.85rem' }}>
+                      💡 {keyboardTransResult.etymologyNotes}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Virtual Keyboard Grid */}
@@ -1102,7 +1195,7 @@ export default function LanguagesPage() {
                     Shastric Translation &amp; Verse Breakdown
                   </h3>
                   <p style={{ color: '#9A9078', fontSize: '0.9rem', margin: '0.25rem 0 0 0' }}>
-                    End-to-end translation for typed/pasted sacred literature and uploaded manuscript imagery.
+                    Paste sacred shlokas, custom verses, or select canonical manuscripts for deep translation and grammatical breakdown.
                   </p>
                 </div>
 
