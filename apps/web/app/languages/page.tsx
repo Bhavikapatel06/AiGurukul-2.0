@@ -497,9 +497,12 @@ export default function LanguagesPage() {
     ],
   ];
 
-  // Matra combination handler supporting cursor position & selection
+  // Matra combination handler supporting cursor position & selection WITHOUT layout/scroll jumping
   function handleKeyPress(char: string) {
     const textarea = keyboardInputRef.current;
+    const currentScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    const currentScrollX = typeof window !== 'undefined' ? window.scrollX : 0;
+
     if (textarea) {
       const start = textarea.selectionStart ?? typedText.length;
       const end = textarea.selectionEnd ?? typedText.length;
@@ -516,8 +519,13 @@ export default function LanguagesPage() {
           setTypedText(newText);
           const newPos = updatedBefore.length + char.length;
           setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(newPos, newPos);
+            try {
+              textarea.focus({ preventScroll: true });
+              textarea.setSelectionRange(newPos, newPos);
+            } catch {}
+            if (typeof window !== 'undefined' && window.scrollY !== currentScrollY) {
+              window.scrollTo(currentScrollX, currentScrollY);
+            }
           }, 0);
           return;
         }
@@ -527,8 +535,13 @@ export default function LanguagesPage() {
       setTypedText(newText);
       const newPos = start + char.length;
       setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(newPos, newPos);
+        try {
+          textarea.focus({ preventScroll: true });
+          textarea.setSelectionRange(newPos, newPos);
+        } catch {}
+        if (typeof window !== 'undefined' && window.scrollY !== currentScrollY) {
+          window.scrollTo(currentScrollX, currentScrollY);
+        }
       }, 0);
     } else {
       setTypedText((prev) => {
@@ -547,6 +560,9 @@ export default function LanguagesPage() {
 
   function handleBackspace() {
     const textarea = keyboardInputRef.current;
+    const currentScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    const currentScrollX = typeof window !== 'undefined' ? window.scrollX : 0;
+
     if (textarea) {
       const start = textarea.selectionStart ?? typedText.length;
       const end = textarea.selectionEnd ?? typedText.length;
@@ -554,8 +570,13 @@ export default function LanguagesPage() {
         const newText = typedText.slice(0, start) + typedText.slice(end);
         setTypedText(newText);
         setTimeout(() => {
-          textarea.focus();
-          textarea.setSelectionRange(start, start);
+          try {
+            textarea.focus({ preventScroll: true });
+            textarea.setSelectionRange(start, start);
+          } catch {}
+          if (typeof window !== 'undefined' && window.scrollY !== currentScrollY) {
+            window.scrollTo(currentScrollX, currentScrollY);
+          }
         }, 0);
         return;
       }
@@ -564,8 +585,13 @@ export default function LanguagesPage() {
         setTypedText(newText);
         const newPos = start - 1;
         setTimeout(() => {
-          textarea.focus();
-          textarea.setSelectionRange(newPos, newPos);
+          try {
+            textarea.focus({ preventScroll: true });
+            textarea.setSelectionRange(newPos, newPos);
+          } catch {}
+          if (typeof window !== 'undefined' && window.scrollY !== currentScrollY) {
+            window.scrollTo(currentScrollX, currentScrollY);
+          }
         }, 0);
         return;
       }
@@ -890,7 +916,8 @@ export default function LanguagesPage() {
                 rows={3}
                 style={{
                   width: '100%',
-                  minHeight: '88px',
+                  height: '100px',
+                  minHeight: '100px',
                   fontSize: '1.45rem',
                   lineHeight: 1.6,
                   color: '#F2D675',
@@ -902,7 +929,7 @@ export default function LanguagesPage() {
                   wordBreak: 'break-word',
                   fontFamily: keyboardScript === 'gu' ? 'sans-serif' : 'var(--font-serif)',
                   outline: 'none',
-                  resize: 'vertical',
+                  resize: 'none',
                   cursor: 'text',
                   userSelect: 'text',
                   WebkitUserSelect: 'text',
@@ -1086,6 +1113,8 @@ export default function LanguagesPage() {
                     return (
                       <button
                         key={colIdx}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleKeyPress(displayChar)}
                         style={{
                           minWidth: '42px',
@@ -1100,6 +1129,9 @@ export default function LanguagesPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          touchAction: 'manipulation',
                           transition: 'background 0.1s, transform 0.1s',
                         }}
                       >
@@ -1113,6 +1145,8 @@ export default function LanguagesPage() {
               {/* Bottom Control Bar */}
               <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginTop: '0.75rem' }}>
                 <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setIsShifted((s) => !s)}
                   style={{
                     flex: 1,
@@ -1124,12 +1158,17 @@ export default function LanguagesPage() {
                     borderRadius: '6px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    touchAction: 'manipulation',
                   }}
                 >
                   ⇧ Shift
                 </button>
 
                 <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={handleSpace}
                   style={{
                     flex: 3,
@@ -1141,12 +1180,17 @@ export default function LanguagesPage() {
                     borderRadius: '6px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    touchAction: 'manipulation',
                   }}
                 >
                   ␣ Space
                 </button>
 
                 <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={handleBackspace}
                   style={{
                     flex: 1,
@@ -1158,6 +1202,9 @@ export default function LanguagesPage() {
                     borderRadius: '6px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    touchAction: 'manipulation',
                   }}
                 >
                   ⌫ Backspace
