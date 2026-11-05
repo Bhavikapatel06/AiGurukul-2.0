@@ -62,7 +62,7 @@ interface QuizAttemptResult {
 
 const DOMAIN_LABELS: Record<string, { label: string; icon: string; color: string }> = {
   all: { label: 'All Traditions', icon: '🪷', color: '#D4AF37' },
-  custom: { label: 'Your Quizzes', icon: '✨', color: '#ec4899' },
+  custom: { label: 'My Quizzes', icon: '✨', color: '#ec4899' },
   gita: { label: 'Bhagavad Gita', icon: '🏹', color: '#7B68EE' },
   chanakya: { label: 'Chanakya Neeti', icon: '🏛️', color: '#C46B3A' },
   upanishads: { label: 'Upanishads', icon: '✨', color: '#4fd1c5' },
@@ -285,7 +285,7 @@ export default function QuizzesPage() {
   };
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 4rem)', padding: activeQuiz && !attemptResult ? '0.65rem 1rem 2rem' : '2.5rem 1rem 5rem' }}>
+    <div style={{ minHeight: 'calc(100vh - 4rem)', padding: activeQuiz && !attemptResult ? '0.65rem 1rem 2rem' : '1.25rem 1rem 3rem' }}>
       <div className="temple-container">
         {/* Compact Navigation when in Active Quiz Mode */}
         {activeQuiz && !attemptResult && (
@@ -328,41 +328,45 @@ export default function QuizzesPage() {
         {/* Navigation Breadcrumb & Banner - Only when NOT in active quiz mode */}
         {!activeQuiz && !attemptResult && (
           <>
-            {/* Navigation Breadcrumb */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                marginBottom: '2rem',
-                fontSize: '0.9rem',
-              }}
-            >
-              <Link href="/" style={{ color: 'var(--text-dust)', textDecoration: 'none' }}>
-                ← Sanctum
+            {/* Small Single-Word Back Button */}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <Link
+                href="/"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: 'var(--text-dust)',
+                  textDecoration: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: 500,
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(212, 175, 55, 0.18)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                ← Back
               </Link>
-              <span style={{ color: 'rgba(212, 175, 55, 0.3)' }}>/</span>
-              <span style={{ color: '#f6ad55', fontWeight: 600 }}>
-                Vedic Quizzes &amp; Dynamic Assessments
-              </span>
             </div>
 
-            {/* Banner Section */}
-            <section style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            {/* Banner Section - Tightly aligned without unnecessary space */}
+            <section style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '0.75rem',
+                  gap: '0.4rem',
+                  marginBottom: '0.35rem',
                 }}
               >
-                <span style={{ fontSize: '1.25rem' }}>🎯</span>
+                <span style={{ fontSize: '1rem' }}>🎯</span>
                 <span
                   style={{
-                    fontSize: '0.85rem',
+                    fontSize: '0.78rem',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.15em',
+                    letterSpacing: '0.12em',
                     color: 'var(--gold-sacred)',
                     fontWeight: 600,
                   }}
@@ -373,21 +377,22 @@ export default function QuizzesPage() {
               <h1
                 style={{
                   fontFamily: 'var(--font-serif)',
-                  fontSize: '2.5rem',
+                  fontSize: 'clamp(1.6rem, 3.2vw, 2.15rem)',
                   fontWeight: 700,
-                  marginBottom: '1rem',
-                  lineHeight: 1.2,
+                  marginBottom: '0.45rem',
+                  lineHeight: 1.25,
                 }}
                 className="gold-gradient-text"
               >
-                Vedic Quizzes & Dynamic Assessments
+                Vedic Quizzes &amp; Dynamic Assessments
               </h1>
               <p
                 style={{
                   color: 'var(--text-dust)',
-                  maxWidth: '700px',
+                  maxWidth: '680px',
                   margin: '0 auto',
-                  fontSize: '1.05rem',
+                  fontSize: '0.92rem',
+                  lineHeight: 1.5,
                 }}
               >
                 Deepen your experiential understanding of ancient wisdom. Challenge yourself with
@@ -395,46 +400,58 @@ export default function QuizzesPage() {
                 spiritual or pragmatic topic.
               </p>
 
-              {/* Quick Action Buttons */}
-              <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              {/* Quick Action Buttons (Compact 1-2 words) */}
+              <div
+                style={{
+                  marginTop: '1.1rem',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap',
+                }}
+              >
                 <button
                   onClick={() => setShowGenerateModal(true)}
                   style={{
                     background: 'linear-gradient(135deg, #D4AF37 0%, #8B6914 100%)',
                     color: '#0D0B08',
                     border: 'none',
-                    padding: '0.85rem 2rem',
-                    borderRadius: '30px',
+                    padding: '0.6rem 1.35rem',
+                    borderRadius: '24px',
                     fontWeight: 700,
-                    fontSize: '1rem',
+                    fontSize: '0.88rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 20px rgba(212, 175, 55, 0.35)',
+                    boxShadow: '0 4px 16px rgba(212, 175, 55, 0.3)',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
+                    gap: '0.45rem',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <span>✨</span> Create Quiz from Topic (Max 15 Qs)
+                  <span>✨</span> Create Quiz
                 </button>
                 <button
                   onClick={() => setSelectedDomain('custom')}
                   style={{
-                    background: selectedDomain === 'custom' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(20, 17, 11, 0.85)',
+                    background:
+                      selectedDomain === 'custom' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(20, 17, 11, 0.85)',
                     color: selectedDomain === 'custom' ? '#f472b6' : 'var(--text-vellum)',
-                    border: selectedDomain === 'custom' ? '1px solid rgba(236, 72, 153, 0.6)' : '1px solid rgba(212, 175, 55, 0.25)',
-                    padding: '0.85rem 1.6rem',
-                    borderRadius: '30px',
+                    border:
+                      selectedDomain === 'custom'
+                        ? '1px solid rgba(236, 72, 153, 0.6)'
+                        : '1px solid rgba(212, 175, 55, 0.25)',
+                    padding: '0.6rem 1.3rem',
+                    borderRadius: '24px',
                     fontWeight: 600,
-                    fontSize: '0.95rem',
+                    fontSize: '0.88rem',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
+                    gap: '0.45rem',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <span>🪪</span> View Your Quizzes
+                  <span>🪪</span> My Quizzes
                 </button>
               </div>
             </section>
@@ -1571,7 +1588,7 @@ export default function QuizzesPage() {
                       Create Quiz from Topic
                     </h3>
                     <span style={{ fontSize: '0.72rem', color: '#f472b6', fontWeight: 600 }}>
-                      Saves to &quot;Your Quizzes&quot; • Up to 15 Questions
+                      Saves to &quot;My Quizzes&quot; • Up to 15 Questions
                     </span>
                   </div>
                 </div>
