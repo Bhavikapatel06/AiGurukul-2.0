@@ -28,8 +28,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cinzel.variable} ${plusJakartaSans.variable}`}>
-      <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <html lang="en" className={`${cinzel.variable} ${plusJakartaSans.variable}`} suppressHydrationWarning>
+      <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }} suppressHydrationWarning>
         <GlobalNavbar />
         <main style={{ flex: 1 }}>{children}</main>
         <GlobalFooter />

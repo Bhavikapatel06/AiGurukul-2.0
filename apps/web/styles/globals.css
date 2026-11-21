@@ -17,6 +17,12 @@
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -263,6 +269,7 @@ a:hover {
 .badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   padding: 0.3rem 0.75rem;
   font-size: 0.75rem;
@@ -274,6 +281,11 @@ a:hover {
   color: var(--gold-radiance);
   background: rgba(212, 175, 55, 0.08);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  box-sizing: border-box;
+  word-break: break-word;
 }
 
 textarea, input[type="text"], input[type="search"], input[type="email"], input[type="password"] {
@@ -526,5 +538,163 @@ textarea, input[type="text"], input[type="search"], input[type="email"], input[t
 
   h2 {
     font-size: 1.35rem !important;
+  }
+}
+
+/* Responsive segmented filter tabs on mobile */
+@media (max-width: 680px) {
+  .card-nav-tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    border-radius: 14px !important;
+    padding: 0.35rem !important;
+    gap: 0.35rem !important;
+    max-width: 100% !important;
+  }
+
+  .card-nav-tab {
+    padding: 0.38rem 0.72rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 9999px !important;
+  }
+}
+
+/* Home CTA buttons mobile full-width stack */
+@media (max-width: 640px) {
+  .home-cta-buttons {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+
+  .home-cta-buttons a {
+    width: 100% !important;
+    padding: 0.75rem 1rem !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    font-size: 0.92rem !important;
+  }
+}
+
+/* Navbar mobile adjustments */
+@media (max-width: 560px) {
+  .navbar-auth-desktop {
+    display: none !important;
+  }
+  .mobile-menu-label {
+    display: none !important;
+  }
+  .mobile-menu-toggle {
+    padding: 0.35rem 0.6rem !important;
+    min-height: 32px !important;
+  }
+}
+
+/* Extra small mobile screens (320px - 375px) */
+@media (max-width: 375px) {
+  .temple-container {
+    padding-left: 0.6rem !important;
+    padding-right: 0.6rem !important;
+  }
+
+  .temple-card {
+    padding: 0.95rem !important;
+  }
+
+  footer {
+    padding: 2.25rem 0.75rem 1.5rem !important;
+  }
+}
+
+/* Hero Badges Bar Mobile: Keep in 1 or 2 lines by decreasing font size and padding */
+@media (max-width: 768px) {
+  .hero-badges-container {
+    gap: 0.35rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .hero-badge {
+    font-size: 0.65rem !important;
+    padding: 0.22rem 0.52rem !important;
+    letter-spacing: 0.03em !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 440px) {
+  .hero-badges-container {
+    gap: 0.28rem !important;
+  }
+
+  .hero-badge {
+    font-size: 0.56rem !important;
+    padding: 0.18rem 0.4rem !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .hero-badges-container {
+    gap: 0.22rem !important;
+  }
+
+  .hero-badge {
+    font-size: 0.5rem !important;
+    padding: 0.15rem 0.32rem !important;
+    letter-spacing: 0.01em !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Responsive Footer Navigation Grid on Tablets & Mobile: 2 Columns Per Row */
+@media (max-width: 860px) {
+  .footer-stats-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem 0.75rem !important;
+  }
+
+  .footer-nav-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 2rem 1.25rem !important;
+    margin-bottom: 2.5rem !important;
+  }
+
+  .footer-col {
+    min-width: 0 !important;
+  }
+
+  .footer-col-brand {
+    grid-column: 1 / -1 !important;
+    max-width: 100% !important;
+  }
+
+  .footer-col h4 {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .footer-col li,
+  .footer-col a,
+  .footer-col button {
+    font-size: 0.82rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-nav-grid {
+    gap: 1.5rem 0.85rem !important;
+  }
+
+  .footer-account-card {
+    padding: 0.75rem 0.5rem !important;
+    gap: 0.55rem !important;
+  }
+
+  .footer-account-card .btn-account-cta {
+    font-size: 0.76rem !important;
+    padding: 0.55rem 0.35rem !important;
   }
 }
