@@ -142,13 +142,14 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="temple-container" style={{ padding: '1.5rem 1rem 3.5rem', maxWidth: '1360px' }}>
+    <div className="temple-container" style={{ padding: '1.5rem 1rem 3.5rem', maxWidth: '1360px', width: '100%', boxSizing: 'border-box' }}>
       {/* =========================================================================
           1. HERO SECTION
           ========================================================================= */}
       <section style={{ textAlign: 'center', marginBottom: '2.5rem', paddingTop: '0.5rem' }}>
         {/* Sacred Badges Bar */}
         <div
+          className="hero-badges-container"
           style={{
             display: 'flex',
             justifyContent: 'center',
@@ -159,7 +160,7 @@ export default function HomePage() {
           }}
         >
           <span
-            className="badge"
+            className="badge hero-badge"
             style={{
               borderColor: 'var(--gold-sacred)',
               color: 'var(--gold-radiance)',
@@ -171,7 +172,7 @@ export default function HomePage() {
             🪷 AI GURUKUL 2.0 • ALL PHASES COMPLETE
           </span>
           <span
-            className="badge"
+            className="badge hero-badge"
             style={{
               borderColor: 'rgba(94, 234, 212, 0.4)',
               color: '#5eead4',
@@ -182,7 +183,7 @@ export default function HomePage() {
             ✓ 204 Unit &amp; Integration Tests
           </span>
           <span
-            className="badge"
+            className="badge hero-badge"
             style={{
               borderColor: 'rgba(56, 189, 248, 0.4)',
               color: '#38bdf8',
@@ -193,7 +194,7 @@ export default function HomePage() {
             🪶 6 Languages &amp; Virtual Keyboards
           </span>
           <span
-            className="badge"
+            className="badge hero-badge"
             style={{
               borderColor: 'rgba(234, 179, 8, 0.4)',
               color: '#eab308',
@@ -209,12 +210,13 @@ export default function HomePage() {
         <h1
           style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 'clamp(2.4rem, 5.5vw, 4.2rem)',
+            fontSize: 'clamp(1.75rem, 5.5vw, 4.2rem)',
             fontWeight: 800,
             marginBottom: '1rem',
             letterSpacing: '0.04em',
             lineHeight: 1.15,
             textTransform: 'uppercase',
+            wordBreak: 'break-word',
           }}
           className="gold-gradient-text"
         >
@@ -257,11 +259,12 @@ export default function HomePage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
             gap: '1.25rem',
             maxWidth: '1180px',
             margin: '0 auto 2.5rem',
             textAlign: 'left',
+            width: '100%',
           }}
         >
           {/* Block 1: Learn Concepts */}
@@ -684,9 +687,10 @@ export default function HomePage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
             gap: '0.75rem',
             textAlign: 'center',
+            width: '100%',
           }}
         >
           <div
@@ -906,6 +910,8 @@ export default function HomePage() {
               return (
                 <button
                   key={tab.id}
+                  type="button"
+                  suppressHydrationWarning
                   onClick={() => setActiveTab(tab.id)}
                   className={`card-nav-tab ${isActive ? 'active' : ''}`}
                   role="tab"
@@ -923,8 +929,9 @@ export default function HomePage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
             gap: '1rem',
+            width: '100%',
           }}
         >
           {filteredPillars.map((pillar) => (
@@ -1088,8 +1095,9 @@ export default function HomePage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
             gap: '1.75rem',
+            width: '100%',
           }}
         >
           {personas.map((p) => (
@@ -1111,6 +1119,8 @@ export default function HomePage() {
                     justifyContent: 'space-between',
                     alignItems: 'baseline',
                     marginBottom: '0.5rem',
+                    flexWrap: 'wrap',
+                    gap: '0.4rem',
                   }}
                 >
                   <span
@@ -1225,6 +1235,7 @@ export default function HomePage() {
         </p>
 
         <div
+          className="home-cta-buttons"
           style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', flexWrap: 'wrap' }}
         >
           <Link

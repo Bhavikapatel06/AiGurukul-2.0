@@ -76,82 +76,102 @@ export function GlobalFooter() {
             </p>
           </div>
 
-          <form
-            onSubmit={handleSubscribe}
-            style={{
-              display: 'flex',
-              gap: '0.5rem',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              width: '100%',
-              maxWidth: '460px',
-            }}
-          >
-            {subscribed ? (
-              <div
-                style={{
-                  background: 'rgba(34, 197, 94, 0.15)',
-                  border: '1px solid rgba(34, 197, 94, 0.4)',
-                  color: '#86EFAC',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '8px',
-                  fontSize: '0.88rem',
-                  fontWeight: 500,
-                  width: '100%',
-                  textAlign: 'center',
-                }}
-              >
-                🙏 Welcome! You are now subscribed to weekly wisdom.
-              </div>
-            ) : (
-              <>
-                <input
-                  type="email"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="Enter your email address..."
-                  required
+          {mounted ? (
+            <form
+              onSubmit={handleSubscribe}
+              suppressHydrationWarning
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '460px',
+              }}
+            >
+              {subscribed ? (
+                <div
                   style={{
-                    flex: '1 1 220px',
-                    padding: '0.75rem 1rem',
-                    background: 'rgba(10, 8, 6, 0.8)',
-                    border: '1px solid rgba(212, 175, 55, 0.35)',
+                    background: 'rgba(34, 197, 94, 0.15)',
+                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                    color: '#86EFAC',
+                    padding: '0.65rem 1.25rem',
                     borderRadius: '8px',
-                    color: '#EDE8D5',
                     fontSize: '0.88rem',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
+                    fontWeight: 500,
+                    width: '100%',
+                    textAlign: 'center',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#F2D675')}
-                  onBlur={(e) => (e.target.style.borderColor = 'rgba(212, 175, 55, 0.35)')}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    background: 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)',
-                    color: '#0D0B08',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1.25rem',
-                    fontSize: '0.88rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 2px 10px rgba(212, 175, 55, 0.25)',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
-                  Subscribe Free
-                </button>
-              </>
-            )}
-          </form>
+                  🙏 Welcome! You are now subscribed to weekly wisdom.
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    suppressHydrationWarning
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="Enter your email address..."
+                    required
+                    style={{
+                      flex: '1 1 220px',
+                      padding: '0.75rem 1rem',
+                      background: 'rgba(10, 8, 6, 0.8)',
+                      border: '1px solid rgba(212, 175, 55, 0.35)',
+                      borderRadius: '8px',
+                      color: '#EDE8D5',
+                      fontSize: '0.88rem',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#F2D675')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(212, 175, 55, 0.35)')}
+                  />
+                  <button
+                    type="submit"
+                    suppressHydrationWarning
+                    style={{
+                      background: 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)',
+                      color: '#0D0B08',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.75rem 1.25rem',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 2px 10px rgba(212, 175, 55, 0.25)',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+                  >
+                    Subscribe Free
+                  </button>
+                </>
+              )}
+            </form>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '460px',
+                minHeight: '44px',
+              }}
+            />
+          )}
         </div>
 
         {/* Quick Platform Numbers Strip */}
         <div
+          className="footer-stats-strip"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -182,6 +202,7 @@ export function GlobalFooter() {
 
         {/* Main 5-Column Navigation Grid */}
         <div
+          className="footer-nav-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
@@ -190,7 +211,7 @@ export function GlobalFooter() {
           }}
         >
           {/* Column 1: Brand & About */}
-          <div style={{ minWidth: '220px' }}>
+          <div className="footer-col footer-col-brand" style={{ minWidth: '220px' }}>
             <div
               style={{
                 display: 'flex',
@@ -410,7 +431,7 @@ export function GlobalFooter() {
           </div>
 
           {/* Column 2: Explore Features */}
-          <div>
+          <div className="footer-col footer-col-features">
             <h4
               style={{
                 fontFamily: 'var(--font-serif, serif)',
@@ -564,7 +585,7 @@ export function GlobalFooter() {
           </div>
 
           {/* Column 3: Sacred Scriptures */}
-          <div>
+          <div className="footer-col footer-col-scriptures">
             <h4
               style={{
                 fontFamily: 'var(--font-serif, serif)',
@@ -682,7 +703,7 @@ export function GlobalFooter() {
           </div>
 
           {/* Column 4: About & Help */}
-          <div>
+          <div className="footer-col footer-col-help">
             <h4
               style={{
                 fontFamily: 'var(--font-serif, serif)',
@@ -708,6 +729,8 @@ export function GlobalFooter() {
             >
               <li>
                 <button
+                  type="button"
+                  suppressHydrationWarning
                   onClick={() => setActiveModal('about')}
                   style={{
                     background: 'none',
@@ -729,6 +752,8 @@ export function GlobalFooter() {
               </li>
               <li>
                 <button
+                  type="button"
+                  suppressHydrationWarning
                   onClick={() => setActiveModal('howItWorks')}
                   style={{
                     background: 'none',
@@ -750,6 +775,8 @@ export function GlobalFooter() {
               </li>
               <li>
                 <button
+                  type="button"
+                  suppressHydrationWarning
                   onClick={() => setActiveModal('faq')}
                   style={{
                     background: 'none',
@@ -788,6 +815,8 @@ export function GlobalFooter() {
               </li>
               <li>
                 <button
+                  type="button"
+                  suppressHydrationWarning
                   onClick={() => setActiveModal('contact')}
                   style={{
                     background: 'none',
@@ -811,7 +840,7 @@ export function GlobalFooter() {
           </div>
 
           {/* Column 5: Account & Community */}
-          <div style={{ minWidth: '220px' }}>
+          <div className="footer-col footer-col-account" style={{ minWidth: '220px' }}>
             <h4
               style={{
                 fontFamily: 'var(--font-serif, serif)',
@@ -828,6 +857,7 @@ export function GlobalFooter() {
 
             {mounted && user ? (
               <div
+                className="footer-account-card"
                 style={{
                   background: 'rgba(212, 175, 55, 0.08)',
                   border: '1px solid rgba(212, 175, 55, 0.3)',
@@ -884,6 +914,8 @@ export function GlobalFooter() {
                     🏆 Continue Playing Sagas
                   </Link>
                   <button
+                    type="button"
+                    suppressHydrationWarning
                     onClick={() => logout()}
                     style={{
                       background: 'rgba(239, 68, 68, 0.1)',
@@ -905,6 +937,7 @@ export function GlobalFooter() {
               </div>
             ) : (
               <div
+                className="footer-account-card"
                 style={{
                   background: 'rgba(212, 175, 55, 0.05)',
                   border: '1px solid rgba(212, 175, 55, 0.2)',
@@ -921,15 +954,18 @@ export function GlobalFooter() {
 
                 <Link
                   href="/register"
+                  className="btn-account-cta"
                   style={{
                     background: 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)',
                     color: '#0D0B08',
-                    padding: '0.65rem 1rem',
+                    padding: '0.65rem 0.6rem',
                     borderRadius: '6px',
-                    fontSize: '0.86rem',
+                    fontSize: '0.84rem',
                     fontWeight: 700,
                     textAlign: 'center',
                     textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
                     boxShadow: '0 2px 8px rgba(212, 175, 55, 0.25)',
                   }}
                 >
@@ -942,12 +978,14 @@ export function GlobalFooter() {
                     background: 'rgba(212, 175, 55, 0.08)',
                     border: '1px solid rgba(212, 175, 55, 0.4)',
                     color: '#F2D675',
-                    padding: '0.6rem 1rem',
+                    padding: '0.6rem 0.6rem',
                     borderRadius: '6px',
-                    fontSize: '0.86rem',
+                    fontSize: '0.84rem',
                     fontWeight: 600,
                     textAlign: 'center',
                     textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
@@ -1011,6 +1049,8 @@ export function GlobalFooter() {
             <span>© {new Date().getFullYear()} AI Gurukul Technologies. All rights reserved.</span>
             <span>•</span>
             <button
+              type="button"
+              suppressHydrationWarning
               onClick={() => setActiveModal('privacy')}
               style={{
                 background: 'none',
@@ -1026,6 +1066,8 @@ export function GlobalFooter() {
             </button>
             <span>•</span>
             <button
+              type="button"
+              suppressHydrationWarning
               onClick={() => setActiveModal('terms')}
               style={{
                 background: 'none',
@@ -1041,6 +1083,8 @@ export function GlobalFooter() {
             </button>
             <span>•</span>
             <button
+              type="button"
+              suppressHydrationWarning
               onClick={() => setActiveModal('contact')}
               style={{
                 background: 'none',
@@ -1203,6 +1247,8 @@ export function GlobalFooter() {
             )}
 
             <button
+              type="button"
+              suppressHydrationWarning
               onClick={closeModal}
               style={{
                 marginTop: '1.5rem',
