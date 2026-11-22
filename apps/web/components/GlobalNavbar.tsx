@@ -49,11 +49,11 @@ export function GlobalNavbar() {
       style={{
         borderBottom: '1px solid rgba(212, 175, 55, 0.22)',
         background: 'rgba(13, 11, 8, 0.94)',
-        backdropFilter: 'blur(20px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+        backdropFilter: mobileMenuOpen ? 'none' : 'blur(20px) saturate(160%)',
+        WebkitBackdropFilter: mobileMenuOpen ? 'none' : 'blur(20px) saturate(160%)',
         position: 'sticky',
         top: 0,
-        zIndex: 100,
+        zIndex: 1000,
         boxShadow: '0 4px 28px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(212, 175, 55, 0.15)',
       }}
     >
@@ -221,7 +221,7 @@ export function GlobalNavbar() {
         {/* Right Side User / Auth Profile Widget (Right-aligned) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.6rem', flexShrink: 0 }}>
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div className="navbar-auth-desktop" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <div
                 style={{
                   display: 'flex',
@@ -278,6 +278,8 @@ export function GlobalNavbar() {
                 </div>
               </div>
               <button
+                type="button"
+                suppressHydrationWarning
                 onClick={logout}
                 className="btn-outline-sacred"
                 style={{
@@ -291,7 +293,7 @@ export function GlobalNavbar() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="navbar-auth-desktop" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Link
                 href="/login"
                 className="btn-outline-sacred"
@@ -321,6 +323,8 @@ export function GlobalNavbar() {
 
           {/* Mobile Menu Toggle Button */}
           <button
+            type="button"
+            suppressHydrationWarning
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={mobileMenuOpen}
@@ -342,7 +346,7 @@ export function GlobalNavbar() {
             className="mobile-menu-toggle"
           >
             <span>{mobileMenuOpen ? '✕' : '☰'}</span>
-            <span style={{ fontSize: '0.78rem' }}>Menu</span>
+            <span className="mobile-menu-label" style={{ fontSize: '0.78rem' }}>Menu</span>
           </button>
         </div>
       </div>
@@ -357,15 +361,23 @@ export function GlobalNavbar() {
             position: 'fixed',
             inset: 0,
             top: '3.6rem',
-            background: 'rgba(10, 8, 6, 0.95)',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: 'calc(100dvh - 3.6rem)',
+            maxHeight: 'calc(100vh - 3.6rem)',
+            background: 'rgba(10, 8, 6, 0.96)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            zIndex: 999,
+            zIndex: 9999,
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'auto',
-            padding: '1.25rem 1.5rem 3.5rem',
+            WebkitOverflowScrolling: 'touch',
+            padding: '1.25rem 1.25rem 3.5rem',
             borderTop: '1px solid rgba(212, 175, 55, 0.25)',
+            boxSizing: 'border-box',
           }}
         >
           <div
@@ -379,7 +391,7 @@ export function GlobalNavbar() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>☸</span>
+              <span style={{ fontSize: '1.25rem' }}>🪷</span>
               <span
                 style={{
                   fontFamily: 'var(--font-serif)',
@@ -390,10 +402,12 @@ export function GlobalNavbar() {
                   fontWeight: 700,
                 }}
               >
-                Sacred Sanctum Navigation
+                Navigation Menu
               </span>
             </div>
             <button
+              type="button"
+              suppressHydrationWarning
               onClick={() => setMobileMenuOpen(false)}
               style={{
                 background: 'rgba(212, 175, 55, 0.1)',
@@ -522,6 +536,8 @@ export function GlobalNavbar() {
                   </div>
                 </div>
                 <button
+                  type="button"
+                  suppressHydrationWarning
                   onClick={() => {
                     logout();
                     setMobileMenuOpen(false);
