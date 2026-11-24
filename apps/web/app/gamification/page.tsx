@@ -778,6 +778,53 @@ function generateSolvableBoard(): number[] {
 }
 
 // ---------------------------------------------------------------------------
+// SAGA MAP COORDINATES & PATH GENERATORS (RESPONSIVE DUAL-LAYOUT)
+// ---------------------------------------------------------------------------
+
+// Mobile Serpentine Winding Path: 20 points, viewBox 0 0 360 1760
+const MOBILE_MAP_POINTS = Array.from({ length: 20 }, (_, i) => {
+  const y = 65 + i * 85;
+  const x = 180 + Math.sin(i * (Math.PI / 2.5)) * 82;
+  return { x: Math.round(x * 10) / 10, y };
+});
+
+function getMobileBezierPath(points: { x: number; y: number }[]) {
+  if (!points || points.length === 0) return '';
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const cy1 = p0.y + (p1.y - p0.y) * 0.5;
+    const cy2 = p0.y + (p1.y - p0.y) * 0.5;
+    d += ` C ${p0.x},${cy1} ${p1.x},${cy2} ${p1.x},${p1.y}`;
+  }
+  return d;
+}
+
+// Desktop Widescreen S-Curve Path: 20 points, viewBox 0 0 1100 480
+const DESKTOP_MAP_POINTS = Array.from({ length: 20 }, (_, i) => {
+  const t = i / 19;
+  const x = 60 + t * 980;
+  const y = 240 + Math.sin(t * Math.PI * 2) * 155;
+  return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+});
+
+function getDesktopBezierPath(points: { x: number; y: number }[]) {
+  if (!points || points.length === 0) return '';
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const cx1 = p0.x + (p1.x - p0.x) * 0.5;
+    const cy1 = p0.y;
+    const cx2 = p0.x + (p1.x - p0.x) * 0.5;
+    const cy2 = p1.y;
+    d += ` C ${cx1},${cy1} ${cx2},${cy2} ${p1.x},${p1.y}`;
+  }
+  return d;
+}
+
+// ---------------------------------------------------------------------------
 // MAIN COMPONENT
 // ---------------------------------------------------------------------------
 
@@ -1118,7 +1165,7 @@ export default function GamificationPage() {
       } catch {
         // Ignore
       }
-      showToast(`🏆 Level ${selectedLevelId} Conquered! Saved to ${activeUser.displayName || 'Seeker'} (+${rewardCoins} 🪙)`);
+      showToast(`🏆 L${selectedLevelId} Conquered! Saved to ${activeUser.displayName || 'Seeker'} (+${rewardCoins} 🪙)`);
     }
   }
 
@@ -1237,7 +1284,7 @@ export default function GamificationPage() {
       }}
     >
       {/* ----------------------------------------------------------------- */}
-      {/* GLOBAL GAME HEADER (Sticky) */}
+      {/* GLOBAL GAME HEADER (Sticky & Responsive) */}
       {/* ----------------------------------------------------------------- */}
       <header
         className="game-sticky-header"
@@ -1245,203 +1292,476 @@ export default function GamificationPage() {
           position: 'sticky',
           top: 0,
           zIndex: 1000,
-          background: 'rgba(13, 11, 8, 0.95)',
+          background: 'rgba(13, 11, 8, 0.96)',
           backdropFilter: 'blur(12px)',
           borderBottom: '1px solid rgba(212, 175, 55, 0.35)',
           padding: '0.75rem 1.25rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
           boxShadow: '0 4px 24px rgba(0,0,0,0.7)',
         }}
       >
-        {/* Left: Exit/Back Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button
-            onClick={() => {
-              if (screen === 'boutique') setScreen('saga-map');
-              else if (screen === 'puzzle-play') setScreen('saga-map');
-              else if (screen === 'saga-map') setScreen('categories');
-              else if (screen === 'categories') window.location.href = '/';
-            }}
-            style={{
-              background: '#D4AF37',
-              color: '#0D0B08',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              letterSpacing: '0.05em',
-              padding: '0.45rem 1rem',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              transition: 'transform 0.15s ease',
-            }}
-          >
-            ← EXIT
-          </button>
+        {/* DESKTOP HEADER (Screens > 768px) */}
+        <div className="game-header-desktop" style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Left: Branding + Exit + Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <a
+              href="/"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                textDecoration: 'none',
+                color: '#F2D675',
+                marginRight: '0.25rem',
+              }}
+              title="Return to Sacred Sanctum Home"
+            >
+              <span style={{ fontSize: '1.3rem' }}>🪷</span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-serif, serif)',
+                  fontWeight: 800,
+                  fontSize: '0.95rem',
+                  letterSpacing: '0.08em',
+                  color: '#F2D675',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                AI GURUKUL
+              </span>
+            </a>
 
-          <span
-            className="game-header-title"
-            style={{
-              fontFamily: 'var(--font-serif, serif)',
-              fontSize: '1.15rem',
-              fontWeight: 700,
-              color: '#F2D675',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {screen === 'categories' && 'VEDIC CHRONICLES: SELECT YOUR REALM'}
-            {screen === 'saga-map' && `${activeCategoryData.name} SAGA MAP`}
-            {screen === 'puzzle-play' && `LEVEL ${selectedLevelId}: ${activeCategoryData.name} CHALLENGE`}
-            {screen === 'boutique' && `${activeCategoryData.name}'S DIVINE BOUTIQUE`}
-          </span>
-        </div>
-
-        {/* Right: Seeker Capsule, Switch User, Rules, Sound, Coins, Shop */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {/* Seeker Profile Capsule */}
-          <button
-            onClick={() => setShowProfileModal(true)}
-            title="View your Seeker Saga Progress"
-            style={{
-              background: 'rgba(212, 175, 55, 0.15)',
-              border: '1px solid rgba(212, 175, 55, 0.45)',
-              padding: '0.35rem 0.85rem',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              color: '#F2D675',
-              cursor: 'pointer',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-            }}
-          >
-            <span>🧘</span>
-            <span>{activeUser.displayName || activeUser.email.split('@')[0]}</span>
-            <span
+            <button
+              onClick={() => {
+                if (screen === 'boutique') setScreen('saga-map');
+                else if (screen === 'puzzle-play') setScreen('saga-map');
+                else if (screen === 'saga-map') setScreen('categories');
+                else if (screen === 'categories') window.location.href = '/';
+              }}
               style={{
                 background: '#D4AF37',
                 color: '#0D0B08',
-                borderRadius: '10px',
-                padding: '1px 6px',
-                fontSize: '0.72rem',
-                fontWeight: 800,
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                letterSpacing: '0.05em',
+                padding: '0.45rem 1rem',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'transform 0.15s ease',
               }}
             >
-              {completedLevels.length}/100
+              ← EXIT
+            </button>
+
+            <span
+              className="game-header-title"
+              style={{
+                fontFamily: 'var(--font-serif, serif)',
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                color: '#F2D675',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {screen === 'categories' && 'VEDIC CHRONICLES: SELECT YOUR REALM'}
+              {screen === 'saga-map' && `${activeCategoryData.name} SAGA MAP`}
+              {screen === 'puzzle-play' && `L${selectedLevelId}: ${activeCategoryData.name} CHALLENGE`}
+              {screen === 'boutique' && `${activeCategoryData.name}'S DIVINE BOUTIQUE`}
             </span>
-          </button>
-
-          {/* Switch Seeker / Logout */}
-          <button
-            onClick={() => {
-              if (window.confirm('Switch seeker or log out of current chronicle?')) {
-                logout();
-                showToast('Seeker logged out. Sanctum locked.');
-              }
-            }}
-            title="Switch Seeker / Logout"
-            style={{
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#FCA5A5',
-              padding: '0.4rem 0.65rem',
-              borderRadius: '8px',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-            }}
-          >
-            🚪 Switch
-          </button>
-
-          {/* Rules/Info Button */}
-          <button
-            onClick={() => setShowTutorial(true)}
-            title="How to Play / Rules"
-            style={{
-              background: 'rgba(212, 175, 55, 0.12)',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              color: '#F2D675',
-              padding: '0.45rem 0.75rem',
-              borderRadius: '8px',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-            }}
-          >
-            📜 Rules
-          </button>
-
-          {/* Sound Mute/Unmute */}
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            title={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#EDE8D5',
-              padding: '0.45rem 0.65rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            {soundEnabled ? '🔊' : '🔇'}
-          </button>
-
-          {/* Coins Pill */}
-          <div
-            style={{
-              background: 'rgba(212, 175, 55, 0.15)',
-              border: '1px solid #D4AF37',
-              padding: '0.45rem 1rem',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontWeight: 700,
-              color: '#F2D675',
-              boxShadow: '0 0 12px rgba(212, 175, 55, 0.2)',
-            }}
-          >
-            <span style={{ fontSize: '1.1rem' }}>🪙</span>
-            <span>{coins}</span>
           </div>
 
-          {/* Shop Button */}
-          <button
-            onClick={() => setScreen('boutique')}
-            style={{
-              background: 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)',
-              color: '#0D0B08',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              letterSpacing: '0.04em',
-              padding: '0.45rem 1.1rem',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: '0 2px 10px rgba(212, 175, 55, 0.4)',
-            }}
-          >
-            🛍️ SHOP
-          </button>
+          {/* Right: Seeker Capsule, Switch User, Rules, Sound, Coins, Shop */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {/* Seeker Profile Capsule */}
+            <button
+              onClick={() => setShowProfileModal(true)}
+              title="View your Seeker Saga Progress"
+              style={{
+                background: 'rgba(212, 175, 55, 0.15)',
+                border: '1px solid rgba(212, 175, 55, 0.45)',
+                padding: '0.35rem 0.85rem',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                color: '#F2D675',
+                cursor: 'pointer',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+              }}
+            >
+              <span>🧘</span>
+              <span>{activeUser.displayName || activeUser.email.split('@')[0]}</span>
+              <span
+                style={{
+                  background: '#D4AF37',
+                  color: '#0D0B08',
+                  borderRadius: '10px',
+                  padding: '1px 6px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                }}
+              >
+                {completedLevels.length}/100
+              </span>
+            </button>
+
+            {/* Switch Seeker / Logout */}
+            <button
+              onClick={() => {
+                if (window.confirm('Switch seeker or log out of current chronicle?')) {
+                  logout();
+                  showToast('Seeker logged out. Sanctum locked.');
+                }
+              }}
+              title="Switch Seeker / Logout"
+              style={{
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#FCA5A5',
+                padding: '0.4rem 0.65rem',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+              }}
+            >
+              🚪 Switch
+            </button>
+
+            {/* Rules/Info Button */}
+            <button
+              onClick={() => setShowTutorial(true)}
+              title="How to Play / Rules"
+              style={{
+                background: 'rgba(212, 175, 55, 0.12)',
+                border: '1px solid rgba(212, 175, 55, 0.35)',
+                color: '#F2D675',
+                padding: '0.45rem 0.75rem',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              📜 Rules
+            </button>
+
+            {/* Sound Mute/Unmute */}
+            <button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              title={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#EDE8D5',
+                padding: '0.45rem 0.65rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
+            >
+              {soundEnabled ? '🔊' : '🔇'}
+            </button>
+
+            {/* Coins Pill */}
+            <div
+              style={{
+                background: 'rgba(212, 175, 55, 0.15)',
+                border: '1px solid #D4AF37',
+                padding: '0.45rem 1rem',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: 700,
+                color: '#F2D675',
+                boxShadow: '0 0 12px rgba(212, 175, 55, 0.2)',
+              }}
+            >
+              <span style={{ fontSize: '1.1rem' }}>🪙</span>
+              <span>{coins}</span>
+            </div>
+
+            {/* Shop Button */}
+            <button
+              onClick={() => setScreen('boutique')}
+              style={{
+                background: 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)',
+                color: '#0D0B08',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                letterSpacing: '0.04em',
+                padding: '0.45rem 1.1rem',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                boxShadow: '0 2px 10px rgba(212, 175, 55, 0.4)',
+              }}
+            >
+              🛍️ SHOP
+            </button>
+          </div>
+        </div>
+
+        {/* MOBILE HEADER (Screens <= 768px) */}
+        <div className="game-header-mobile" style={{ width: '100%' }}>
+          {/* Row 1: Logo & Exit on Left | Rules & Title on Right */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.45rem', gap: '0.35rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+              <a
+                href="/"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  textDecoration: 'none',
+                  color: '#F2D675',
+                }}
+                title="Return to Sacred Sanctum Home"
+              >
+                <span style={{ fontSize: '1.15rem' }}>🪷</span>
+                <span
+                  className="game-brand-text"
+                  style={{
+                    fontFamily: 'var(--font-serif, serif)',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    letterSpacing: '0.06em',
+                    color: '#F2D675',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  AI GURUKUL
+                </span>
+              </a>
+
+              <button
+                onClick={() => {
+                  if (screen === 'boutique') setScreen('saga-map');
+                  else if (screen === 'puzzle-play') setScreen('saga-map');
+                  else if (screen === 'saga-map') setScreen('categories');
+                  else if (screen === 'categories') window.location.href = '/';
+                }}
+                style={{
+                  background: '#D4AF37',
+                  color: '#0D0B08',
+                  fontWeight: 700,
+                  fontSize: '0.74rem',
+                  letterSpacing: '0.04em',
+                  padding: '0.3rem 0.55rem',
+                  borderRadius: '5px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.2rem',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ← EXIT
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+              {/* Rules Button - prominent, fully visible, never clipped */}
+              <button
+                onClick={() => setShowTutorial(true)}
+                title="How to Play / Rules"
+                style={{
+                  background: 'rgba(212, 175, 55, 0.16)',
+                  border: '1px solid #D4AF37',
+                  color: '#F2D675',
+                  padding: '0.26rem 0.55rem',
+                  borderRadius: '6px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 0 8px rgba(212, 175, 55, 0.25)',
+                }}
+              >
+                <span>📜</span>
+                <span>Rules</span>
+              </button>
+
+              {/* Realm Title Pill */}
+              <span
+                style={{
+                  fontFamily: 'var(--font-serif, serif)',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: '#F2D675',
+                  background: 'rgba(212, 175, 55, 0.12)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  borderRadius: '6px',
+                  padding: '0.22rem 0.55rem',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {screen === 'categories' && 'SELECT REALM'}
+                {screen === 'saga-map' && `${activeCategoryData.name} SAGA`}
+                {screen === 'puzzle-play' && `L${selectedLevelId}`}
+                {screen === 'boutique' && 'BOUTIQUE'}
+              </span>
+            </div>
+          </div>
+
+          {/* Row 2: Seeker Capsule & Switch on Left | Sound, Coins, Shop on Right */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '0.35rem' }}>
+            {/* Left Controls: Seeker & Switch */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+              {/* Seeker Profile Capsule */}
+              <button
+                onClick={() => setShowProfileModal(true)}
+                title="View your Seeker Saga Progress"
+                style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1px solid rgba(212, 175, 55, 0.45)',
+                  padding: '0.28rem 0.5rem',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  color: '#F2D675',
+                  cursor: 'pointer',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>🧘</span>
+                <span
+                  style={{
+                    background: '#D4AF37',
+                    color: '#0D0B08',
+                    borderRadius: '10px',
+                    padding: '1px 5px',
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                  }}
+                >
+                  {completedLevels.length}/100
+                </span>
+              </button>
+
+              {/* Switch Seeker */}
+              <button
+                onClick={() => {
+                  if (window.confirm('Switch seeker or log out of current chronicle?')) {
+                    logout();
+                    showToast('Seeker logged out. Sanctum locked.');
+                  }
+                }}
+                title="Switch Seeker / Logout"
+                style={{
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#FCA5A5',
+                  padding: '0.28rem 0.45rem',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.2rem',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>🚪</span>
+                <span className="game-btn-text">Switch</span>
+              </button>
+            </div>
+
+            {/* Right Controls Group */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+              {/* Sound Mute/Unmute */}
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                title={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#EDE8D5',
+                  padding: '0.28rem 0.45rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
+
+              {/* Coins Pill */}
+              <div
+                style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1px solid #D4AF37',
+                  padding: '0.28rem 0.55rem',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  fontWeight: 700,
+                  color: '#F2D675',
+                  fontSize: '0.75rem',
+                  boxShadow: '0 0 10px rgba(212, 175, 55, 0.2)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{ fontSize: '0.85rem' }}>🪙</span>
+                <span>{coins}</span>
+              </div>
+
+              {/* Shop Button */}
+              <button
+                onClick={() => setScreen('boutique')}
+                style={{
+                  background: 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)',
+                  color: '#0D0B08',
+                  fontWeight: 700,
+                  fontSize: '0.74rem',
+                  letterSpacing: '0.03em',
+                  padding: '0.28rem 0.55rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.2rem',
+                  boxShadow: '0 2px 8px rgba(212, 175, 55, 0.35)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>🛍️</span>
+                <span className="game-btn-text">Shop</span>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -1658,7 +1978,7 @@ export default function GamificationPage() {
       {/* SCREEN 1: CATEGORY SELECTION (Matches User Image 4) */}
       {/* ----------------------------------------------------------------- */}
       {screen === 'categories' && (
-        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '3.5rem 1.5rem' }}>
+        <main className="game-categories-main" style={{ maxWidth: '1100px', margin: '0 auto', padding: '3.5rem 1.5rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <div
               style={{
@@ -1764,7 +2084,7 @@ export default function GamificationPage() {
                       color: '#EDE8D5',
                     }}
                   >
-                    <span>⚡ Level {unlocked} / 20</span>
+                    <span>⚡ L{unlocked} / 20</span>
                     <span style={{ color: '#D4AF37' }}>•</span>
                     <span style={{ color: '#A7F3D0' }}>{solvedCount} Solved</span>
                   </div>
@@ -1776,10 +2096,11 @@ export default function GamificationPage() {
       )}
 
       {/* ----------------------------------------------------------------- */}
-      {/* SCREEN 2: SAGA MAP (Responsive S-Curve Path & Level Grid) */}
+      {/* SCREEN 2: SAGA MAP (Responsive Dual-Layout S-Curve & Serpentine)  */}
       {/* ----------------------------------------------------------------- */}
       {screen === 'saga-map' && (
         <main
+          className="saga-map-main-wrapper"
           style={{
             position: 'relative',
             width: '100%',
@@ -1793,26 +2114,27 @@ export default function GamificationPage() {
             padding: '1.5rem 1rem 3.5rem',
           }}
         >
-          {/* Header indicator */}
-          <div style={{ textAlign: 'center', marginBottom: '1.25rem', zIndex: 10, width: '100%' }}>
+          {/* Header indicator & View Mode Controls */}
+          <div style={{ textAlign: 'center', marginBottom: '1.25rem', zIndex: 10, width: '100%', maxWidth: '800px', margin: '0 auto 1.25rem' }}>
             <span
               style={{
                 fontFamily: 'var(--font-serif, serif)',
-                fontSize: 'clamp(1.25rem, 4vw, 1.8rem)',
+                fontSize: 'clamp(1.2rem, 3.5vw, 1.85rem)',
                 color: '#D4AF37',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 display: 'block',
+                fontWeight: 700,
               }}
             >
               {activeCategoryData.icon} {activeCategoryData.name} SAGA MAP
             </span>
-            <p style={{ color: '#9A9078', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-              Seeker <strong>{activeUser.displayName || activeUser.email}</strong>: {completedLevels.filter((k) => k.startsWith(`${selectedCategory}-`)).length} of 20 Challenges Mastered
+            <p style={{ color: '#9A9078', fontSize: '0.82rem', marginTop: '0.35rem', lineHeight: 1.4 }}>
+              Seeker <strong style={{ color: '#EDE8D5' }}>{activeUser.displayName || activeUser.email}</strong>: {completedLevels.filter((k) => k.startsWith(`${selectedCategory}-`)).length} of 20 Challenges Mastered
             </p>
 
-            {/* Mobile & Desktop View Mode Toggle */}
-            <div style={{ marginTop: '0.85rem', display: 'inline-flex', background: 'rgba(212, 175, 55, 0.12)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.3)', gap: '4px' }}>
+            {/* View Mode Toggle (Map vs Grid) */}
+            <div style={{ marginTop: '0.75rem', display: 'inline-flex', background: 'rgba(212, 175, 55, 0.12)', padding: '3px', borderRadius: '10px', border: '1px solid rgba(212, 175, 55, 0.3)', gap: '4px' }}>
               <button
                 type="button"
                 onClick={() => setSagaViewMode('map')}
@@ -1820,12 +2142,13 @@ export default function GamificationPage() {
                   background: sagaViewMode === 'map' ? 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)' : 'transparent',
                   color: sagaViewMode === 'map' ? '#0D0B08' : '#EDE8D5',
                   border: 'none',
-                  borderRadius: '6px',
-                  padding: '5px 12px',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
                   fontSize: '0.8rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
+                  letterSpacing: '0.03em',
                 }}
               >
                 🗺️ SAGA MAP
@@ -1837,184 +2160,461 @@ export default function GamificationPage() {
                   background: sagaViewMode === 'grid' ? 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)' : 'transparent',
                   color: sagaViewMode === 'grid' ? '#0D0B08' : '#EDE8D5',
                   border: 'none',
-                  borderRadius: '6px',
-                  padding: '5px 12px',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
                   fontSize: '0.8rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
+                  letterSpacing: '0.03em',
                 }}
               >
                 📜 LEVEL GRID
               </button>
             </div>
+
+            {sagaViewMode === 'map' && (
+              <div style={{ marginTop: '0.6rem', color: '#9A9078', fontSize: '0.75rem' }}>
+                <span className="saga-map-desktop-container">
+                  ✨ Click any unlocked quest along the sacred path to challenge the trial
+                </span>
+                <span className="saga-map-mobile-container">
+                  👇 Scroll vertically to journey through 20 sacred quests • Tap to play
+                </span>
+              </div>
+            )}
           </div>
 
           {sagaViewMode === 'map' ? (
-            /* S-Curve Landscape Saga Map Container with Horizontal Scroll on Mobile */
-            <div
-              className="saga-map-scroll-wrapper"
-              style={{
-                width: '100%',
-                maxWidth: '1150px',
-                overflowX: 'auto',
-                WebkitOverflowScrolling: 'touch',
-                paddingBottom: '1.5rem',
-              }}
-            >
-              <div style={{ textAlign: 'center', marginBottom: '0.5rem', color: '#9A9078', fontSize: '0.75rem' }} className="hide-on-desktop">
-                👉 Swipe horizontally to navigate 20 levels or switch to Level Grid
-              </div>
-              <div
-                style={{
-                  position: 'relative',
-                  width: '1000px',
-                  minWidth: '1000px',
-                  height: '520px',
-                  margin: '0 auto',
-                }}
-              >
-                {/* Winding Trail SVG */}
-                <svg
-                  viewBox="0 0 1000 520"
-                  preserveAspectRatio="xMidYMid meet"
+            <div style={{ width: '100%', maxWidth: '1150px', margin: '0 auto' }}>
+              {/* ------------------------------------------------------------- */}
+              {/* DESKTOP WIDESCREEN S-CURVE SAGA MAP (> 768px)                */}
+              {/* ------------------------------------------------------------- */}
+              <div className="saga-map-desktop-container" style={{ width: '100%', position: 'relative' }}>
+                <div
                   style={{
-                    position: 'absolute',
-                    inset: 0,
+                    position: 'relative',
                     width: '100%',
-                    height: '100%',
-                    pointerEvents: 'none',
-                    zIndex: 1,
+                    maxWidth: '1100px',
+                    aspectRatio: '1100 / 480',
+                    margin: '0 auto',
                   }}
                 >
-                  <path
-                    d="M 50,300 C 150,80 350,80 500,260 C 650,450 850,450 950,260"
-                    stroke="#D4AF37"
-                    strokeWidth="4"
-                    fill="none"
-                    strokeDasharray="10 10"
-                    opacity="0.38"
-                  />
-                </svg>
+                  {/* SVG Path Layer */}
+                  <svg
+                    viewBox="0 0 1100 480"
+                    preserveAspectRatio="xMidYMid meet"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      pointerEvents: 'none',
+                      zIndex: 1,
+                    }}
+                  >
+                    <defs>
+                      <linearGradient id="goldGradientDesktop" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#F2D675" />
+                        <stop offset="50%" stopColor="#D4AF37" />
+                        <stop offset="100%" stopColor="#B8860B" />
+                      </linearGradient>
+                      <filter id="goldGlowDesktop" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
 
-                {/* 20 Circular Nodes placed along the curve */}
-                <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
-                  {Array.from({ length: 20 }).map((_, i) => {
-                    const lvlNum = i + 1;
-                    const unlocked = unlockedLevels[selectedCategory] || 1;
-                    const isLocked = lvlNum > unlocked;
-                    const isCompleted = completedLevels.includes(`${selectedCategory}-${lvlNum}`);
-                    const isCurrent = lvlNum === unlocked;
+                    {/* Under-glow ambient trail */}
+                    <path
+                      d={getDesktopBezierPath(DESKTOP_MAP_POINTS)}
+                      stroke="#D4AF37"
+                      strokeWidth="10"
+                      fill="none"
+                      opacity="0.14"
+                      strokeLinecap="round"
+                    />
 
-                    // Mathematical placement along S-curve
-                    const t = i / 19;
-                    const x = 50 + t * 900;
-                    const y = 270 + Math.sin(t * Math.PI * 2) * 165;
+                    {/* Golden dashed highway path */}
+                    <path
+                      d={getDesktopBezierPath(DESKTOP_MAP_POINTS)}
+                      stroke="#D4AF37"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray="10 8"
+                      opacity="0.45"
+                      strokeLinecap="round"
+                    />
 
-                    const levelObj = (CATEGORY_LEVELS[selectedCategory] || [])[i];
-                    const charName = levelObj ? levelObj.name : `Level ${lvlNum}`;
+                    {/* Solid illuminated path for unlocked progression */}
+                    {(() => {
+                      const activeProgressIndex = Math.min(19, (unlockedLevels[selectedCategory] || 1) - 1);
+                      if (activeProgressIndex > 0) {
+                        const activePoints = DESKTOP_MAP_POINTS.slice(0, activeProgressIndex + 1);
+                        return (
+                          <path
+                            d={getDesktopBezierPath(activePoints)}
+                            stroke="url(#goldGradientDesktop)"
+                            strokeWidth="5"
+                            fill="none"
+                            strokeLinecap="round"
+                            filter="url(#goldGlowDesktop)"
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+                  </svg>
 
-                    return (
-                      <div
-                        key={lvlNum}
-                        onClick={() => {
-                          if (!isLocked) startLevel(lvlNum);
-                          else showToast(`🔒 Complete Level ${lvlNum - 1} to unlock this quest!`);
-                        }}
-                        style={{
-                          position: 'absolute',
-                          left: `${(x / 1000) * 100}%`,
-                          top: `${(y / 520) * 100}%`,
-                          transform: 'translate(-50%, -50%)',
-                          cursor: isLocked ? 'not-allowed' : 'pointer',
-                          textAlign: 'center',
-                          transition: 'all 0.25s ease',
-                          zIndex: isCurrent ? 5 : 2,
-                        }}
-                      >
-                        {/* Outer Circle */}
+                  {/* 20 Circular Nodes placed along the desktop curve */}
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+                    {Array.from({ length: 20 }).map((_, i) => {
+                      const lvlNum = i + 1;
+                      const unlocked = unlockedLevels[selectedCategory] || 1;
+                      const isLocked = lvlNum > unlocked;
+                      const isCompleted = completedLevels.includes(`${selectedCategory}-${lvlNum}`);
+                      const isCurrent = lvlNum === unlocked;
+
+                      const pt = DESKTOP_MAP_POINTS[i];
+
+                      return (
                         <div
+                          key={lvlNum}
+                          onClick={() => {
+                            if (!isLocked) startLevel(lvlNum);
+                            else showToast(`🔒 Complete L${lvlNum - 1} to unlock this quest!`);
+                          }}
                           style={{
-                            width: isCurrent ? '56px' : '48px',
-                            height: isCurrent ? '56px' : '48px',
-                            borderRadius: '50%',
-                            background: isCompleted
-                              ? '#D4AF37'
-                              : isCurrent
-                              ? '#1A160E'
-                              : 'rgba(25, 22, 15, 0.95)',
-                            border: isCurrent
-                              ? '3px solid #FFF'
-                              : isCompleted
-                              ? '2px solid #FFF'
-                              : '2px solid rgba(212, 175, 55, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            margin: '0 auto',
-                            boxShadow: isCurrent
-                              ? '0 0 24px rgba(242, 214, 117, 0.8), 0 0 45px rgba(212, 175, 55, 0.4)'
-                              : '0 4px 16px rgba(0,0,0,0.8)',
-                            opacity: isLocked ? 0.38 : 1,
-                            filter: isLocked ? 'grayscale(1)' : 'none',
+                            position: 'absolute',
+                            left: `${(pt.x / 1100) * 100}%`,
+                            top: `${(pt.y / 480) * 100}%`,
+                            transform: 'translate(-50%, -50%)',
+                            cursor: isLocked ? 'not-allowed' : 'pointer',
+                            textAlign: 'center',
                             transition: 'transform 0.2s ease',
+                            zIndex: isCurrent ? 5 : 2,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isLocked) e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translate(-50%, -50%)';
                           }}
                         >
-                          <span
+                          {/* Node Circle */}
+                          <div
+                            className={isCurrent ? 'node-pulse-active' : ''}
                             style={{
-                              fontFamily: 'var(--font-serif, serif)',
-                              fontSize: isCurrent ? '1.25rem' : '1.05rem',
-                              fontWeight: 700,
-                              color: isCompleted ? '#0D0B08' : isCurrent ? '#F2D675' : '#9A9078',
+                              width: isCurrent ? '58px' : '48px',
+                              height: isCurrent ? '58px' : '48px',
+                              borderRadius: '50%',
+                              background: isCompleted
+                                ? 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)'
+                                : isCurrent
+                                ? '#1A160E'
+                                : 'rgba(25, 22, 15, 0.95)',
+                              border: isCurrent
+                                ? '3px solid #FFF'
+                                : isCompleted
+                                ? '2px solid #FFF'
+                                : '2px solid rgba(212, 175, 55, 0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              margin: '0 auto',
+                              boxShadow: isCurrent
+                                ? '0 0 24px rgba(242, 214, 117, 0.8), 0 0 45px rgba(212, 175, 55, 0.4)'
+                                : '0 4px 16px rgba(0,0,0,0.8)',
+                              opacity: isLocked ? 0.38 : 1,
+                              filter: isLocked ? 'grayscale(1)' : 'none',
+                              transition: 'all 0.2s ease',
                             }}
                           >
-                            {isCompleted ? '✓' : lvlNum}
-                          </span>
-                        </div>
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-serif, serif)',
+                                fontSize: isCurrent ? '1.3rem' : '1.05rem',
+                                fontWeight: 800,
+                                color: isCompleted ? '#0D0B08' : isCurrent ? '#F2D675' : '#9A9078',
+                              }}
+                            >
+                              {isCompleted ? '✓' : isLocked ? '🔒' : lvlNum}
+                            </span>
+                          </div>
 
-                        {/* Level Label */}
+                          {/* Level Label */}
+                          <div
+                            style={{
+                              marginTop: '0.4rem',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              color: isCurrent ? '#F2D675' : isCompleted ? '#D4AF37' : '#9A9078',
+                              background: 'rgba(0,0,0,0.75)',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              whiteSpace: 'nowrap',
+                              border: isCurrent ? '1px solid rgba(212,175,55,0.45)' : 'none',
+                            }}
+                          >
+                            L{lvlNum}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* ------------------------------------------------------------- */}
+              {/* MOBILE COMPACT SERPENTINE SAGA MAP (<= 768px)                */}
+              {/* ------------------------------------------------------------- */}
+              <div className="saga-map-mobile-container" style={{ width: '100%', maxWidth: '380px', margin: '0 auto', position: 'relative' }}>
+                {/* Top Ayodhya Milestone Banner */}
+                <div
+                  style={{
+                    textAlign: 'center',
+                    marginBottom: '1rem',
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(180deg, rgba(212, 175, 55, 0.16) 0%, rgba(13, 11, 8, 0.5) 100%)',
+                    border: '1px solid rgba(212, 175, 55, 0.35)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.72rem', letterSpacing: '0.08em', color: '#D4AF37', fontWeight: 800 }}>
+                    🪷 AYODHYA • THE JOURNEY BEGINS
+                  </div>
+                  <div style={{ fontSize: '0.64rem', color: '#9A9078', marginTop: '2px' }}>
+                    Conquer each sacred quest in order to reveal the divine epic
+                  </div>
+                </div>
+
+                {/* Relative Winding Serpentine Path & Node Canvas */}
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    aspectRatio: '360 / 1760',
+                    margin: '0 auto',
+                  }}
+                >
+                  {/* SVG Serpentine Path */}
+                  <svg
+                    viewBox="0 0 360 1760"
+                    preserveAspectRatio="xMidYMid meet"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      pointerEvents: 'none',
+                      zIndex: 1,
+                    }}
+                  >
+                    <defs>
+                      <linearGradient id="goldGradientMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#F2D675" />
+                        <stop offset="50%" stopColor="#D4AF37" />
+                        <stop offset="100%" stopColor="#B8860B" />
+                      </linearGradient>
+                      <filter id="goldGlowMobile" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3.5" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+
+                    {/* Outer glow trail */}
+                    <path
+                      d={getMobileBezierPath(MOBILE_MAP_POINTS)}
+                      stroke="#D4AF37"
+                      strokeWidth="10"
+                      fill="none"
+                      opacity="0.16"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Base golden dashed path */}
+                    <path
+                      d={getMobileBezierPath(MOBILE_MAP_POINTS)}
+                      stroke="#D4AF37"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray="8 6"
+                      opacity="0.45"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Illuminated completed path */}
+                    {(() => {
+                      const activeProgressIndex = Math.min(19, (unlockedLevels[selectedCategory] || 1) - 1);
+                      if (activeProgressIndex > 0) {
+                        const activePoints = MOBILE_MAP_POINTS.slice(0, activeProgressIndex + 1);
+                        return (
+                          <path
+                            d={getMobileBezierPath(activePoints)}
+                            stroke="url(#goldGradientMobile)"
+                            strokeWidth="4.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            filter="url(#goldGlowMobile)"
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+                  </svg>
+
+                  {/* 20 Compact Level Nodes along Serpentine Trail */}
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+                    {Array.from({ length: 20 }).map((_, i) => {
+                      const lvlNum = i + 1;
+                      const unlocked = unlockedLevels[selectedCategory] || 1;
+                      const isLocked = lvlNum > unlocked;
+                      const isCompleted = completedLevels.includes(`${selectedCategory}-${lvlNum}`);
+                      const isCurrent = lvlNum === unlocked;
+
+                      const pt = MOBILE_MAP_POINTS[i];
+
+                      return (
                         <div
+                          key={lvlNum}
+                          onClick={() => {
+                            if (!isLocked) startLevel(lvlNum);
+                            else showToast(`🔒 Complete L${lvlNum - 1} to unlock this quest!`);
+                          }}
                           style={{
-                            marginTop: '0.4rem',
-                            fontSize: '0.72rem',
-                            fontWeight: 600,
-                            color: isCurrent ? '#F2D675' : '#9A9078',
-                            background: 'rgba(0,0,0,0.7)',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            whiteSpace: 'nowrap',
-                            border: isCurrent ? '1px solid rgba(212,175,55,0.4)' : 'none',
+                            position: 'absolute',
+                            left: `${(pt.x / 360) * 100}%`,
+                            top: `${(pt.y / 1760) * 100}%`,
+                            transform: 'translate(-50%, -50%)',
+                            cursor: isLocked ? 'not-allowed' : 'pointer',
+                            textAlign: 'center',
+                            zIndex: isCurrent ? 5 : 2,
+                            width: '120px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
                           }}
                         >
-                          LEVEL {lvlNum}
-                        </div>
+                          {/* Node Circle */}
+                          <div
+                            className={isCurrent ? 'node-pulse-active' : ''}
+                            style={{
+                              width: isCurrent ? '48px' : '42px',
+                              height: isCurrent ? '48px' : '42px',
+                              borderRadius: '50%',
+                              background: isCompleted
+                                ? 'linear-gradient(135deg, #F2D675 0%, #D4AF37 100%)'
+                                : isCurrent
+                                ? '#1A160E'
+                                : 'rgba(25, 22, 15, 0.95)',
+                              border: isCurrent
+                                ? '2.5px solid #FFF'
+                                : isCompleted
+                                ? '2px solid #FFF'
+                                : '2px solid rgba(212, 175, 55, 0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: isCurrent
+                                ? '0 0 16px rgba(242, 214, 117, 0.8), 0 0 30px rgba(212, 175, 55, 0.4)'
+                                : '0 3px 12px rgba(0,0,0,0.8)',
+                              opacity: isLocked ? 0.4 : 1,
+                              filter: isLocked ? 'grayscale(1)' : 'none',
+                              transition: 'transform 0.15s ease',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-serif, serif)',
+                                fontSize: isCurrent ? '1.15rem' : '0.98rem',
+                                fontWeight: 800,
+                                color: isCompleted ? '#0D0B08' : isCurrent ? '#F2D675' : '#9A9078',
+                              }}
+                            >
+                              {isCompleted ? '✓' : isLocked ? '🔒' : lvlNum}
+                            </span>
+                          </div>
 
-                        {/* Character Tag preview */}
-                        <div
-                          style={{
-                            fontSize: '0.65rem',
-                            color: '#C4B5FD',
-                            whiteSpace: 'nowrap',
-                            marginTop: '1px',
-                          }}
-                        >
-                          {charName}
+                          {/* Level Capsule Pill */}
+                          <div
+                            style={{
+                              marginTop: '3px',
+                              background: isCurrent ? 'rgba(212, 175, 55, 0.25)' : 'rgba(13, 11, 8, 0.85)',
+                              border: isCurrent ? '1px solid #F2D675' : '1px solid rgba(212, 175, 55, 0.22)',
+                              borderRadius: '10px',
+                              padding: '2px 8px',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.7)',
+                              backdropFilter: 'blur(4px)',
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: '0.64rem',
+                                fontWeight: 800,
+                                color: isCurrent ? '#F2D675' : isCompleted ? '#D4AF37' : '#9A9078',
+                                letterSpacing: '0.03em',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              L{lvlNum}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Bottom Rama Rajya Milestone Banner */}
+                <div
+                  style={{
+                    marginTop: '1.25rem',
+                    textAlign: 'center',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '12px',
+                    background:
+                      completedLevels.filter((k) => k.startsWith(`${selectedCategory}-`)).length === 20
+                        ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(16, 185, 129, 0.2) 100%)'
+                        : 'rgba(21, 18, 12, 0.85)',
+                    border: '1px solid rgba(212, 175, 55, 0.35)',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.7)',
+                  }}
+                >
+                  <div style={{ fontSize: '1.15rem' }}>👑</div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-serif, serif)',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      color: '#F2D675',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    RAMA RAJYA • SAGA CONQUERED
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: '#9A9078', marginTop: '2px' }}>
+                    Conquer all 20 sacred trials to achieve supreme chronicle mastery
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            /* Mobile-First Level Grid View */
+            /* Level Grid View (Mobile-First 2-Column Responsive Grid) */
             <div
+              className="saga-grid-view"
               style={{
                 width: '100%',
                 maxWidth: '960px',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))',
-                gap: '1rem',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 130px), 1fr))',
+                gap: '0.85rem',
                 padding: '0.5rem 0.5rem 2rem',
               }}
             >
@@ -2024,16 +2624,13 @@ export default function GamificationPage() {
                 const isLocked = lvlNum > unlocked;
                 const isCompleted = completedLevels.includes(`${selectedCategory}-${lvlNum}`);
                 const isCurrent = lvlNum === unlocked;
-                const levelObj = (CATEGORY_LEVELS[selectedCategory] || [])[i];
-                const charName = levelObj ? levelObj.name : `Level ${lvlNum}`;
-                const charTitle = levelObj ? levelObj.title : '';
 
                 return (
                   <div
                     key={lvlNum}
                     onClick={() => {
                       if (!isLocked) startLevel(lvlNum);
-                      else showToast(`🔒 Complete Level ${lvlNum - 1} to unlock this quest!`);
+                      else showToast(`🔒 Complete L${lvlNum - 1} to unlock this quest!`);
                     }}
                     style={{
                       background: isCurrent
@@ -2074,16 +2671,8 @@ export default function GamificationPage() {
                       {isCompleted ? '✓' : isLocked ? '🔒' : lvlNum}
                     </div>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrent ? '#F2D675' : '#EDE8D5' }}>
-                      LEVEL {lvlNum}
+                      L{lvlNum}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#C4B5FD', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {charName}
-                    </div>
-                    {charTitle && (
-                      <div style={{ fontSize: '0.62rem', color: '#9A9078', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {charTitle}
-                      </div>
-                    )}
                   </div>
                 );
               })}
