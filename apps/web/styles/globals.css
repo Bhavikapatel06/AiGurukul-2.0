@@ -1172,11 +1172,68 @@ textarea, input[type="text"], input[type="search"], input[type="email"], input[t
   border-radius: 3px;
 }
 
+/* Game Header & Dual Saga Map Responsive Declarations */
+.game-header-desktop {
+  display: flex !important;
+}
+.game-header-mobile {
+  display: none !important;
+}
+
+.saga-map-desktop-container {
+  display: block !important;
+}
+.saga-map-mobile-container {
+  display: none !important;
+}
+
+@keyframes goldPulseNode {
+  0% {
+    box-shadow: 0 0 0 0 rgba(242, 214, 117, 0.7), 0 0 16px rgba(212, 175, 55, 0.4);
+  }
+  60% {
+    box-shadow: 0 0 0 8px rgba(242, 214, 117, 0), 0 0 28px rgba(212, 175, 55, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(242, 214, 117, 0), 0 0 16px rgba(212, 175, 55, 0.4);
+  }
+}
+
+.node-pulse-active {
+  animation: goldPulseNode 2.2s infinite ease-in-out;
+}
+
 /* Screen width < 768px (Mobile & Tablets) */
 @media (max-width: 768px) {
   /* Sticky game header on mobile */
   .game-sticky-header {
-    padding: 0.5rem 0.65rem !important;
+    padding: 0.45rem 0.65rem !important;
+  }
+
+  .game-brand-text {
+    display: none !important;
+  }
+
+  .game-header-desktop {
+    display: none !important;
+  }
+  .game-header-mobile {
+    display: block !important;
+  }
+
+  .saga-map-desktop-container {
+    display: none !important;
+  }
+  .saga-map-mobile-container {
+    display: block !important;
+  }
+
+  .saga-map-main-wrapper {
+    padding: 1rem 0.5rem 3rem !important;
+  }
+
+  .game-categories-main {
+    padding: 1.5rem 1rem !important;
   }
 
   .game-header-title {
@@ -1225,12 +1282,8 @@ textarea, input[type="text"], input[type="search"], input[type="email"], input[t
 /* Screen width < 480px (Compact Mobile) */
 @media (max-width: 480px) {
   .game-sticky-header {
-    padding: 0.4rem 0.5rem !important;
+    padding: 0.35rem 0.5rem !important;
     gap: 0.35rem !important;
-  }
-
-  .game-header-title {
-    display: none !important;
   }
 
   h1 {
