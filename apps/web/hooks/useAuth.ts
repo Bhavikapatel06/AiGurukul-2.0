@@ -24,6 +24,8 @@ function notifyAuthState(user: UserDTO | null) {
   }
 }
 
+let inFlightProfilePromise: Promise<any> | null = null;
+
 export function useAuth() {
   const [user, setUser] = useState<UserDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -55,10 +57,12 @@ export function useAuth() {
 
   const fetchProfile = useCallback(async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
-    const cached = getStoredUser();
 
-    // If there is no token and no cached user, seeker is unauthenticated
-    if (!token && !cached) {
+    // If there is no token, seeker is unauthenticated - do not issue failing requests to /auth/me
+    if (!token) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(USER_KEY);
+      }
       setUser(null);
       setLoading(false);
       return;
@@ -66,7 +70,14 @@ export function useAuth() {
 
     setLoading(true);
     setError(null);
-    const res = await apiClient<{ user: UserDTO }>('/auth/me');
+
+    if (!inFlightProfilePromise) {
+      inFlightProfilePromise = apiClient<{ user: UserDTO }>('/auth/me').finally(() => {
+        inFlightProfilePromise = null;
+      });
+    }
+
+    const res = await inFlightProfilePromise;
 
     if (res.success && res.data?.user) {
       const activeUser = res.data.user;
@@ -79,12 +90,13 @@ export function useAuth() {
       if (
         res.error?.code === 'UNAUTHORIZED' ||
         res.error?.code === 'AUTHENTICATION_ERROR' ||
-        res.error?.message?.toLowerCase().includes('token')
+        res.error?.code === 'HTTP_ERROR' ||
+        res.error?.message?.toLowerCase().includes('token') ||
+        res.error?.message?.toLowerCase().includes('unauthorized')
       ) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
-          notifyAuthState(null);
         }
         setUser(null);
       }
