@@ -43,11 +43,19 @@ export async function apiClient<T>(
     const json = (await res.json().catch(() => null)) as ApiResponse<T>;
 
     if (!res.ok) {
+      if (res.status === 401 && typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('aigurukul_access_token');
+          localStorage.removeItem('aigurukul_user');
+        } catch {
+          // ignore
+        }
+      }
       return {
         success: false,
         error: json?.error || {
-          code: 'HTTP_ERROR',
-          message: `Request failed with status ${res.status}`,
+          code: res.status === 401 ? 'UNAUTHORIZED' : 'HTTP_ERROR',
+          message: (json as any)?.message || `Request failed with status ${res.status}`,
         },
       };
     }

@@ -897,7 +897,7 @@ export default function HomePage() {
           </p>
 
           {/* Card Navigation Segmented Tabs */}
-          <div className="card-nav-tabs" role="tablist" aria-label="Pillar Categories" style={{ justifyContent: 'center' }}>
+          <div className="card-nav-tabs" role="tablist" aria-label="Pillar Categories">
             {(
               [
                 { id: 'all', label: 'All 7 Pillars', count: 7 },
@@ -916,13 +916,14 @@ export default function HomePage() {
                   className={`card-nav-tab ${isActive ? 'active' : ''}`}
                   role="tab"
                   aria-selected={isActive}
-                  style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
+                  style={{ padding: '0.42rem 0.95rem', fontSize: '0.82rem' }}
                 >
-                  <span>{tab.label}</span>
-                  <span className="card-nav-badge" style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem' }}>{tab.count}</span>
+                  <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>{tab.label}</span>
+                  <span className="card-nav-badge" style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem', flexShrink: 0 }}>{tab.count}</span>
                 </button>
               );
             })}
+            <div style={{ flexShrink: 0, width: '0.5rem', height: '1px' }} aria-hidden="true" />
           </div>
         </div>
 
