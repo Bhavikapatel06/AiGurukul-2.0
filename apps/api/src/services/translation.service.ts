@@ -491,11 +491,15 @@ ${cleanText}`;
     let base64Clean = request.imageBase64.trim();
     let detectedMime = request.mimeType || 'image/jpeg';
 
-    const dataUrlMatch = base64Clean.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
-    if (dataUrlMatch) {
-      detectedMime = dataUrlMatch[1];
-      base64Clean = dataUrlMatch[2];
+    const commaIndex = base64Clean.indexOf(',');
+    if (base64Clean.startsWith('data:') && commaIndex !== -1) {
+      const mimeMatch = base64Clean.substring(0, commaIndex).match(/data:([^;]+)/);
+      if (mimeMatch) {
+        detectedMime = mimeMatch[1];
+      }
+      base64Clean = base64Clean.substring(commaIndex + 1);
     }
+    base64Clean = base64Clean.replace(/\s+/g, '');
 
     const buffer = Buffer.from(base64Clean, 'base64');
     if (buffer.length === 0) {
@@ -526,6 +530,7 @@ ${cleanText}`;
       confidence: ocrResult.confidence,
       isReadable: ocrResult.isReadable && text.length > 0,
       warning: ocrResult.warning,
+      ocrProvider: this.ocrProvider.providerName,
     };
   }
 
@@ -556,6 +561,9 @@ ${cleanText}`;
 
     return {
       ...ocrRes,
+      translatedText: translationResult.translatedText,
+      transliteration: translationResult.transliteration,
+      etymologyNotes: translationResult.etymologyNotes,
       translation: translationResult,
     };
   }

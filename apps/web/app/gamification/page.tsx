@@ -1577,7 +1577,7 @@ export default function GamificationPage() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, minWidth: 0 }}>
               {/* Rules Button - prominent, fully visible, never clipped */}
               <button
                 onClick={() => setShowTutorial(true)}
@@ -1612,10 +1612,14 @@ export default function GamificationPage() {
                   background: 'rgba(212, 175, 55, 0.12)',
                   border: '1px solid rgba(212, 175, 55, 0.3)',
                   borderRadius: '6px',
-                  padding: '0.22rem 0.55rem',
+                  padding: '0.22rem 0.5rem',
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
+                  maxWidth: '120px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: 'inline-block',
                   flexShrink: 0,
                 }}
               >

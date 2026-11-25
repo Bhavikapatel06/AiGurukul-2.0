@@ -48,3 +48,7 @@ PHASE_2_COMPLETION.md
 phase_2.md
 PHASE_3_COMPLETION.md
 phase_3.md
+
+# Tesseract OCR Trained Data cache
+*.traineddata
+*.traineddata.gz
