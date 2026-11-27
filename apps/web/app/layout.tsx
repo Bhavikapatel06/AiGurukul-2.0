@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Cinzel, Plus_Jakarta_Sans } from 'next/font/google';
 import '../styles/globals.css';
 import { GlobalNavbar } from '../components/GlobalNavbar';
@@ -26,12 +26,19 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0D0B08',
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${cinzel.variable} ${plusJakartaSans.variable}`} suppressHydrationWarning>
-      <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }} suppressHydrationWarning>
+      <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }} suppressHydrationWarning>
         <GlobalNavbar />
-        <main style={{ flex: 1 }}>{children}</main>
+        <main style={{ flex: 1, width: '100%', overflowX: 'hidden' }}>{children}</main>
         <GlobalFooter />
       </body>
     </html>

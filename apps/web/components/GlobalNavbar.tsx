@@ -34,14 +34,14 @@ export function GlobalNavbar() {
   }, [mobileMenuOpen]);
 
   const navLinks = [
-    { href: '/concepts', label: 'Library', icon: '📖', color: '#fbbf24' },
-    { href: '/wisdom', label: 'Wisdom', icon: '💬', color: '#c4b5fd' },
-    { href: '/ayurveda', label: 'Ayurveda', icon: '🌿', color: '#5eead4' },
-    { href: '/graph', label: 'Graph', icon: '🕸️', color: '#fde047' },
-    { href: '/quizzes', label: 'Quizzes', icon: '🎯', color: '#fdba74' },
-    { href: '/gamification', label: 'Games', icon: '🏆', color: '#fbbf24' },
-    { href: '/languages', label: 'Translate', icon: '🪶', color: '#38bdf8' },
-    { href: '/documents', label: 'RAG', icon: '📜', color: '#a78bfa' },
+    { href: '/concepts', label: 'Library' },
+    { href: '/wisdom', label: 'Wisdom' },
+    { href: '/ayurveda', label: 'Ayurveda' },
+    { href: '/graph', label: 'Graph' },
+    { href: '/quizzes', label: 'Quizzes' },
+    { href: '/gamification', label: 'Games' },
+    { href: '/languages', label: 'Translate' },
+    { href: '/documents', label: 'RAG' },
   ];
 
   return (
@@ -69,6 +69,7 @@ export function GlobalNavbar() {
       />
 
       <div
+        className="global-navbar-container"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -84,6 +85,7 @@ export function GlobalNavbar() {
         {/* Brand Logo (Left) */}
         <Link
           href="/"
+          className="navbar-brand-logo"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -125,12 +127,13 @@ export function GlobalNavbar() {
             </span>
             <span
               style={{
-                fontSize: '0.58rem',
+                fontSize: '0.62rem',
                 letterSpacing: '0.14em',
                 color: '#b8ae96',
                 textTransform: 'uppercase',
                 fontWeight: 600,
               }}
+              className="navbar-brand-subtitle"
             >
               Vedic Intelligence 2.0
             </span>
@@ -163,56 +166,32 @@ export function GlobalNavbar() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.35rem',
-                  fontSize: '0.82rem',
-                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '13px',
+                  fontWeight: isActive ? 500 : 400,
                   color: isActive ? 'var(--gold-radiance)' : '#EDE8D5',
-                  background: isActive
-                    ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.18) 0%, rgba(212, 175, 55, 0.08) 100%)'
-                    : 'transparent',
-                  border: isActive
-                    ? '1px solid rgba(242, 214, 117, 0.45)'
-                    : '1px solid transparent',
-                  boxShadow: isActive ? '0 2px 10px rgba(212, 175, 55, 0.2)' : 'none',
-                  padding: '0.35rem 0.65rem',
-                  borderRadius: '7px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: isActive ? '2px solid var(--gold-radiance)' : '2px solid transparent',
+                  padding: '0.35rem 0.6rem',
+                  borderRadius: 0,
                   textDecoration: 'none',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   position: 'relative',
-                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                  transition: 'color 0.15s ease, border-color 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.1)';
                     e.currentTarget.style.color = 'var(--gold-radiance)';
-                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.25)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = 'transparent';
                     e.currentTarget.style.color = '#EDE8D5';
-                    e.currentTarget.style.borderColor = 'transparent';
-                    e.currentTarget.style.transform = 'translateY(0)';
                   }
                 }}
               >
-                <span style={{ fontSize: '0.9rem' }}>{link.icon}</span>
                 <span>{link.label}</span>
-                {isActive && (
-                  <span
-                    style={{
-                      width: '4px',
-                      height: '4px',
-                      borderRadius: '50%',
-                      background: 'var(--gold-radiance)',
-                      boxShadow: '0 0 6px var(--gold-radiance)',
-                      marginLeft: '0.1rem',
-                    }}
-                  />
-                )}
               </Link>
             );
           })}
@@ -321,7 +300,7 @@ export function GlobalNavbar() {
             </div>
           )}
 
-          {/* Mobile Menu Toggle Button */}
+          {/* Mobile Menu Toggle Button (Proper Animated Hamburger) */}
           <button
             type="button"
             suppressHydrationWarning
@@ -329,24 +308,71 @@ export function GlobalNavbar() {
             aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={mobileMenuOpen}
             style={{
-              background: mobileMenuOpen ? 'rgba(212, 175, 55, 0.2)' : 'rgba(212, 175, 55, 0.08)',
-              border: '1px solid rgba(212, 175, 55, 0.4)',
+              background: mobileMenuOpen ? 'rgba(212, 175, 55, 0.22)' : 'rgba(212, 175, 55, 0.08)',
+              border: '1px solid rgba(212, 175, 55, 0.45)',
               color: 'var(--gold-radiance)',
-              padding: '0.35rem 0.7rem',
-              borderRadius: '7px',
+              padding: '0.45rem',
+              borderRadius: '8px',
               cursor: 'pointer',
               display: 'none',
               alignItems: 'center',
-              gap: '0.4rem',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              minHeight: '34px',
-              transition: 'all 0.2s ease',
+              justifyContent: 'center',
+              width: '40px',
+              height: '40px',
+              minWidth: '40px',
+              minHeight: '40px',
+              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: mobileMenuOpen ? '0 0 14px rgba(212, 175, 55, 0.35)' : 'none',
             }}
             className="mobile-menu-toggle"
           >
-            <span>{mobileMenuOpen ? '✕' : '☰'}</span>
-            <span className="mobile-menu-label" style={{ fontSize: '0.78rem' }}>Menu</span>
+            <div
+              style={{
+                width: '20px',
+                height: '15px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                position: 'relative',
+              }}
+            >
+              <span
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: '2px',
+                  backgroundColor: 'var(--gold-radiance)',
+                  borderRadius: '2px',
+                  transition: 'all 0.25s ease-in-out',
+                  transformOrigin: 'center',
+                  transform: mobileMenuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none',
+                }}
+              />
+              <span
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: '2px',
+                  backgroundColor: 'var(--gold-radiance)',
+                  borderRadius: '2px',
+                  transition: 'all 0.25s ease-in-out',
+                  opacity: mobileMenuOpen ? 0 : 1,
+                  transform: mobileMenuOpen ? 'scaleX(0)' : 'none',
+                }}
+              />
+              <span
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: '2px',
+                  backgroundColor: 'var(--gold-radiance)',
+                  borderRadius: '2px',
+                  transition: 'all 0.25s ease-in-out',
+                  transformOrigin: 'center',
+                  transform: mobileMenuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none',
+                }}
+              />
+            </div>
           </button>
         </div>
       </div>
@@ -435,37 +461,30 @@ export function GlobalNavbar() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.95rem',
-                    padding: '0.85rem 1.15rem',
-                    borderRadius: '10px',
+                    padding: '0.65rem 0.95rem',
+                    borderRadius: '6px',
                     color: isActive ? 'var(--gold-radiance)' : '#EDE8D5',
-                    background: isActive
-                      ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.08) 100%)'
-                      : 'rgba(255, 255, 255, 0.03)',
-                    border: isActive
-                      ? '1px solid rgba(242, 214, 117, 0.5)'
-                      : '1px solid rgba(212, 175, 55, 0.12)',
+                    background: isActive ? 'rgba(212, 175, 55, 0.08)' : 'transparent',
+                    border: 'none',
+                    borderLeft: isActive ? '3px solid var(--gold-radiance)' : '3px solid transparent',
                     textDecoration: 'none',
-                    fontSize: '1.02rem',
-                    fontWeight: isActive ? 700 : 500,
-                    minHeight: '52px',
-                    boxShadow: isActive ? '0 4px 16px rgba(212, 175, 55, 0.2)' : 'none',
+                    fontSize: '0.92rem',
+                    fontWeight: isActive ? 500 : 400,
+                    minHeight: '42px',
+                    boxShadow: 'none',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  <span style={{ fontSize: '1.35rem' }}>{link.icon}</span>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span>{link.label}</span>
-                  </div>
+                  <span>{link.label}</span>
                   {isActive && (
                     <span
                       style={{
                         marginLeft: 'auto',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                        fontWeight: 500,
                         color: 'var(--gold-radiance)',
-                        background: 'rgba(212, 175, 55, 0.2)',
-                        padding: '0.15rem 0.5rem',
-                        borderRadius: '9999px',
+                        borderBottom: '2px solid var(--gold-radiance)',
+                        paddingBottom: '1px',
                       }}
                     >
                       Active

@@ -10,27 +10,6 @@ export default function AyurvedaPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeModalPlant, setActiveModalPlant] = useState<AyurvedicPlant | null>(null);
 
-  // Quick symptom solver filter
-  const handleQuickPreset = (preset: 'sleep' | 'heat' | 'lungs' | 'digestion') => {
-    if (preset === 'sleep') {
-      setSearchQuery('');
-      setSelectedDosha('vata');
-      setSelectedCategory('vitality');
-    } else if (preset === 'heat') {
-      setSearchQuery('');
-      setSelectedDosha('pitta');
-      setSelectedCategory('all');
-    } else if (preset === 'lungs') {
-      setSearchQuery('');
-      setSelectedDosha('kapha');
-      setSelectedCategory('immunity');
-    } else if (preset === 'digestion') {
-      setSearchQuery('');
-      setSelectedDosha('all');
-      setSelectedCategory('digestion');
-    }
-  };
-
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedDosha('all');
@@ -39,7 +18,6 @@ export default function AyurvedaPage() {
 
   const filteredPlants = useMemo(() => {
     return AYURVEDIC_PLANTS.filter((plant) => {
-      // Search text match
       const query = searchQuery.trim().toLowerCase();
       if (query) {
         const matchesName = plant.name.toLowerCase().includes(query);
@@ -67,7 +45,6 @@ export default function AyurvedaPage() {
         }
       }
 
-      // Dosha Filter
       if (selectedDosha === 'vata') {
         if (plant.doshaMatrix.vata !== 'reduces') return false;
       } else if (selectedDosha === 'pitta') {
@@ -82,7 +59,6 @@ export default function AyurvedaPage() {
         if (!isTridoshic) return false;
       }
 
-      // Category Filter
       if (selectedCategory !== 'all') {
         if (plant.categoryKey !== selectedCategory) return false;
       }
@@ -92,294 +68,225 @@ export default function AyurvedaPage() {
   }, [searchQuery, selectedDosha, selectedCategory]);
 
   return (
-    <div className="temple-container" style={{ padding: '2rem 1.5rem 6rem', maxWidth: '1280px' }}>
-      {/* Quick Navigation Breadcrumb */}
+    <div
+      className="ayurveda-page-root"
+      style={{
+        minHeight: '100vh',
+        background: '#0D0B08',
+        color: '#EDE8D5',
+        paddingBottom: '4rem',
+      }}
+    >
+      {/* ── 1. SUBNAV BAR ─────────────────────────────────────── */}
       <div
+        className="ayurveda-subnav-bar"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '2rem',
-          paddingBottom: '1rem',
-          borderBottom: '1px solid rgba(212, 175, 55, 0.15)',
-          flexWrap: 'wrap',
-          gap: '1rem',
+          borderBottom: '1px solid rgba(212, 175, 55, 0.12)',
+          background: 'rgba(13, 11, 8, 0.98)',
+          padding: '0.65rem 1.25rem',
+          position: 'relative',
+          zIndex: 50,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Link
-            href="/"
+        <div
+          className="ayurveda-subnav-container"
+          style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            gap: '0.75rem',
+          }}
+        >
+          {/* Breadcrumb Back Option */}
+          <nav
+            aria-label="Breadcrumb"
+            className="ayurveda-subnav-breadcrumb"
             style={{
-              color: 'var(--text-dust)',
-              fontSize: '0.9rem',
-              textDecoration: 'none',
-              transition: 'color 0.2s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.85rem',
+              color: '#b8ae96',
+              whiteSpace: 'nowrap',
             }}
           >
-            ← Sanctum
-          </Link>
-          <span style={{ color: 'rgba(212, 175, 55, 0.3)' }}>/</span>
-          <span style={{ color: '#4fd1c5', fontSize: '0.9rem', fontWeight: 600 }}>
-            Ayurveda &amp; Sacred Plant Matrix
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link
+              href="/"
+              className="ayurveda-back-link"
+              style={{
+                color: '#b8ae96',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'color 0.15s ease',
+              }}
+            >
+              <span>←</span>
+              <span>Sanctum Home</span>
+            </Link>
+            <span style={{ color: 'rgba(212, 175, 55, 0.35)', userSelect: 'none' }}>›</span>
+            <span style={{ color: 'var(--gold-radiance)', fontWeight: 500 }}>Ayurveda</span>
+            <span className="ayurveda-breadcrumb-leaf" style={{ color: 'rgba(212, 175, 55, 0.35)', userSelect: 'none' }}>›</span>
+            <span className="ayurveda-breadcrumb-leaf" style={{ color: '#EDE8D5', fontWeight: 500 }}>Medicinal Plants</span>
+          </nav>
+
+          {/* Badge */}
           <span
-            className="badge"
+            className="ayurveda-subnav-badge"
             style={{
-              borderColor: 'rgba(58, 155, 140, 0.4)',
-              color: '#4fd1c5',
-              fontSize: '0.75rem',
+              fontSize: '0.82rem',
+              color: '#b8ae96',
+              fontWeight: 400,
+              whiteSpace: 'nowrap',
             }}
           >
-            🌿 Dravyaguna Materia Medica
-          </span>
-          <span
-            className="badge"
-            style={{
-              borderColor: 'rgba(212, 175, 55, 0.3)',
-              color: 'var(--gold-radiance)',
-              fontSize: '0.75rem',
-            }}
-          >
-            14 Classical Healing Herbs
-          </span>
-          <span
-            className="badge"
-            style={{
-              borderColor: 'rgba(123, 104, 238, 0.3)',
-              color: '#c4b5fd',
-              fontSize: '0.75rem',
-            }}
-          >
-            Zero Quiz Required
+            <span>{AYURVEDIC_PLANTS.length} Classical Herbs</span>
+            <span className="ayurveda-badge-verbose"> · Dravyaguna Materia Medica</span>
           </span>
         </div>
       </div>
 
-      {/* HEADER HERO */}
-      <section style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <div
+      {/* ── 2. PAGE HEADER ────────────────────────────────────── */}
+      <main className="ayurveda-main-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.75rem 1.25rem 3.5rem', position: 'relative', zIndex: 10 }}>
+        <section
+          className="ayurveda-hero-card"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.75rem',
+            textAlign: 'center',
+            padding: '1.75rem 2rem 1.6rem',
+            background: 'rgba(16, 13, 9, 0.96)',
+            border: '1px solid rgba(212, 175, 55, 0.2)',
+            borderRadius: '12px',
+            marginBottom: '1.75rem',
+            marginTop: 0,
+            boxSizing: 'border-box',
           }}
         >
-          <span style={{ fontSize: '1.75rem' }}>🌿</span>
-          <span
+          <h1
             style={{
-              fontSize: '0.85rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              color: '#4fd1c5',
-              fontWeight: 700,
+              fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(1.6rem, 3.2vw, 2.2rem)',
+              letterSpacing: '0.03em',
+              lineHeight: 1.25,
+              color: 'var(--gold-radiance)',
+              margin: '0 0 0.65rem',
+              fontWeight: 600,
             }}
           >
-            द्रव्यगुण विज्ञान • Classical Ayurvedic Materia Medica
-          </span>
-        </div>
+            Ayurveda &amp; Sacred Plant Matrix
+          </h1>
 
-        <h1
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: 'clamp(2.1rem, 4.2vw, 3.2rem)',
-            letterSpacing: '0.04em',
-            lineHeight: 1.2,
-            marginBottom: '1rem',
-          }}
-          className="gold-gradient-text"
-        >
-          Ayurveda &amp; Sacred Plant Matrix
-        </h1>
+          <p
+            style={{
+              color: '#b8ae96',
+              maxWidth: '720px',
+              margin: '0 auto',
+              fontSize: '0.92rem',
+              lineHeight: 1.6,
+              fontWeight: 400,
+            }}
+          >
+            Authentic medicinal plants grounded in the <em>Charaka Samhita</em>, <em>Sushruta Samhita</em>, and{' '}
+            <em>Bhavaprakasha Nighantu</em>. Exact preparation methods, circadian timings, and doshic dynamics.
+          </p>
+        </section>
 
-        <p
+        {/* ── 3. SEARCH & FILTER CONTROLS ───────────────────── */}
+        <section
+          className="ayurveda-filter-section"
           style={{
-            color: 'var(--text-vellum)',
-            maxWidth: '820px',
-            margin: '0 auto 1.5rem',
-            fontSize: '1.05rem',
-            lineHeight: 1.65,
-          }}
-        >
-          Discover authentic medicinal plants grounded in the <em>Charaka Samhita</em>, <em>Sushruta Samhita</em>, and <em>Bhavaprakasha Nighantu</em>. Master exact preparation methods, optimal circadian timings, doshic dynamics, and proven shastric healing benefits.
-        </p>
-
-        {/* Quick Problem Selector (Presets) */}
-        <div
-          style={{
-            display: 'inline-flex',
-            flexWrap: 'wrap',
-            gap: '0.6rem',
-            justifyContent: 'center',
-            background: 'rgba(26, 22, 14, 0.75)',
-            padding: '0.75rem 1.25rem',
-            borderRadius: '30px',
-            border: '1px solid rgba(212, 175, 55, 0.25)',
+            marginBottom: '2rem',
+            padding: '1.25rem 1.25rem 1rem',
+            background: 'rgba(18, 15, 10, 0.9)',
+            border: '1px solid rgba(212, 175, 55, 0.15)',
+            borderRadius: '10px',
           }}
         >
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-dust)', alignSelf: 'center', marginRight: '0.25rem' }}>
-            What balance do you seek today?
-          </span>
-          <button
-            onClick={() => handleQuickPreset('sleep')}
-            className="badge"
-            style={{
-              background: 'rgba(123, 104, 238, 0.15)',
-              borderColor: '#7B68EE',
-              color: '#c4b5fd',
-              cursor: 'pointer',
-              fontSize: '0.78rem',
-              padding: '0.35rem 0.8rem',
-            }}
-          >
-            🌙 Insomnia &amp; Stress (Ashwagandha / Shankhpushpi)
-          </button>
-          <button
-            onClick={() => handleQuickPreset('heat')}
-            className="badge"
-            style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              borderColor: '#ef4444',
-              color: '#fca5a5',
-              cursor: 'pointer',
-              fontSize: '0.78rem',
-              padding: '0.35rem 0.8rem',
-            }}
-          >
-            🔥 Acid Reflux &amp; Skin Heat (Shatavari / Neem / Brahmi)
-          </button>
-          <button
-            onClick={() => handleQuickPreset('lungs')}
-            className="badge"
-            style={{
-              background: 'rgba(58, 155, 140, 0.15)',
-              borderColor: '#3A9B8C',
-              color: '#5eead4',
-              cursor: 'pointer',
-              fontSize: '0.78rem',
-              padding: '0.35rem 0.8rem',
-            }}
-          >
-            🍃 Cough &amp; Lungs (Tulsi &amp; Turmeric)
-          </button>
-          <button
-            onClick={() => handleQuickPreset('digestion')}
-            className="badge"
-            style={{
-              background: 'rgba(245, 158, 11, 0.15)',
-              borderColor: '#f59e0b',
-              color: '#fcd34d',
-              cursor: 'pointer',
-              fontSize: '0.78rem',
-              padding: '0.35rem 0.8rem',
-            }}
-          >
-            🥣 Digestion &amp; Detox (Triphala &amp; Yashtimadhu)
-          </button>
-        </div>
-      </section>
-
-      {/* SEARCH & FILTER CONTROLS */}
-      <section
-        className="temple-card"
-        style={{
-          marginBottom: '2.5rem',
-          padding: '1.5rem 1.75rem',
-          background: 'linear-gradient(160deg, rgba(33, 29, 18, 0.95) 0%, rgba(18, 15, 10, 0.98) 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.3)',
-        }}
-      >
-        {/* Search Input Bar */}
-        <div style={{ marginBottom: '1.25rem', position: 'relative' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: 'rgba(13, 11, 8, 0.85)',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              borderRadius: '8px',
-              padding: '0.6rem 1rem',
-              gap: '0.75rem',
-            }}
-          >
-            <span style={{ fontSize: '1.2rem', color: 'var(--gold-sacred)' }}>🔍</span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search plant by name, botanical name, Sanskrit, symptom (e.g. sleep, stress, skin, digestion, lungs)..."
+          {/* Search Input */}
+          <div style={{ marginBottom: '1rem' }}>
+            <div
               style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                color: 'var(--text-vellum)',
-                fontSize: '0.95rem',
-                fontFamily: 'inherit',
-              }}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-dust)',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  padding: '0.2rem',
-                }}
-                title="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Dosha & Category Filter Rows */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Row 1: Dosha Filter Tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: 'var(--text-dust)',
-                fontWeight: 700,
-                minWidth: '100px',
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(13, 11, 8, 0.8)',
+                border: '1px solid rgba(212, 175, 55, 0.2)',
+                borderRadius: '6px',
+                padding: '0.5rem 0.85rem',
+                gap: '0.5rem',
               }}
             >
-              Dosha Action:
-            </span>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.9rem', color: 'rgba(212, 175, 55, 0.6)', flexShrink: 0 }}>⌕</span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by plant name, Sanskrit, symptom, benefit..."
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#EDE8D5',
+                  fontSize: '0.86rem',
+                  fontFamily: 'inherit',
+                }}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#b8ae96',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    padding: '0.1rem',
+                    flexShrink: 0,
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Dosha Filter Row */}
+          <div className="ayurveda-filter-row" style={{ marginBottom: '1rem' }}>
+            <span className="ayurveda-filter-label">Dosha Action</span>
+            <div className="ayurveda-filter-chips">
               {[
                 { id: 'all', label: 'All Plants' },
-                { id: 'vata', label: '🌬️ Vata Pacifiers (Calming/Nourishing)' },
-                { id: 'pitta', label: '🔥 Pitta Pacifiers (Cooling/Soothing)' },
-                { id: 'kapha', label: '💧 Kapha Pacifiers (Stimulating/Warming)' },
-                { id: 'tridosha', label: '⚖️ Tridoshic (Harmonizes All 3)' },
+                { id: 'vata', label: 'Vata' },
+                { id: 'pitta', label: 'Pitta' },
+                { id: 'kapha', label: 'Kapha' },
+                { id: 'tridosha', label: 'Tridoshic' },
               ].map((tab) => {
                 const isActive = selectedDosha === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setSelectedDosha(tab.id as any)}
+                    className={`ayurveda-chip ${isActive ? 'active dosha-active' : ''}`}
                     style={{
-                      background: isActive
-                        ? 'linear-gradient(135deg, rgba(58, 155, 140, 0.4) 0%, rgba(58, 155, 140, 0.2) 100%)'
-                        : 'rgba(13, 11, 8, 0.6)',
-                      border: isActive ? '1px solid #4fd1c5' : '1px solid rgba(212, 175, 55, 0.18)',
-                      color: isActive ? '#81e6d9' : 'var(--text-dust)',
-                      padding: '0.35rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.8rem',
-                      fontWeight: isActive ? 700 : 500,
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: isActive
+                        ? '2px solid var(--gold-radiance)'
+                        : '2px solid transparent',
+                      color: isActive ? 'var(--gold-radiance)' : '#b8ae96',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: 0,
+                      fontSize: '0.78rem',
+                      fontWeight: isActive ? 500 : 400,
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
+                      transition: 'color 0.15s ease, border-color 0.15s ease',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      outline: 'none',
                     }}
                   >
                     {tab.label}
@@ -389,623 +296,634 @@ export default function AyurvedaPage() {
             </div>
           </div>
 
-          {/* Row 2: Category Filter Tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <span
+          {/* Target System Dropdown Row */}
+          <div
+            className="ayurveda-filter-row"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            <label
+              htmlFor="target-system-select"
+              className="ayurveda-filter-label"
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.68rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: 'var(--text-dust)',
-                fontWeight: 700,
-                minWidth: '100px',
+                color: '#b8ae96',
+                fontWeight: 500,
+                minWidth: '80px',
+                flexShrink: 0,
               }}
             >
-              Target System:
-            </span>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {[
-                { id: 'all', label: 'All Categories' },
-                { id: 'vitality', label: '🌿 Vitality & Longevity (Rasayana)' },
-                { id: 'brain', label: '🧠 Brain & Memory (Medhya)' },
-                { id: 'immunity', label: '🛡️ Immunity & Lungs (Pranavaha)' },
-                { id: 'digestion', label: '🥣 Digestion & Detox (Deepana)' },
-                { id: 'skin', label: '🌸 Skin & Blood Detox' },
-                { id: 'joints', label: '🦴 Joints & Mobility' },
-                { id: 'heart', label: '🫀 Heart & Circulation' },
-              ].map((tab) => {
-                const isActive = selectedCategory === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSelectedCategory(tab.id)}
-                    style={{
-                      background: isActive
-                        ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.15) 100%)'
-                        : 'rgba(13, 11, 8, 0.6)',
-                      border: isActive ? '1px solid var(--gold-sacred)' : '1px solid rgba(212, 175, 55, 0.18)',
-                      color: isActive ? 'var(--gold-radiance)' : 'var(--text-dust)',
-                      padding: '0.35rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.8rem',
-                      fontWeight: isActive ? 700 : 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
+              Target System
+            </label>
+            <div style={{ position: 'relative', display: 'inline-block', minWidth: '200px', maxWidth: '320px', flex: '1 1 auto' }}>
+              <select
+                id="target-system-select"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="input-sacred"
+                style={{
+                  width: '100%',
+                  padding: '0.38rem 2rem 0.38rem 0.75rem',
+                  fontSize: '0.82rem',
+                  borderRadius: '6px',
+                  background: 'rgba(20, 17, 11, 0.95)',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  color: selectedCategory === 'all' ? '#EDE8D5' : 'var(--gold-radiance)',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <option value="all" style={{ background: '#14110b', color: '#EDE8D5' }}>All Target Systems</option>
+                <option value="vitality" style={{ background: '#14110b', color: '#EDE8D5' }}>Vitality</option>
+                <option value="brain" style={{ background: '#14110b', color: '#EDE8D5' }}>Mind &amp; Focus</option>
+                <option value="immunity" style={{ background: '#14110b', color: '#EDE8D5' }}>Immunity</option>
+                <option value="digestion" style={{ background: '#14110b', color: '#EDE8D5' }}>Digestion</option>
+                <option value="skin" style={{ background: '#14110b', color: '#EDE8D5' }}>Skin Detox</option>
+                <option value="joints" style={{ background: '#14110b', color: '#EDE8D5' }}>Joints</option>
+                <option value="heart" style={{ background: '#14110b', color: '#EDE8D5' }}>Heart</option>
+              </select>
+              <span
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  color: 'rgba(212, 175, 55, 0.6)',
+                  fontSize: '0.68rem',
+                }}
+              >
+                ▼
+              </span>
             </div>
+            {selectedCategory !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('all')}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#b8ae96',
+                  fontSize: '0.74rem',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: '0.2rem 0.4rem',
+                  flexShrink: 0,
+                }}
+              >
+                Reset System
+              </button>
+            )}
           </div>
-        </div>
 
-        {/* Filter Stats & Reset */}
-        <div
-          style={{
-            marginTop: '1.25rem',
-            paddingTop: '0.85rem',
-            borderTop: '1px solid rgba(212, 175, 55, 0.12)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '0.85rem',
-          }}
-        >
-          <span style={{ color: 'var(--text-dust)' }}>
-            Displaying <strong style={{ color: '#4fd1c5' }}>{filteredPlants.length}</strong> of{' '}
-            {AYURVEDIC_PLANTS.length} sacred medicinal plants
-          </span>
-          {(searchQuery || selectedDosha !== 'all' || selectedCategory !== 'all') && (
+          {/* Results count + Reset */}
+          <div
+            style={{
+              marginTop: '1rem',
+              paddingTop: '0.75rem',
+              borderTop: '1px solid rgba(212, 175, 55, 0.1)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '0.78rem',
+            }}
+          >
+            <span style={{ color: '#b8ae96' }}>
+              Showing <strong style={{ color: '#EDE8D5', fontWeight: 500 }}>{filteredPlants.length}</strong> of{' '}
+              {AYURVEDIC_PLANTS.length} medicinal plants
+            </span>
+            {(searchQuery || selectedDosha !== 'all' || selectedCategory !== 'all') && (
+              <button
+                onClick={resetFilters}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--gold-radiance)',
+                  cursor: 'pointer',
+                  fontSize: '0.76rem',
+                  textDecoration: 'underline',
+                  padding: 0,
+                }}
+              >
+                Reset filters
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* ── 4. PLANT CARDS GRID ───────────────────────────── */}
+        {filteredPlants.length === 0 ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '3.5rem 2rem',
+              color: '#b8ae96',
+              border: '1px solid rgba(212, 175, 55, 0.12)',
+              borderRadius: '10px',
+              background: 'rgba(18, 15, 10, 0.6)',
+            }}
+          >
+            <div style={{ fontSize: '2rem', marginBottom: '1rem', opacity: 0.6 }}>⌕</div>
+            <h3 style={{ fontFamily: 'var(--font-serif)', color: '#EDE8D5', marginBottom: '0.5rem', fontWeight: 500 }}>
+              No Plants Found
+            </h3>
+            <p style={{ fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+              No herbs matched &ldquo;{searchQuery}&rdquo; with the current filters.
+            </p>
             <button
               onClick={resetFilters}
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--gold-radiance)',
+                padding: '0.55rem 1.25rem',
+                background: 'rgba(79, 209, 197, 0.12)',
+                border: '1px solid rgba(79, 209, 197, 0.35)',
+                color: '#81e6d9',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                fontSize: '0.82rem',
-                textDecoration: 'underline',
+                fontSize: '0.85rem',
+                fontWeight: 500,
               }}
             >
-              Reset all filters
+              Show all {AYURVEDIC_PLANTS.length} plants
             </button>
-          )}
-        </div>
-      </section>
-
-      {/* PLANT CARDS GRID */}
-      {filteredPlants.length === 0 ? (
-        <div
-          className="temple-card"
-          style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-dust)' }}
-        >
-          <span style={{ fontSize: '2.5rem' }}>🍃</span>
-          <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-vellum)', marginTop: '1rem' }}>
-            No Medicinal Plants Found
-          </h3>
-          <p style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
-            No herbs matched your current search criteria &quot;{searchQuery}&quot;.
-          </p>
-          <button
-            onClick={resetFilters}
-            className="btn-sacred"
-            style={{
-              marginTop: '1.5rem',
-              display: 'inline-flex',
-              padding: '0.6rem 1.4rem',
-              background: 'linear-gradient(135deg, #3A9B8C 0%, #22645a 100%)',
-              color: '#EDE8D5',
-              cursor: 'pointer',
-            }}
-          >
-            Show All 14 Medicinal Plants
-          </button>
-        </div>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '2rem',
-          }}
-        >
-          {filteredPlants.map((plant) => (
-            <div
-              key={plant.id}
-              className="temple-card temple-card-interactive"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                borderTop: '3px solid #3A9B8C',
-                padding: '2rem 1.75rem',
-                background: 'linear-gradient(155deg, rgba(32, 28, 18, 0.95) 0%, rgba(16, 13, 8, 0.98) 100%)',
-                boxShadow: '0 12px 36px -4px rgba(0, 0, 0, 0.75), 0 0 20px rgba(58, 155, 140, 0.1)',
-                position: 'relative',
-              }}
-            >
-              <div>
-                {/* Card Top: Icon, Sanskrit & Category Badge */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div
-                      className="card-icon-bubble"
-                      style={{
-                        background: 'rgba(58, 155, 140, 0.18)',
-                        borderColor: 'rgba(58, 155, 140, 0.45)',
-                        fontSize: '1.75rem',
-                      }}
-                    >
-                      {plant.icon}
-                    </div>
-                    <div>
-                      <div
-                        style={{
-                          fontSize: '0.8rem',
-                          color: '#4fd1c5',
-                          fontWeight: 700,
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {plant.sanskritName}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.78rem',
-                          fontStyle: 'italic',
-                          color: 'var(--text-dust)',
-                        }}
-                      >
-                        {plant.botanicalName}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span
-                    className="badge"
-                    style={{
-                      borderColor: 'rgba(58, 155, 140, 0.45)',
-                      color: '#4fd1c5',
-                      background: 'rgba(58, 155, 140, 0.12)',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      maxWidth: '140px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={plant.category}
-                  >
-                    {plant.category.split('(')[0]}
-                  </span>
-                </div>
-
-                {/* Common Name */}
-                <h3
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.45rem',
-                    color: 'var(--gold-radiance)',
-                    marginBottom: '0.75rem',
-                    lineHeight: 1.25,
-                  }}
-                >
-                  {plant.name}
-                </h3>
-
-                {/* Dosha Matrix Strip */}
-                <div
-                  style={{
-                    background: 'rgba(13, 11, 8, 0.75)',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(212, 175, 55, 0.18)',
-                    marginBottom: '1.25rem',
-                  }}
-                >
+          </div>
+        ) : (
+          <div className="ayurveda-plant-grid">
+            {filteredPlants.map((plant) => (
+              <div
+                key={plant.id}
+                className="ayurveda-plant-card"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  padding: '1.5rem',
+                  background: 'rgba(18, 15, 10, 0.95)',
+                  border: '1px solid rgba(212, 175, 55, 0.12)',
+                  borderTop: '2px solid rgba(79, 209, 197, 0.35)',
+                  borderRadius: '10px',
+                  position: 'relative',
+                }}
+              >
+                <div>
+                  {/* Card Top: Icon, Sanskrit & Category */}
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '0.4rem',
+                      alignItems: 'flex-start',
+                      marginBottom: '0.85rem',
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        color: 'var(--gold-sacred)',
-                        fontWeight: 700,
-                      }}
-                    >
-                      Tri-Dosha Matrix Action
-                    </span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dust)' }}>
-                      {plant.doshaMatrix.summary}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '4px',
-                        background:
-                          plant.doshaMatrix.vata === 'reduces'
-                            ? 'rgba(79, 209, 197, 0.2)'
-                            : 'rgba(13, 11, 8, 0.5)',
-                        border:
-                          plant.doshaMatrix.vata === 'reduces'
-                            ? '1px solid #4fd1c5'
-                            : '1px solid rgba(212, 175, 55, 0.15)',
-                        color: plant.doshaMatrix.vata === 'reduces' ? '#81e6d9' : 'var(--text-dust)',
-                      }}
-                    >
-                      🌬️ Vata: {plant.doshaMatrix.vata === 'reduces' ? '↓ Pacifies' : '= Neutral'}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '4px',
-                        background:
-                          plant.doshaMatrix.pitta === 'reduces'
-                            ? 'rgba(248, 113, 113, 0.2)'
-                            : 'rgba(13, 11, 8, 0.5)',
-                        border:
-                          plant.doshaMatrix.pitta === 'reduces'
-                            ? '1px solid #f87171'
-                            : '1px solid rgba(212, 175, 55, 0.15)',
-                        color: plant.doshaMatrix.pitta === 'reduces' ? '#fca5a5' : 'var(--text-dust)',
-                      }}
-                    >
-                      🔥 Pitta: {plant.doshaMatrix.pitta === 'reduces' ? '↓ Cools' : plant.doshaMatrix.pitta === 'neutral' ? '= Neutral' : '↑ Mild Warm'}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '4px',
-                        background:
-                          plant.doshaMatrix.kapha === 'reduces'
-                            ? 'rgba(251, 191, 36, 0.2)'
-                            : 'rgba(13, 11, 8, 0.5)',
-                        border:
-                          plant.doshaMatrix.kapha === 'reduces'
-                            ? '1px solid #fbbf24'
-                            : '1px solid rgba(212, 175, 55, 0.15)',
-                        color: plant.doshaMatrix.kapha === 'reduces' ? '#fde68a' : 'var(--text-dust)',
-                      }}
-                    >
-                      💧 Kapha: {plant.doshaMatrix.kapha === 'reduces' ? '↓ Reduces' : '= Neutral'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* SECTION 1: WHAT IS THE BENEFITS */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      marginBottom: '0.5rem',
-                    }}
-                  >
-                    <span style={{ fontSize: '0.9rem' }}>✨</span>
-                    <h4
-                      style={{
-                        fontSize: '0.82rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        color: 'var(--gold-sacred)',
-                        fontWeight: 700,
-                        margin: 0,
-                      }}
-                    >
-                      What is the Benefits (स्वास्थ्य लाभ)
-                    </h4>
-                  </div>
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      padding: 0,
-                      margin: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.4rem',
-                    }}
-                  >
-                    {plant.benefits.map((b, idx) => (
-                      <li
-                        key={idx}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div
                         style={{
-                          fontSize: '0.85rem',
-                          color: 'var(--text-vellum)',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '0.55rem',
-                          lineHeight: 1.45,
+                          fontSize: '1.5rem',
+                          lineHeight: 1,
+                          flexShrink: 0,
                         }}
                       >
-                        <span style={{ color: '#4fd1c5', fontWeight: 700, fontSize: '0.85rem' }}>✓</span>
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                        {plant.icon}
+                      </div>
+                      <div>
+                        <div
+                          style={{
+                            fontSize: '0.78rem',
+                            color: '#81e6d9',
+                            fontWeight: 500,
+                            letterSpacing: '0.03em',
+                          }}
+                        >
+                          {plant.sanskritName}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '0.74rem',
+                            fontStyle: 'italic',
+                            color: '#b8ae96',
+                          }}
+                        >
+                          {plant.botanicalName}
+                        </div>
+                      </div>
+                    </div>
 
-                {/* SECTION 2: HOW TO USE */}
-                <div
-                  style={{
-                    background: 'rgba(58, 155, 140, 0.08)',
-                    border: '1px solid rgba(58, 155, 140, 0.25)',
-                    padding: '0.9rem',
-                    borderRadius: '8px',
-                    marginBottom: '1.25rem',
-                  }}
-                >
-                  <div
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '9999px',
+                        border: '1px solid rgba(79, 209, 197, 0.3)',
+                        color: '#81e6d9',
+                        background: 'rgba(79, 209, 197, 0.07)',
+                        fontWeight: 400,
+                        maxWidth: '130px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        flexShrink: 0,
+                      }}
+                      title={plant.category}
+                    >
+                      {plant.category.split('(')[0].trim()}
+                    </span>
+                  </div>
+
+                  {/* Plant Common Name */}
+                  <h3
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      marginBottom: '0.45rem',
+                      fontFamily: 'var(--font-serif)',
+                      fontSize: '1.3rem',
+                      color: 'var(--gold-radiance)',
+                      marginBottom: '0.85rem',
+                      lineHeight: 1.3,
+                      fontWeight: 600,
                     }}
                   >
-                    <span style={{ fontSize: '0.9rem' }}>🥣</span>
-                    <h4
-                      style={{
-                        fontSize: '0.82rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        color: '#4fd1c5',
-                        fontWeight: 700,
-                        margin: 0,
-                      }}
-                    >
-                      How to Use (उपयोग विधि &amp; Anupana)
-                    </h4>
-                  </div>
-                  <div style={{ fontSize: '0.83rem', color: 'var(--text-vellum)', lineHeight: 1.5 }}>
-                    <div style={{ marginBottom: '0.3rem' }}>
-                      <strong style={{ color: 'var(--gold-radiance)' }}>Form &amp; Dosage:</strong>{' '}
-                      {plant.howToUse.dosage} in {plant.howToUse.form}.
-                    </div>
-                    <div>
-                      <strong style={{ color: 'var(--gold-radiance)' }}>Vehicle (Anupana):</strong>{' '}
-                      {plant.howToUse.anupana}
-                    </div>
-                  </div>
-                </div>
+                    {plant.name}
+                  </h3>
 
-                {/* SECTION 3: WHERE & WHEN TO USE */}
-                <div
-                  style={{
-                    background: 'rgba(212, 175, 55, 0.07)',
-                    border: '1px solid rgba(212, 175, 55, 0.2)',
-                    padding: '0.9rem',
-                    borderRadius: '8px',
-                    marginBottom: '1.5rem',
-                  }}
-                >
+                  {/* Dosha Matrix */}
                   <div
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      marginBottom: '0.45rem',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: '7px',
+                      border: '1px solid rgba(212, 175, 55, 0.12)',
+                      background: 'rgba(13, 11, 8, 0.5)',
+                      marginBottom: '1rem',
                     }}
                   >
-                    <span style={{ fontSize: '0.9rem' }}>⏰</span>
-                    <h4
+                    <div
                       style={{
-                        fontSize: '0.82rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        color: 'var(--gold-radiance)',
-                        fontWeight: 700,
-                        margin: 0,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '0.4rem',
                       }}
                     >
-                      Where &amp; When to Use (समय एवं स्थिति)
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          color: 'rgba(212, 175, 55, 0.65)',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Tri-Dosha Action
+                      </span>
+                      <span style={{ fontSize: '0.68rem', color: '#b8ae96' }}>
+                        {plant.doshaMatrix.summary}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {/* Vata */}
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '0.18rem 0.5rem',
+                          borderRadius: '4px',
+                          background:
+                            plant.doshaMatrix.vata === 'reduces'
+                              ? 'rgba(79, 209, 197, 0.12)'
+                              : 'rgba(13, 11, 8, 0.4)',
+                          border:
+                            plant.doshaMatrix.vata === 'reduces'
+                              ? '1px solid rgba(79, 209, 197, 0.35)'
+                              : '1px solid rgba(212, 175, 55, 0.12)',
+                          color:
+                            plant.doshaMatrix.vata === 'reduces' ? '#81e6d9' : '#b8ae96',
+                        }}
+                      >
+                        Vata: {plant.doshaMatrix.vata === 'reduces' ? '↓ Pacifies' : '= Neutral'}
+                      </span>
+                      {/* Pitta */}
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '0.18rem 0.5rem',
+                          borderRadius: '4px',
+                          background:
+                            plant.doshaMatrix.pitta === 'reduces'
+                              ? 'rgba(248, 113, 113, 0.12)'
+                              : 'rgba(13, 11, 8, 0.4)',
+                          border:
+                            plant.doshaMatrix.pitta === 'reduces'
+                              ? '1px solid rgba(248, 113, 113, 0.35)'
+                              : '1px solid rgba(212, 175, 55, 0.12)',
+                          color:
+                            plant.doshaMatrix.pitta === 'reduces' ? '#fca5a5' : '#b8ae96',
+                        }}
+                      >
+                        Pitta:{' '}
+                        {plant.doshaMatrix.pitta === 'reduces'
+                          ? '↓ Cools'
+                          : plant.doshaMatrix.pitta === 'neutral'
+                          ? '= Neutral'
+                          : '↑ Warms'}
+                      </span>
+                      {/* Kapha */}
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '0.18rem 0.5rem',
+                          borderRadius: '4px',
+                          background:
+                            plant.doshaMatrix.kapha === 'reduces'
+                              ? 'rgba(251, 191, 36, 0.12)'
+                              : 'rgba(13, 11, 8, 0.4)',
+                          border:
+                            plant.doshaMatrix.kapha === 'reduces'
+                              ? '1px solid rgba(251, 191, 36, 0.35)'
+                              : '1px solid rgba(212, 175, 55, 0.12)',
+                          color:
+                            plant.doshaMatrix.kapha === 'reduces' ? '#fde68a' : '#b8ae96',
+                        }}
+                      >
+                        Kapha: {plant.doshaMatrix.kapha === 'reduces' ? '↓ Reduces' : '= Neutral'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Benefits */}
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h4
+                      style={{
+                        fontSize: '0.7rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: 'rgba(212, 175, 55, 0.65)',
+                        fontWeight: 600,
+                        margin: '0 0 0.5rem',
+                      }}
+                    >
+                      Health Benefits
                     </h4>
+                    <ul
+                      style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      {plant.benefits.map((b, idx) => (
+                        <li
+                          key={idx}
+                          style={{
+                            fontSize: '0.84rem',
+                            color: '#EDE8D5',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '0.5rem',
+                            lineHeight: 1.45,
+                            fontWeight: 400,
+                          }}
+                        >
+                          <span style={{ color: '#81e6d9', flexShrink: 0, fontSize: '0.78rem', marginTop: '0.1em' }}>✓</span>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div style={{ fontSize: '0.83rem', color: 'var(--text-vellum)', lineHeight: 1.5 }}>
-                    <div style={{ marginBottom: '0.3rem' }}>
-                      <strong style={{ color: '#4fd1c5' }}>When:</strong>{' '}
-                      {plant.whereAndWhen.whenToUse} ({plant.whereAndWhen.seasonalRitucharya}).
+
+                  {/* How to Use */}
+                  <div
+                    style={{
+                      background: 'rgba(79, 209, 197, 0.06)',
+                      border: '1px solid rgba(79, 209, 197, 0.18)',
+                      padding: '0.75rem',
+                      borderRadius: '7px',
+                      marginBottom: '0.85rem',
+                    }}
+                  >
+                    <h4
+                      style={{
+                        fontSize: '0.7rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: '#81e6d9',
+                        fontWeight: 600,
+                        margin: '0 0 0.4rem',
+                      }}
+                    >
+                      Preparation &amp; Dosage
+                    </h4>
+                    <div style={{ fontSize: '0.83rem', color: '#EDE8D5', lineHeight: 1.5, fontWeight: 400 }}>
+                      <div style={{ marginBottom: '0.25rem' }}>
+                        <strong style={{ color: 'var(--gold-radiance)', fontWeight: 500 }}>Form &amp; Dosage:</strong>{' '}
+                        {plant.howToUse.dosage} in {plant.howToUse.form}.
+                      </div>
+                      <div>
+                        <strong style={{ color: 'var(--gold-radiance)', fontWeight: 500 }}>Anupana (Vehicle):</strong>{' '}
+                        {plant.howToUse.anupana}
+                      </div>
                     </div>
-                    <div>
-                      <strong style={{ color: '#4fd1c5' }}>Where (Target):</strong>{' '}
-                      {plant.whereAndWhen.whereToUse}.
+                  </div>
+
+                  {/* When & Where */}
+                  <div
+                    style={{
+                      background: 'rgba(212, 175, 55, 0.05)',
+                      border: '1px solid rgba(212, 175, 55, 0.15)',
+                      padding: '0.75rem',
+                      borderRadius: '7px',
+                      marginBottom: '1.25rem',
+                    }}
+                  >
+                    <h4
+                      style={{
+                        fontSize: '0.7rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: 'rgba(212, 175, 55, 0.7)',
+                        fontWeight: 600,
+                        margin: '0 0 0.4rem',
+                      }}
+                    >
+                      Timing &amp; Application
+                    </h4>
+                    <div style={{ fontSize: '0.83rem', color: '#EDE8D5', lineHeight: 1.5, fontWeight: 400 }}>
+                      <div style={{ marginBottom: '0.25rem' }}>
+                        <strong style={{ color: '#b8ae96', fontWeight: 500 }}>When:</strong>{' '}
+                        {plant.whereAndWhen.whenToUse} ({plant.whereAndWhen.seasonalRitucharya}).
+                      </div>
+                      <div>
+                        <strong style={{ color: '#b8ae96', fontWeight: 500 }}>Target:</strong>{' '}
+                        {plant.whereAndWhen.whereToUse}.
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* CARD FOOTER: Classical Shastra Citation & Modal Button */}
-              <div>
-                <div
-                  style={{
-                    fontSize: '0.74rem',
-                    color: 'var(--text-dust)',
-                    fontStyle: 'italic',
-                    marginBottom: '1rem',
-                    paddingTop: '0.75rem',
-                    borderTop: '1px solid rgba(212, 175, 55, 0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                  }}
-                >
-                  <span>📜</span>
-                  <span>{plant.classicalCitation.source}</span>
+                {/* Card Footer */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      color: '#b8ae96',
+                      fontStyle: 'italic',
+                      marginBottom: '0.85rem',
+                      paddingTop: '0.65rem',
+                      borderTop: '1px solid rgba(212, 175, 55, 0.1)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    {plant.classicalCitation.source}
+                  </div>
+
+                  <button
+                    onClick={() => setActiveModalPlant(plant)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      padding: '0.65rem 1rem',
+                      background: 'rgba(79, 209, 197, 0.1)',
+                      border: '1px solid rgba(79, 209, 197, 0.3)',
+                      color: '#81e6d9',
+                      fontWeight: 500,
+                      fontSize: '0.84rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <span>View Classical Recipe &amp; Precautions</span>
+                    <span>→</span>
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => setActiveModalPlant(plant)}
-                  className="btn-sacred"
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.25rem',
-                    background: 'linear-gradient(135deg, rgba(58, 155, 140, 0.25) 0%, rgba(58, 155, 140, 0.12) 100%)',
-                    borderColor: 'rgba(58, 155, 140, 0.6)',
-                    color: '#81e6d9',
-                    fontWeight: 600,
-                    fontSize: '0.88rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <span>View Classical Recipe &amp; Precautions</span>
-                  <span>→</span>
-                </button>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      {/* EDUCATIONAL PRIMER: THE 4 PILLARS OF DRAVYAGUNA */}
-      <section
-        className="temple-card"
-        style={{
-          marginTop: '4rem',
-          padding: '2.5rem 2rem',
-          background: 'linear-gradient(160deg, rgba(30, 26, 17, 0.95) 0%, rgba(14, 12, 8, 0.98) 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.25)',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <span
-            style={{
-              fontSize: '0.8rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              color: 'var(--gold-sacred)',
-              fontWeight: 700,
-            }}
-          >
-            द्रव्यगुण रहस्य • The Classical Science of Ayurvedic Herbs
-          </span>
-          <h2
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.8rem',
-              marginTop: '0.4rem',
-              color: 'var(--gold-radiance)',
-            }}
-          >
-            Why Formulations, Anupanas &amp; Timings Matter
-          </h2>
-          <p
-            style={{
-              color: 'var(--text-dust)',
-              maxWidth: '750px',
-              margin: '0.5rem auto 0',
-              fontSize: '0.95rem',
-              lineHeight: 1.6,
-            }}
-          >
-            In the Charaka Samhita, a plant is not merely a collection of chemical compounds; it acts dynamically through four classical energetic dimensions:
-          </p>
-        </div>
-
-        <div
+        {/* ── 5. EDUCATIONAL PRIMER ─────────────────────────── */}
+        <section
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '1.5rem',
+            marginTop: '3.5rem',
+            padding: '2.25rem 1.75rem',
+            background: 'rgba(18, 15, 10, 0.9)',
+            border: '1px solid rgba(212, 175, 55, 0.15)',
+            borderRadius: '10px',
           }}
         >
-          <div
-            style={{
-              background: 'rgba(13, 11, 8, 0.65)',
-              padding: '1.25rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(212, 175, 55, 0.15)',
-            }}
-          >
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>👅</div>
-            <h4 style={{ fontFamily: 'var(--font-serif)', color: 'var(--gold-radiance)', marginBottom: '0.3rem' }}>
-              1. Rasa (Taste on Tongue)
-            </h4>
-            <p style={{ color: 'var(--text-dust)', fontSize: '0.85rem', lineHeight: 1.5 }}>
-              The 6 tastes (Sweet, Sour, Salty, Pungent, Bitter, Astringent) signal the nervous system immediately upon contact, triggering specific enzymatic cascades.
+          <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+            <div
+              style={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+                color: 'rgba(212, 175, 55, 0.65)',
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+              }}
+            >
+              द्रव्यगुण रहस्य · The Classical Science of Ayurvedic Herbs
+            </div>
+            <h2
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: 'clamp(1.3rem, 2.5vw, 1.7rem)',
+                color: 'var(--gold-radiance)',
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Why Formulations, Anupanas &amp; Timings Matter
+            </h2>
+            <p
+              style={{
+                color: '#b8ae96',
+                maxWidth: '680px',
+                margin: '0 auto',
+                fontSize: '0.9rem',
+                lineHeight: 1.6,
+                fontWeight: 400,
+              }}
+            >
+              In the Charaka Samhita, a plant acts dynamically through four classical energetic dimensions:
             </p>
           </div>
 
-          <div
-            style={{
-              background: 'rgba(13, 11, 8, 0.65)',
-              padding: '1.25rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(212, 175, 55, 0.15)',
-            }}
-          >
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔥</div>
-            <h4 style={{ fontFamily: 'var(--font-serif)', color: 'var(--gold-radiance)', marginBottom: '0.3rem' }}>
-              2. Virya (Thermal Potency)
-            </h4>
-            <p style={{ color: 'var(--text-dust)', fontSize: '0.85rem', lineHeight: 1.5 }}>
-              Whether an herb is Ushna (heating) or Sheeta (cooling) determines whether it kindles digestive fire or calms inflammatory burning within the circulatory channels.
-            </p>
+          <div className="ayurveda-pillars-grid">
+            {[
+              {
+                label: 'Rasa',
+                subtitle: 'Taste on Tongue',
+                body: 'The 6 tastes (Sweet, Sour, Salty, Pungent, Bitter, Astringent) signal the nervous system immediately upon contact, triggering specific enzymatic cascades.',
+              },
+              {
+                label: 'Virya',
+                subtitle: 'Thermal Potency',
+                body: 'Whether an herb is Ushna (heating) or Sheeta (cooling) determines whether it kindles digestive fire or calms inflammatory burning within the channels.',
+              },
+              {
+                label: 'Vipaka',
+                subtitle: 'Post-Digestive Effect',
+                body: 'The transformation the herb undergoes after absorption — determining its long-term tissue-building (Madhura) or tissue-clearing (Katu) impact.',
+              },
+              {
+                label: 'Anupana',
+                subtitle: 'Sacred Carrier',
+                body: 'Milk, ghee, warm water, and raw honey act as Yogavahi vehicles that transport active botanicals across tissue barriers directly into target organs.',
+              },
+            ].map((pillar) => (
+              <div
+                key={pillar.label}
+                style={{
+                  background: 'rgba(13, 11, 8, 0.6)',
+                  padding: '1.1rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(212, 175, 55, 0.12)',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '0.65rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    color: 'rgba(212, 175, 55, 0.6)',
+                    fontWeight: 600,
+                    marginBottom: '0.2rem',
+                  }}
+                >
+                  {pillar.subtitle}
+                </div>
+                <h4
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    color: 'var(--gold-radiance)',
+                    marginBottom: '0.5rem',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {pillar.label}
+                </h4>
+                <p style={{ color: '#b8ae96', fontSize: '0.84rem', lineHeight: 1.55, margin: 0, fontWeight: 400 }}>
+                  {pillar.body}
+                </p>
+              </div>
+            ))}
           </div>
+        </section>
+      </main>
 
-          <div
-            style={{
-              background: 'rgba(13, 11, 8, 0.65)',
-              padding: '1.25rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(212, 175, 55, 0.15)',
-            }}
-          >
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔄</div>
-            <h4 style={{ fontFamily: 'var(--font-serif)', color: 'var(--gold-radiance)', marginBottom: '0.3rem' }}>
-              3. Vipaka (Post-Digestive Effect)
-            </h4>
-            <p style={{ color: 'var(--text-dust)', fontSize: '0.85rem', lineHeight: 1.5 }}>
-              The transformation the herb undergoes after absorption by Agni—determining its long-term tissue-building (Madhura) or tissue-clearing (Katu) impact.
-            </p>
-          </div>
-
-          <div
-            style={{
-              background: 'rgba(13, 11, 8, 0.65)',
-              padding: '1.25rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(212, 175, 55, 0.15)',
-            }}
-          >
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🥛</div>
-            <h4 style={{ fontFamily: 'var(--font-serif)', color: 'var(--gold-radiance)', marginBottom: '0.3rem' }}>
-              4. Anupana (Sacred Carrier)
-            </h4>
-            <p style={{ color: 'var(--text-dust)', fontSize: '0.85rem', lineHeight: 1.5 }}>
-              Milk, ghee, warm water, and raw honey act as Yogavahi vehicles that transport active botanicals across blood-tissue barriers directly into target organs.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* DETAIL MODAL: CLASSICAL RECIPE, SHASTRA SHLOKA & PRECAUTIONS */}
+      {/* ── 6. DETAIL MODAL ───────────────────────────────────── */}
       {activeModalPlant && (
         <div
           style={{
@@ -1017,21 +935,21 @@ export default function AyurvedaPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1.5rem',
+            padding: '1.25rem',
           }}
           onClick={() => setActiveModalPlant(null)}
         >
           <div
-            className="temple-card"
+            className="ayurveda-modal"
             style={{
-              maxWidth: '720px',
+              maxWidth: '680px',
               width: '100%',
               maxHeight: '90vh',
               overflowY: 'auto',
-              background: 'linear-gradient(160deg, #1f1b11 0%, #120f09 100%)',
-              border: '1px solid rgba(212, 175, 55, 0.45)',
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.9), 0 0 40px rgba(58, 155, 140, 0.25)',
-              padding: '2.5rem 2rem',
+              background: 'linear-gradient(160deg, rgba(22, 18, 12, 0.98) 0%, rgba(14, 11, 8, 0.99) 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              borderRadius: '12px',
+              padding: '2rem 1.5rem',
               position: 'relative',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1041,98 +959,109 @@ export default function AyurvedaPage() {
               onClick={() => setActiveModalPlant(null)}
               style={{
                 position: 'absolute',
-                top: '1.25rem',
-                right: '1.25rem',
+                top: '1rem',
+                right: '1rem',
                 background: 'rgba(13, 11, 8, 0.6)',
                 border: '1px solid rgba(212, 175, 55, 0.2)',
-                color: 'var(--text-vellum)',
-                width: '36px',
-                height: '36px',
+                color: '#EDE8D5',
+                width: '34px',
+                height: '34px',
                 borderRadius: '50%',
                 cursor: 'pointer',
-                fontSize: '1.1rem',
+                fontSize: '1rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
+              aria-label="Close modal"
             >
               ✕
             </button>
 
             {/* Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.25rem' }}>
               <div
                 style={{
-                  fontSize: '2.5rem',
-                  background: 'rgba(58, 155, 140, 0.2)',
-                  padding: '0.75rem',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(58, 155, 140, 0.4)',
+                  fontSize: '2rem',
+                  background: 'rgba(79, 209, 197, 0.1)',
+                  padding: '0.6rem',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(79, 209, 197, 0.25)',
+                  lineHeight: 1,
+                  flexShrink: 0,
                 }}
               >
                 {activeModalPlant.icon}
               </div>
               <div>
-                <span style={{ fontSize: '0.8rem', color: '#4fd1c5', fontWeight: 700 }}>
-                  {activeModalPlant.sanskritName} • <em>{activeModalPlant.botanicalName}</em>
-                </span>
+                <div style={{ fontSize: '0.76rem', color: '#81e6d9', fontWeight: 500, marginBottom: '0.2rem' }}>
+                  {activeModalPlant.sanskritName} · <em>{activeModalPlant.botanicalName}</em>
+                </div>
                 <h2
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: '1.85rem',
+                    fontSize: 'clamp(1.3rem, 3vw, 1.65rem)',
                     color: 'var(--gold-radiance)',
-                    margin: '0.2rem 0 0',
+                    margin: 0,
+                    fontWeight: 600,
                   }}
                 >
-                  {activeModalPlant.name} Classical Preparation
+                  {activeModalPlant.name} — Classical Preparation
                 </h2>
               </div>
             </div>
 
-            {/* Shastric Shloka Citation */}
+            {/* Shastra Verse */}
             <div
               style={{
-                background: 'rgba(13, 11, 8, 0.8)',
-                padding: '1.25rem',
+                background: 'rgba(13, 11, 8, 0.7)',
+                padding: '1rem 1.1rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
-                marginBottom: '1.5rem',
+                border: '1px solid rgba(212, 175, 55, 0.18)',
+                marginBottom: '1.25rem',
               }}
             >
-              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-sacred)', fontWeight: 700, marginBottom: '0.4rem' }}>
-                📜 Verbatim Shastra Verse ({activeModalPlant.classicalCitation.source})
+              <div
+                style={{
+                  fontSize: '0.65rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: 'rgba(212, 175, 55, 0.65)',
+                  fontWeight: 600,
+                  marginBottom: '0.5rem',
+                }}
+              >
+                Shastra Verse · {activeModalPlant.classicalCitation.source}
               </div>
               <div
                 style={{
                   fontFamily: 'var(--font-serif)',
-                  fontSize: '1.05rem',
+                  fontSize: '1rem',
                   color: 'var(--gold-radiance)',
                   lineHeight: 1.6,
                   marginBottom: '0.5rem',
+                  fontWeight: 500,
                 }}
               >
                 &ldquo;{activeModalPlant.classicalCitation.verse}&rdquo;
               </div>
-              <div style={{ fontSize: '0.88rem', color: 'var(--text-vellum)', fontStyle: 'italic', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '0.86rem', color: '#b8ae96', fontStyle: 'italic', lineHeight: 1.5, fontWeight: 400 }}>
                 {activeModalPlant.classicalCitation.translation}
               </div>
             </div>
 
             {/* Step-by-Step Recipe */}
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
               <h3
                 style={{
                   fontFamily: 'var(--font-serif)',
-                  fontSize: '1.2rem',
-                  color: '#4fd1c5',
-                  marginBottom: '0.75rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
+                  fontSize: '1.1rem',
+                  color: '#81e6d9',
+                  marginBottom: '0.65rem',
+                  fontWeight: 500,
                 }}
               >
-                <span>🥣</span>
-                <span>{activeModalPlant.preparationRecipe.title}</span>
+                {activeModalPlant.preparationRecipe.title}
               </h3>
               <ol
                 style={{
@@ -1140,10 +1069,11 @@ export default function AyurvedaPage() {
                   padding: 0,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.6rem',
-                  fontSize: '0.9rem',
-                  color: 'var(--text-vellum)',
+                  gap: '0.5rem',
+                  fontSize: '0.88rem',
+                  color: '#EDE8D5',
                   lineHeight: 1.5,
+                  fontWeight: 400,
                 }}
               >
                 {activeModalPlant.preparationRecipe.steps.map((step, idx) => (
@@ -1152,81 +1082,78 @@ export default function AyurvedaPage() {
               </ol>
             </div>
 
-            {/* Energetics Breakdown */}
+            {/* Energetics Grid */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '0.75rem',
-                background: 'rgba(13, 11, 8, 0.6)',
-                padding: '1rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                gap: '0.65rem',
+                background: 'rgba(13, 11, 8, 0.5)',
+                padding: '0.85rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(58, 155, 140, 0.2)',
-                marginBottom: '1.5rem',
+                border: '1px solid rgba(79, 209, 197, 0.15)',
+                marginBottom: '1.25rem',
                 fontSize: '0.82rem',
               }}
             >
               <div>
-                <strong style={{ color: 'var(--gold-radiance)' }}>Rasa (Taste):</strong>
-                <div style={{ color: 'var(--text-dust)' }}>{activeModalPlant.rasaGuna.rasa}</div>
+                <div style={{ color: 'rgba(212, 175, 55, 0.65)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Rasa (Taste)</div>
+                <div style={{ color: '#EDE8D5', fontWeight: 400 }}>{activeModalPlant.rasaGuna.rasa}</div>
               </div>
               <div>
-                <strong style={{ color: 'var(--gold-radiance)' }}>Virya (Thermal):</strong>
-                <div style={{ color: 'var(--text-dust)' }}>{activeModalPlant.rasaGuna.virya}</div>
+                <div style={{ color: 'rgba(212, 175, 55, 0.65)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Virya (Thermal)</div>
+                <div style={{ color: '#EDE8D5', fontWeight: 400 }}>{activeModalPlant.rasaGuna.virya}</div>
               </div>
               <div>
-                <strong style={{ color: 'var(--gold-radiance)' }}>Vipaka (Post-Digestive):</strong>
-                <div style={{ color: 'var(--text-dust)' }}>{activeModalPlant.rasaGuna.vipaka}</div>
+                <div style={{ color: 'rgba(212, 175, 55, 0.65)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Vipaka (Post-Digestive)</div>
+                <div style={{ color: '#EDE8D5', fontWeight: 400 }}>{activeModalPlant.rasaGuna.vipaka}</div>
               </div>
             </div>
 
-            {/* Safety & Precautions */}
+            {/* Precautions */}
             <div
               style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                padding: '1rem 1.25rem',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                padding: '0.85rem 1rem',
                 borderRadius: '8px',
-                marginBottom: '1.5rem',
+                marginBottom: '1.25rem',
               }}
             >
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.8rem',
+                  fontSize: '0.68rem',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
+                  letterSpacing: '0.1em',
                   color: '#fca5a5',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   marginBottom: '0.35rem',
                 }}
               >
-                <span>⚠️</span>
-                <span>Ayurvedic Precautions &amp; Contraindications</span>
+                Precautions &amp; Contraindications
               </div>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#fed7d7', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '0.84rem', color: '#fed7d7', lineHeight: 1.5, fontWeight: 400 }}>
                 {activeModalPlant.preparationRecipe.precautions}
               </p>
             </div>
 
-            {/* Modal Close Action */}
+            {/* Modal Close */}
             <div style={{ textAlign: 'right' }}>
               <button
                 onClick={() => setActiveModalPlant(null)}
-                className="btn-sacred"
                 style={{
-                  padding: '0.65rem 1.5rem',
-                  background: 'linear-gradient(135deg, #3A9B8C 0%, #22645a 100%)',
-                  color: '#EDE8D5',
-                  cursor: 'pointer',
+                  padding: '0.6rem 1.35rem',
+                  background: 'rgba(79, 209, 197, 0.12)',
+                  border: '1px solid rgba(79, 209, 197, 0.35)',
+                  color: '#81e6d9',
                   borderRadius: '6px',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  fontSize: '0.86rem',
+                  fontFamily: 'inherit',
                 }}
               >
-                Done Reading
+                Done
               </button>
             </div>
           </div>

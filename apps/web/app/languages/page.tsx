@@ -944,21 +944,53 @@ export default function LanguagesPage() {
     <div className="translation-page-container" style={{ minHeight: '100vh', background: '#0D0B08', color: '#EDE8D5' }}>
       <div className="temple-container" style={{ maxWidth: '1240px', margin: '0 auto' }}>
 
+        {/* Quick Navigation Breadcrumb */}
+        <div style={{ marginBottom: '1rem' }}>
+          <Link
+            href="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              color: 'var(--text-dust)',
+              fontSize: '0.8rem',
+              textDecoration: 'none',
+              padding: '0.25rem 0.65rem',
+              borderRadius: '6px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(212, 175, 55, 0.18)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            ← Back
+          </Link>
+        </div>
+
         {/* Header Banner */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <h1
             className="translation-title"
             style={{
               fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(1.6rem, 3.2vw, 2.25rem)',
               fontWeight: 700,
               color: '#D4AF37',
-              letterSpacing: '0.04em',
-              marginBottom: '0.5rem',
+              letterSpacing: '0.03em',
+              marginBottom: '0.45rem',
+              lineHeight: 1.25,
             }}
           >
-            Multilingual Manuscripts, Virtual Keyboards &amp; Etymology
+            Languages &amp; Translation
           </h1>
-          <p className="translation-subtitle" style={{ color: '#9A9078', maxWidth: '780px', margin: '0 auto', lineHeight: 1.6 }}>
+          <p
+            className="translation-subtitle"
+            style={{
+              color: '#9A9078',
+              maxWidth: '780px',
+              margin: '0 auto',
+              lineHeight: 1.6,
+            }}
+          >
             Access authentic sacred literature across Sanskrit, Hindi, Gujarati, Tamil, and Pali. Type with high-precision virtual keyboards, explore word-by-word anatomical verse breakdowns, and trace primordial Dhatu roots.
           </p>
         </div>
