@@ -15,13 +15,25 @@ export class TesseractOCRProvider implements OCRProvider {
     let worker: any = null;
     try {
       // Map language hint if provided
-      let lang = 'eng';
+      let lang = 'san+hin+eng';
       if (options?.languageHint === 'hin' || options?.languageHint === 'hi') lang = 'hin+eng';
       else if (options?.languageHint === 'san' || options?.languageHint === 'sa') lang = 'san+eng';
       else if (options?.languageHint === 'guj' || options?.languageHint === 'gu') lang = 'guj+eng';
       else if (options?.languageHint === 'tam' || options?.languageHint === 'ta') lang = 'tam+eng';
+      else if (options?.languageHint === 'pli') lang = 'san+eng';
+      else if (options?.languageHint === 'en') lang = 'eng';
 
-      worker = await createWorker(lang);
+      try {
+        worker = await createWorker(lang, 1, {
+          errorHandler: () => {},
+        });
+      } catch {
+        // Fallback to eng if compound script failed to initialize
+        worker = await createWorker('eng', 1, {
+          errorHandler: () => {},
+        });
+      }
+
       const ret = await worker.recognize(imageBuffer);
       await worker.terminate();
       worker = null;
@@ -32,7 +44,7 @@ export class TesseractOCRProvider implements OCRProvider {
           ? Math.max(0, Math.min(1, Math.round(ret.data.confidence) / 100))
           : 0.7;
 
-      const isReadable = rawText.length >= 2 && confidence >= 0.3;
+      const isReadable = rawText.length >= 2 && confidence >= 0.15;
       let warning: string | undefined = undefined;
 
       if (!isReadable) {
